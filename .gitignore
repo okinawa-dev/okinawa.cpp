@@ -54,10 +54,11 @@ coverage/
 
 # assets
 assets/*
+!assets/okinawa*
 !assets/test/
 assets/test/*
 !assets/test/cube*.obj
 
 # tmp
-okinawa*
+okinawa
 tests/okinawa*
