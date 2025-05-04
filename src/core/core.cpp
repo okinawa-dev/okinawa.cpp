@@ -86,9 +86,9 @@ bool OkCore::initializeOpenGL(int width, int height) {
  */
 bool OkCore::initializeShaders() {
   std::string fragmentShaderSource =
-      OkFiles::readFile("./okinawa.cpp/shaders/fragmentshader.frag.glsl");
+      OkFiles::readFile("./okinawa.cpp/src/shaders/fragmentshader.frag.glsl");
   std::string vertexShaderSource =
-      OkFiles::readFile("./okinawa.cpp/shaders/vertexshader.vert.glsl");
+      OkFiles::readFile("./okinawa.cpp/src/shaders/vertexshader.vert.glsl");
 
   if (fragmentShaderSource.empty() || vertexShaderSource.empty()) {
     OkLogger::error("Core :: Failed to load shader files");
