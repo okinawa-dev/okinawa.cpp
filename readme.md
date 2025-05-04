@@ -4,7 +4,7 @@
 
 # okinawa.cpp
 
-This is a work in progress C++ 3D game engine, inspired by the [Okinawa](https://github.com/okinawa-dev/okinawa.js), a previous version coded in JavaScript. The goal is to create a game engine that is easy to use, flexible, and powerful. The engine is designed to be modular, so you can easily add or remove features as needed.
+This is a work in progress C++ 3D game engine, inspired by [okinawa.js](https://github.com/okinawa-dev/okinawa.js), a previous version coded in JavaScript. The goal is to create a game engine that is easy to use, flexible, and powerful. The engine is designed to be modular, so you can easily add or remove features as needed.
 
 At the moment I'm not using it as a compiled library, but as a git submodule included in the games I develop. I'm currently testing it on a MacOS machine. Feedback is welcome.
 
