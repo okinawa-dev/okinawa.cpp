@@ -12,6 +12,7 @@ class OkCamera {
 public:
   OkCamera(float width, float height);
   void setView(const glm::mat4 &newView);
+  void setPerspective(float fovDegrees, float nearPlane, float farPlane);
 
   // Getters for matrices
   const glm::mat4 &getView() const {
