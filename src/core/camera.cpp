@@ -1,7 +1,7 @@
 #include "camera.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 
-OkCamera::OkCamera(float width, float height) {
+OkCamera::OkCamera(float width, float height) : OkObject() {
   // Initialize matrices
   view       = glm::mat4(1.0f);
   projection = glm::mat4(1.0f);
@@ -15,8 +15,13 @@ OkCamera::OkCamera(float width, float height) {
   // Create projection matrix
   projection = glm::perspective(glm::radians(fov), aspectRatio, near, far);
 
-  // Create view matrix and move camera back
-  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+  // Initialize direction vectors
+  front = OkPoint(0.0f, 0.0f, -1.0f);
+  up    = OkPoint(0.0f, 1.0f, 0.0f);
+
+  // Set initial position and update view
+  setPosition(0.0f, 0.0f, 3.0f);
+  updateView();
 }
 
 /**
@@ -24,9 +29,9 @@ OkCamera::OkCamera(float width, float height) {
  *        This method allows you to set a custom view matrix.
  * @param newView The new view matrix.
  */
-void OkCamera::setView(const glm::mat4 &newView) {
-  view = newView;
-}
+// void OkCamera::setView(const glm::mat4 &newView) {
+//   view = newView;
+// }
 
 /**
  * @brief Set the perspective projection matrix.
@@ -41,4 +46,23 @@ void OkCamera::setPerspective(float fovDegrees, float nearPlane,
   near       = nearPlane;
   far        = farPlane;
   projection = glm::perspective(glm::radians(fov), aspectRatio, near, far);
+}
+
+void OkCamera::setDirection(const glm::vec3 &direction) {
+  front = OkPoint(direction.x, direction.y, direction.z);
+  updateView();
+}
+
+void OkCamera::updateView() {
+  glm::vec3 pos(position.x(), position.y(), position.z());
+  glm::vec3 frontVec = front.toVec3();
+  glm::vec3 upVec    = up.toVec3();
+  view               = glm::lookAt(pos, pos + frontVec, upVec);
+}
+
+void OkCamera::updateTransform() {
+  // Call parent's updateTransform first
+  OkObject::updateTransform();
+  // Update the view matrix when transform changes
+  updateView();
 }

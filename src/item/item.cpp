@@ -148,34 +148,6 @@ void OkItem::setTexture(const std::string &texturePath) {
 }
 
 /**
- * @brief Get the speed of the item in 3D space.
- * @return The speed in 3D space.
- */
-OkPoint OkItem::getSpeed() const {
-  return speed;
-}
-
-/**
- * @brief Set the speed of the item in 3D space.
- * @param x The speed in the X direction.
- * @param y The speed in the Y direction.
- * @param z The speed in the Z direction.
- */
-void OkItem::setSpeed(float x, float y, float z) {
-  speed = OkPoint(x, y, z);
-}
-
-/**
- * @brief Get the speed magnitude of the item.
- * @return The speed magnitude in 3D space.
- */
-float OkItem::getSpeedMagnitude() const {
-  // Calculate speed magnitude in 3D
-  return std::sqrt(speed.x() * speed.x() + speed.y() * speed.y() +
-                   speed.z() * speed.z());
-}
-
-/**
  * @brief Update the item position and rotation based on speed and rotation
  * vectors.
  * @param dt The delta time since the last update.
