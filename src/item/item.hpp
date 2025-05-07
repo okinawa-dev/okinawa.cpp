@@ -32,6 +32,7 @@ private:
   unsigned int *indices;
   long          numVertices;
   long          numIndices;
+  float         radius;  // Maximum dimension
 
   // OpenGL objects
   GLuint     VAO, VBO, EBO;
@@ -54,6 +55,9 @@ private:
   OkRotation rotation;
 
 protected:
+  // Geometry
+  void _calculateRadius();
+
   // Hierarchy
   OkItem *_attachedItems;  // linked list
   OkItem *_nextItem;       // next sibling
@@ -72,6 +76,11 @@ public:
   OkItem(const OkItem &)            = delete;
   OkItem &operator=(const OkItem &) = delete;
 
+  // Geometry
+  float getRadius() const {
+    return radius;
+  }
+
   // Texture methods
   void setTexture(const std::string &texturePath);
 
@@ -79,17 +88,12 @@ public:
   OkPoint getPosition() const;
   void    setPosition(float x, float y, float z);
 
-  OkPoint getSize() const;
-  void    setSize(float x, float y, float z);
-
   OkPoint getScaling() const;
   void    setScaling(float x, float y, float z);
 
   OkPoint getSpeed() const;
   void    setSpeed(float x, float y, float z);
-
-  float getRadius() const;
-  float getSpeedMagnitude() const;
+  float   getSpeedMagnitude() const;
 
   // Movement and rotation
   void       move(float dx, float dy, float dz);

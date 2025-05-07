@@ -64,6 +64,8 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   std::memcpy(indices, indexData, indexCount * sizeof(unsigned int));
   numIndices = indexCount;
 
+  _calculateRadius();
+
   _initBuffers();
 }
 
@@ -126,6 +128,34 @@ void OkItem::_initBuffers() {
 }
 
 /**
+ * @brief Calculate the radius of the item based on its vertices.
+ * @note  The radius is calculated as the maximum distance from the center of
+ *        the item to any vertex.
+ */
+void OkItem::_calculateRadius() {
+  float minX = std::numeric_limits<float>::max();
+  float maxX = std::numeric_limits<float>::lowest();
+  float minY = std::numeric_limits<float>::max();
+  float maxY = std::numeric_limits<float>::lowest();
+  float minZ = std::numeric_limits<float>::max();
+  float maxZ = std::numeric_limits<float>::lowest();
+
+  for (long i = 0; i < numVertices * 5; i += 5) {  // 5 components per vertex
+    minX = std::min(minX, vertices[i]);
+    maxX = std::max(maxX, vertices[i]);
+    minY = std::min(minY, vertices[i + 1]);
+    maxY = std::max(maxY, vertices[i + 1]);
+    minZ = std::min(minZ, vertices[i + 2]);
+    maxZ = std::max(maxZ, vertices[i + 2]);
+  }
+
+  float width  = maxX - minX;
+  float height = maxY - minY;
+  float depth  = maxZ - minZ;
+  radius       = std::max(std::max(width, height), depth);
+}
+
+/**
  * @brief Set the texture for the item.
  * @param texturePath The path to the texture file.
  */
@@ -179,24 +209,6 @@ void OkItem::setPosition(float x, float y, float z) {
 }
 
 /**
- * @brief Get the size of the item in 3D space.
- * @return The size in 3D space.
- */
-OkPoint OkItem::getSize() const {
-  return size;
-}
-
-/**
- * @brief Set the size of the item in 3D space.
- * @param x The size in the X direction.
- * @param y The size in the Y direction.
- * @param z The size in the Z direction.
- */
-void OkItem::setSize(float x, float y, float z) {
-  size = OkPoint(x, y, z);
-}
-
-/**
  * @brief Get the scaling of the item in 3D space.
  * @return The scaling in 3D space.
  */
@@ -230,17 +242,6 @@ OkPoint OkItem::getSpeed() const {
  */
 void OkItem::setSpeed(float x, float y, float z) {
   speed = OkPoint(x, y, z);
-}
-
-/**
- * @brief Get the radius of the item.
- * @return The radius of the item.
- */
-float OkItem::getRadius() const {
-  // Calculate radius in 3D space (from center to corner)
-  return std::sqrt(std::pow(size.x() / 2.0f, 2.0f) +
-                   std::pow(size.y() / 2.0f, 2.0f) +
-                   std::pow(size.z() / 2.0f, 2.0f));
 }
 
 /**
