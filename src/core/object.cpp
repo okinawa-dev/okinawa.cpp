@@ -34,6 +34,12 @@ void OkObject::setPosition(float x, float y, float z) {
   updateTransform();
 }
 
+void OkObject::setPosition(const OkPoint &newPosition) {
+  // OkPoint copy assignment operator
+  position = newPosition;
+  updateTransform();
+}
+
 void OkObject::move(float dx, float dy, float dz) {
   position = position + OkPoint(dx, dy, dz);
   updateTransform();
@@ -48,6 +54,12 @@ OkRotation OkObject::getRotation() const {
 
 void OkObject::setRotation(float x, float y, float z) {
   rotation.setRotation(x, y, z);
+  updateTransform();
+}
+
+void OkObject::setRotation(const OkRotation &newRotation) {
+  // OkPoint copy assignment operator
+  rotation = newRotation;
   updateTransform();
 }
 

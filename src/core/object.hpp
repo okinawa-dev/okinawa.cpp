@@ -34,11 +34,13 @@ public:
   // Position
   OkPoint getPosition() const;
   void    setPosition(float x, float y, float z);
+  void    setPosition(const OkPoint &newPosition);
   void    move(float dx, float dy, float dz);
 
   // Rotation
   OkRotation getRotation() const;
   void       setRotation(float x, float y, float z);
+  void       setRotation(const OkRotation &newRotation);
   void       rotate(float dx, float dy, float dz);
 
   // Scale

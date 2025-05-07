@@ -24,7 +24,8 @@ public:
   const float *getProjectionPtr() const { return glm::value_ptr(projection); }
 
   // Camera-specific direction handling
-  void           setDirection(const glm::vec3 &direction);
+  void           setDirection(float x, float y, float z);
+  void           setDirection(const OkPoint &direction);
   const OkPoint &getFront() const { return front; }
 
 protected:

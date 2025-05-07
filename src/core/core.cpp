@@ -223,10 +223,7 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
   if (pitch < -89.0f)
     pitch = -89.0f;
 
-  glm::vec3 direction;
-  direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-  direction.y = sin(glm::radians(pitch));
-  direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-
-  _camera->setDirection(direction);
+  _camera->setDirection(cos(glm::radians(yaw)) * cos(glm::radians(pitch)),
+                        sin(glm::radians(pitch)),
+                        sin(glm::radians(yaw)) * cos(glm::radians(pitch)));
 }

@@ -48,8 +48,16 @@ void OkCamera::setPerspective(float fovDegrees, float nearPlane,
   projection = glm::perspective(glm::radians(fov), aspectRatio, near, far);
 }
 
-void OkCamera::setDirection(const glm::vec3 &direction) {
-  front = OkPoint(direction.x, direction.y, direction.z);
+void OkCamera::setDirection(float x, float y, float z) {
+  front.setX(x);
+  front.setY(y);
+  front.setZ(z);
+  front = front.normalize();
+  updateView();
+}
+
+void OkCamera::setDirection(const OkPoint &direction) {
+  front = direction.normalize();
   updateView();
 }
 
