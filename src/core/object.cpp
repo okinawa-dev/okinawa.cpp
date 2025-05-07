@@ -1,6 +1,7 @@
 #include "object.hpp"
 
-OkObject::OkObject() : position(0.0f, 0.0f, 0.0f), scaling(1.0f, 1.0f, 1.0f) {}
+OkObject::OkObject() : position(0.0f, 0.0f, 0.0f), scaling(1.0f, 1.0f, 1.0f) {
+}
 
 OkObject::~OkObject() {
   detachFromParent();

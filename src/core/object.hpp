@@ -32,22 +32,20 @@ public:
   void       rotate(float dx, float dy, float dz);
 
   // Scale
-  OkPoint getScaling() const {
-    return scaling;
-  }
-  void setScaling(float x, float y, float z) {
-    scaling = OkPoint(x, y, z);
-  }
+  OkPoint getScaling() const { return scaling; }
+  void    setScaling(float x, float y, float z) { scaling = OkPoint(x, y, z); }
 
   // Hierarchy
-  void attachTo(OkObject *parent);
-  void detachFromParent();
-  void detachAllChildren();
+  void      attachTo(OkObject *parent);
+  void      detachFromParent();
+  void      detachAllChildren();
+  OkObject *getNextSibling() const { return _nextSibling; }
+  OkObject *getFirstChild() const { return _firstChild; }
+  OkObject *getParent() const { return _parent; }
 
   // Transform matrix
   glm::mat4 getTransformMatrix() const;
 
-protected:
   virtual void updateTransform() = 0;
 };
 

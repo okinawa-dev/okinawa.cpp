@@ -13,19 +13,12 @@
  * @param indexCount  The number of indices.
  */
 OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
-               unsigned int *indexData, long indexCount) {
+               unsigned int *indexData, long indexCount)
+    : OkObject() {
 
   OkLogger::info("Item :: Creating item " + name + " with " +
                  std::to_string(vertexCount) + " vertices and " +
                  std::to_string(indexCount) + " indices");
-
-  // Add checks for valid data
-  // don't do this... with xyz coordinates, it would be multiple of 3,
-  // but with uv coordinates, it would be multiple of 5, etc
-  // if (vertexCount % 3 != 0) {
-  //   okLogWarning("Item :: vertex count %d is not a multiple of 3",
-  //   vertexCount);
-  // }
 
   // Direct assignment - string will handle copying internally
   this->name = name;
@@ -36,10 +29,7 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   numIndices    = indexCount;
   texture       = nullptr;
 
-  position = OkPoint(0.0f, 0.0f, 0.0f);
-  size     = OkPoint(0.0f, 0.0f, 0.0f);
-  scaling  = OkPoint(1.0f, 1.0f, 1.0f);
-  speed    = OkPoint(0.0f, 0.0f, 0.0f);
+  speed = OkPoint(0.0f, 0.0f, 0.0f);
 
   maxVel = 0;
   accel  = 0;
@@ -47,12 +37,6 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   vRot     = OkPoint(0.0f, 0.0f, 0.0f);
   maxVRot  = OkPoint(0.0f, 0.0f, 0.0f);
   accelRot = OkPoint(0.0f, 0.0f, 0.0f);
-
-  drawWireframe = false;
-
-  _parentItem    = nullptr;
-  _attachedItems = nullptr;
-  _nextItem      = nullptr;
 
   // Allocate and copy vertex data
   vertices = new float[vertexCount];
@@ -70,8 +54,6 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
 }
 
 OkItem::~OkItem() {
-  detachAll();
-
   // Delete OpenGL objects
   glDeleteVertexArrays(1, &VAO);
   glDeleteBuffers(1, &VBO);
@@ -175,58 +157,6 @@ void OkItem::setTexture(const std::string &texturePath) {
 }
 
 /**
- * @brief Get the position of the item in 3D space.
- * @return The position in 3D space.
- * @note  The position is relative to the item's parent if it has one.
- *        If the item has no parent, the position is absolute in world space.
- */
-OkPoint OkItem::getPosition() const {
-  if (_parentItem != nullptr) {
-    // Get parent position
-    OkPoint parentPosition = _parentItem->getPosition();
-
-    // Transform position based on parent rotation
-    OkPoint transformedPosition =
-        _parentItem->rotation.transformPoint(position);
-
-    // Combine positions
-    return transformedPosition + parentPosition;
-  }
-
-  return position;
-}
-
-/**
- * @brief Set the position of the item in 3D space.
- * @param x The X coordinate.
- * @param y The Y coordinate.
- * @param z The Z coordinate.
- * @note  The position is relative to the item's parent if it has one.
- *        If the item has no parent, the position is absolute in world space.
- */
-void OkItem::setPosition(float x, float y, float z) {
-  position = OkPoint(x, y, z);
-}
-
-/**
- * @brief Get the scaling of the item in 3D space.
- * @return The scaling in 3D space.
- */
-OkPoint OkItem::getScaling() const {
-  return scaling;
-}
-
-/**
- * @brief Set the scaling of the item in 3D space.
- * @param x The scaling factor in the X direction.
- * @param y The scaling factor in the Y direction.
- * @param z The scaling factor in the Z direction.
- */
-void OkItem::setScaling(float x, float y, float z) {
-  scaling = OkPoint(x, y, z);
-}
-
-/**
  * @brief Get the speed of the item in 3D space.
  * @return The speed in 3D space.
  */
@@ -255,130 +185,6 @@ float OkItem::getSpeedMagnitude() const {
 }
 
 /**
- * @brief Move the item by a specified distance in 3D space.
- * @param dx The distance to move in the X direction.
- * @param dy The distance to move in the Y direction.
- * @param dz The distance to move in the Z direction.
- * @note  The movement is relative to the item's current position.
- *        If the item has a parent, the movement is also relative to the
- *        parent's position. If the item has no parent, the movement is absolute
- *        in world space.
- */
-void OkItem::move(float dx, float dy, float dz) {
-  position = position + OkPoint(dx, dy, dz);
-}
-
-/**
- * @brief Rotate the item by a specified amount around each axis.
- * @param dx The rotation around the X axis in radians.
- * @param dy The rotation around the Y axis in radians.
- * @param dz The rotation around the Z axis in radians.
- */
-void OkItem::rotate(float dx, float dy, float dz) {
-  rotation.rotate(dx, dy, dz);
-}
-
-/**
- * @brief Set the rotation of the item directly.
- * @param x The rotation around the X axis in radians.
- * @param y The rotation around the Y axis in radians.
- * @param z The rotation around the Z axis in radians.
- */
-void OkItem::setRotation(float x, float y, float z) {
-  rotation.setRotation(x, y, z);
-}
-
-/**
- * @brief Get the rotation of the item.
- * @return The rotation of the item.
- * @note  The rotation is relative to the item's parent if it has one.
- *        If the item has no parent, the rotation is absolute in world space.
- */
-OkRotation OkItem::getRotation() const {
-  if (_parentItem != nullptr) {
-    // Combine parent's rotation with our local rotation
-    OkRotation parentRotation = _parentItem->getRotation();
-    return parentRotation.combine(rotation);
-  }
-  return rotation;
-}
-
-/**
- * @brief Attach a child item to this item.
- * @param child The child item to attach.
- */
-void OkItem::attach(OkItem *child) {
-  if (!child)
-    return;
-
-  // Detach from previous parent if any
-  if (child->_parentItem) {
-    child->_parentItem->detach(child);
-  }
-
-  // Set the new parent
-  child->_parentItem = this;
-
-  // Add to parent's list at the beginning
-  child->_nextItem = _attachedItems;
-  _attachedItems   = child;
-}
-
-/**
- * @brief Detach a child item from this item.
- * @param child The child item to detach.
- */
-void OkItem::detach(OkItem *child) {
-  if (!child)
-    return;
-
-  // Find and remove child from parent's list
-  OkItem *current = _attachedItems;
-  OkItem *prev    = nullptr;
-
-  while (current) {
-    if (current == child) {
-      if (prev) {
-        prev->_nextItem = current->_nextItem;
-      } else {
-        _attachedItems = current->_nextItem;
-      }
-
-      child->_parentItem = nullptr;
-      child->_nextItem   = nullptr;
-      break;
-    }
-
-    prev    = current;
-    current = current->_nextItem;
-  }
-}
-
-/**
- * @brief Detach all child items from this item.
- */
-void OkItem::detachAll() {
-  OkItem *current = _attachedItems;
-
-  while (current) {
-    OkItem *next         = current->_nextItem;
-    current->_parentItem = nullptr;
-    current->_nextItem   = nullptr;
-    current              = next;
-  }
-
-  _attachedItems = nullptr;
-}
-
-/**
- * @brief Get the parent item of this item.
- * @return The parent item, or nullptr if there is no parent.
- */
-OkItem *OkItem::getParent() {
-  return _parentItem;
-}
-
-/**
  * @brief Update the item position and rotation based on speed and rotation
  * vectors.
  * @param dt The delta time since the last update.
@@ -396,49 +202,28 @@ void OkItem::step(float dt) {
     rotate(vRot.x() * frameTime, vRot.y() * frameTime, vRot.z() * frameTime);
   }
 
-  // Update attached items recursively
-  OkItem *current = _attachedItems;
+  // Update children recursively
+  OkObject *current = _firstChild;
   while (current != nullptr) {
-    current->step(dt);
-    current = current->_nextItem;
+    if (auto *item = dynamic_cast<OkItem *>(current)) {
+      item->step(dt);
+    }
+    current = current->getNextSibling();
   }
-
-  // Clean up any items marked for removal
-  // finalizeRemoved();  // TODO: Implement if needed
 }
 
-void OkItem::_createModelMatrix(glm::mat4 &model) const {
-  // Initialize model matrix
-  model = glm::mat4(1.0f);  // Identity matrix
-
-  // If we have a parent, start with parent's model matrix
-  if (_parentItem != nullptr) {
-    glm::mat4 parentModel;
-    _parentItem->_createModelMatrix(parentModel);
-    model = parentModel;
-  }
-
-  // Apply transformations in order: T * R * S
-
-  // Translate
-  model = glm::translate(model,
-                         glm::vec3(position.x(), position.y(), position.z()));
-
-  // Rotate using pitch (X), yaw (Y), roll (Z) angles
-  model = glm::rotate(model, rotation.getPitch(), glm::vec3(1.0f, 0.0f, 0.0f));
-  model = glm::rotate(model, rotation.getYaw(), glm::vec3(0.0f, 1.0f, 0.0f));
-  model = glm::rotate(model, rotation.getRoll(), glm::vec3(0.0f, 0.0f, 1.0f));
-
-  // Scale
-  model = glm::scale(model, glm::vec3(scaling.x(), scaling.y(), scaling.z()));
+void OkItem::updateTransform() {
+  // Base class handles transform matrix updates
 }
 
 void OkItem::draw() {
-  // Draw attached items recursively
-  OkItem *current = _attachedItems;
+  // Draw children recursively
+  OkObject *current = _firstChild;
   while (current != nullptr) {
-    current->draw();
-    current = current->_nextItem;
+    if (auto *item = dynamic_cast<OkItem *>(current)) {
+      item->draw();
+    }
+    current = current->getNextSibling();
   }
 
   bool drawWireframe =
@@ -458,9 +243,8 @@ void OkItem::draw() {
   while (glGetError() != GL_NO_ERROR)
     ;
 
-  // Create and compute model matrix
-  glm::mat4 model(1.0f);
-  _createModelMatrix(model);
+  // Get model matrix from base class
+  glm::mat4 model = getTransformMatrix();
 
   // Set the model matrix uniform in shader
   GLint modelLoc = glGetUniformLocation(current_program, "model");
