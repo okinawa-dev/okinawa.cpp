@@ -8,10 +8,11 @@
 #include <string>
 
 // Initialize static members
-GLFWwindow     *OkCore::_window = nullptr;
-OkCamera       *OkCore::_camera;
-OkSceneHandler *OkCore::_sceneHandler;
+GLFWwindow     *OkCore::_window        = nullptr;
+OkCamera       *OkCore::_camera        = nullptr;
+OkSceneHandler *OkCore::_sceneHandler  = nullptr;
 GLuint          OkCore::_shaderProgram = 0;
+OkInput        *OkCore::_input         = nullptr;
 
 /**
  * @brief Initialize the core engine.
@@ -44,7 +45,7 @@ bool OkCore::initialize() {
   _camera = new OkCamera(width, height);
 
   // Initialize input system
-  OkInput::initialize(_window);
+  _input = new OkInput(_window, &OkCore::mouseCallback);
 
   OkLogger::info("Core :: Engine initialized successfully");
   return true;
@@ -134,7 +135,7 @@ void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
       float dt      = static_cast<float>(deltaTime);
 
       // Process input
-      OkInput::process();
+      _input->process();
 
       OkScene *currentScene = _sceneHandler->getCurrentScene();
 
@@ -181,4 +182,51 @@ void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
 
   glDeleteProgram(_shaderProgram);
   glfwTerminate();
+}
+
+/**
+ * @brief Mouse callback function for handling mouse movement.
+ *        This function updates the camera direction based on mouse movement.
+ * @param window The GLFW window that received the event.
+ * @param xpos   The x-coordinate of the mouse cursor.
+ * @param ypos   The y-coordinate of the mouse cursor.
+ */
+void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
+  static float lastX      = xpos;
+  static float lastY      = ypos;
+  static bool  firstMouse = true;
+
+  if (firstMouse) {
+    lastX      = xpos;
+    lastY      = ypos;
+    firstMouse = false;
+    return;
+  }
+
+  float xoffset = xpos - lastX;
+  float yoffset = lastY - ypos;
+  lastX         = xpos;
+  lastY         = ypos;
+
+  const float sensitivity = 0.1f;
+  xoffset *= sensitivity;
+  yoffset *= sensitivity;
+
+  static float yaw   = -90.0f;
+  static float pitch = 0.0f;
+
+  yaw += xoffset;
+  pitch += yoffset;
+
+  if (pitch > 89.0f)
+    pitch = 89.0f;
+  if (pitch < -89.0f)
+    pitch = -89.0f;
+
+  glm::vec3 direction;
+  direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+  direction.y = sin(glm::radians(pitch));
+  direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+
+  _camera->setDirection(direction);
 }

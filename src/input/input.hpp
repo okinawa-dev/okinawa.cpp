@@ -40,25 +40,25 @@ public:
  */
 class OkInput {
 public:
-  // Static initialization
-  static void initialize(GLFWwindow *window) {
-    OkInput::window = window;
-  }
+  using MouseCallback = void (*)(GLFWwindow *, double, double);
+  explicit OkInput(GLFWwindow *window, MouseCallback mouseCallback = nullptr);
 
-  // Delete constructor, copy constructor and assignment
-  OkInput()                           = delete;
+  // No need for delete since we're not using static methods
+  ~OkInput() = default;
+  // Prevent copying
   OkInput(const OkInput &)            = delete;
   OkInput &operator=(const OkInput &) = delete;
 
-  static void         process();
-  static OkInputState getState();
+  void         process();
+  OkInputState getState();
 
   // Constants
   static constexpr float MOVE_SPEED     = 5.0f;
   static constexpr float ROTATION_SPEED = 2.0f;
 
 private:
-  static GLFWwindow *window;
+  GLFWwindow   *_window;
+  MouseCallback _mouseCallback;
 };
 
 #endif

@@ -28,6 +28,31 @@ public:
     return glm::value_ptr(projection);
   }
 
+  // Direction setters/getters
+  void setDirection(const glm::vec3 &direction) {
+    front = glm::normalize(direction);
+    updateView();
+  }
+
+  const glm::vec3 &getFront() const {
+    return front;
+  }
+  const glm::vec3 &getPosition() const {
+    return position;
+  }
+  void setPosition(const glm::vec3 &pos) {
+    position = pos;
+    updateView();
+  }
+
+  // Speed setters/getters
+  void setSpeed(float newSpeed) {
+    speed = newSpeed;
+  }
+  float getSpeed() const {
+    return speed;
+  }
+
 private:
   glm::mat4 view;
   glm::mat4 projection;
@@ -35,6 +60,15 @@ private:
   float     fov;
   float     near;
   float     far;
+  float     speed = 400.0f;
+
+  glm::vec3 position{0.0f, 0.0f, 0.0f};
+  glm::vec3 front{0.0f, 0.0f, -1.0f};
+  glm::vec3 up{0.0f, 1.0f, 0.0f};
+
+  void updateView() {
+    view = glm::lookAt(position, position + front, up);
+  }
 };
 
 #endif

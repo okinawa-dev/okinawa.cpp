@@ -7,6 +7,7 @@
 #endif
 
 #include "../handlers/scenes.hpp"
+#include "../input/input.hpp"
 #include "../scene/scene.hpp"
 #include "./camera.hpp"
 #include <GLFW/glfw3.h>
@@ -43,6 +44,9 @@ public:
   static GLuint getShaderProgram() {
     return _shaderProgram;
   }
+  static OkInput *getInput() {
+    return _input;
+  }
 
 private:
   static bool initializeOpenGL(int width, int height);
@@ -52,6 +56,9 @@ private:
   static OkCamera       *_camera;
   static OkSceneHandler *_sceneHandler;
   static GLuint          _shaderProgram;
+  static OkInput        *_input;
+
+  static void mouseCallback(GLFWwindow *window, double xpos, double ypos);
 };
 
 #endif
