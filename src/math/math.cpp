@@ -3,13 +3,28 @@
 
 OkPoint OkMath::anglesToDirectionVector(float pitch, float yaw, float roll) {
   // Convert angles to direction vector using GLM
-  glm::vec3 direction(cos(yaw) * cos(pitch),  // x component
-                      sin(pitch),             // y component
-                      sin(yaw) * cos(pitch)   // z component
+  glm::vec3 direction(
+      cos(glm::radians(yaw)) * cos(glm::radians(pitch)),  // x component
+      sin(glm::radians(pitch)),                           // y component
+      sin(glm::radians(yaw)) * cos(glm::radians(pitch))   // z component
   );
 
   // Normalize using GLM
   return OkPoint(glm::normalize(direction));
+}
+
+void OkMath::directionVectorToAngles(const OkPoint &direction, float &outPitch,
+                                     float &outYaw) {
+  // Extract components
+  float x = direction.x();
+  float y = direction.y();
+  float z = direction.z();
+
+  // Calculate pitch (up/down) - convert to degrees
+  outPitch = glm::degrees(asin(y));
+
+  // Calculate yaw (left/right) - convert to degrees
+  outYaw = glm::degrees(atan2(z, x));
 }
 
 OkPoint OkMath::getForwardVector(const OkRotation &rotation) {

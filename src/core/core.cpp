@@ -212,18 +212,17 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
   xoffset *= sensitivity;
   yoffset *= sensitivity;
 
-  static float yaw   = -90.0f;
-  static float pitch = 0.0f;
+  // Get current angles from camera
+  float yaw   = _camera->getYaw() + xoffset;
+  float pitch = _camera->getPitch() + yoffset;
 
-  yaw += xoffset;
-  pitch += yoffset;
-
+  // Constrain pitch
   if (pitch > 89.0f)
     pitch = 89.0f;
   if (pitch < -89.0f)
     pitch = -89.0f;
 
-  _camera->setDirection(cos(glm::radians(yaw)) * cos(glm::radians(pitch)),
-                        sin(glm::radians(pitch)),
-                        sin(glm::radians(yaw)) * cos(glm::radians(pitch)));
+  // Calculate new direction vector
+  OkPoint direction = OkMath::anglesToDirectionVector(pitch, yaw, 0.0f);
+  _camera->setDirection(direction);
 }

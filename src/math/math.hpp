@@ -16,6 +16,10 @@ public:
   // Convert Euler angles to direction vector
   static OkPoint anglesToDirectionVector(float pitch, float yaw, float roll);
 
+  // Convert direction vector to angles
+  static void directionVectorToAngles(const OkPoint &direction, float &outPitch,
+                                      float &outYaw);
+
   // Movement vectors
   static OkPoint getForwardVector(const OkRotation &rotation);
   static OkPoint getRightVector(const OkRotation &rotation);
