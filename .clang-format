@@ -6,13 +6,13 @@ ColumnLimit: 80
 UseTab: Never
 InsertNewlineAtEOF: true
 AllowShortEnumsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortFunctionsOnASingleLine: Inline
 NamespaceIndentation: All
+IndentCaseLabels: true
 
 PointerAlignment: Right
 BreakBeforeBraces: Attach
 AllowShortIfStatementsOnASingleLine: false
-IndentCaseLabels: false
 AccessModifierOffset: -2
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
