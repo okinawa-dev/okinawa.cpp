@@ -44,6 +44,10 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   _initBuffers();
 }
 
+/**
+ * @brief Destructor for the OkItem class.
+ *        Cleans up OpenGL objects and allocated memory.
+ */
 OkItem::~OkItem() {
   // Delete OpenGL objects
   glDeleteVertexArrays(1, &VAO);
@@ -175,10 +179,17 @@ void OkItem::step(float dt) {
   }
 }
 
+/**
+ * @brief Update the transform matrix of the item.
+ */
 void OkItem::updateTransform() {
   // Base class handles transform matrix updates
 }
 
+/**
+ * @brief Draw the item and its children.
+ * @note  This method handles the rendering of the item and its children.
+ */
 void OkItem::draw() {
   // Draw children recursively
   OkObject *current = _firstChild;

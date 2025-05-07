@@ -139,6 +139,11 @@ OkRotation OkRotation::combine(const OkRotation &other) const {
   return OkRotation(combinedAngles.x, combinedAngles.y, combinedAngles.z);
 }
 
+/**
+ * @brief Equality operator to compare two rotations.
+ * @param other The other rotation to compare with.
+ * @return True if the rotations are equal, false otherwise.
+ */
 bool OkRotation::operator==(const OkRotation &other) const {
   return angles == other.angles;
 }

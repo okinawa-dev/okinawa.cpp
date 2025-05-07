@@ -1,5 +1,8 @@
 #include "object.hpp"
 
+/**
+ * @brief Constructor for the OkObject class.
+ */
 OkObject::OkObject() {
   position = OkPoint(0.0f, 0.0f, 0.0f);
   scaling  = OkPoint(1.0f, 1.0f, 1.0f);
@@ -15,11 +18,21 @@ OkObject::OkObject() {
   _nextSibling = nullptr;
 }
 
+/**
+ * @brief Destructor for the OkObject class.
+ *        Cleans up the object and detaches from parent.
+ */
 OkObject::~OkObject() {
   detachFromParent();
   detachAllChildren();
 }
 
+/**
+ * @brief Get the position of the object in world coordinates.
+ *        If the object has a parent, the position is transformed by the
+ *        parent's rotation and position.
+ * @return The world position of the object.
+ */
 OkPoint OkObject::getPosition() const {
   if (_parent) {
     // Transform local position by parent's transform
@@ -29,22 +42,50 @@ OkPoint OkObject::getPosition() const {
   return position;
 }
 
+/**
+ * @brief Set the position of the object in local coordinates.
+ *        This method updates the position and recalculates the transform
+ *        matrix.
+ * @param x The x-coordinate of the new position.
+ * @param y The y-coordinate of the new position.
+ * @param z The z-coordinate of the new position.
+ */
 void OkObject::setPosition(float x, float y, float z) {
   position = OkPoint(x, y, z);
   updateTransform();
 }
 
+/**
+ * @brief Set the position of the object using an OkPoint.
+ *        This method updates the position and recalculates the transform
+ *        matrix.
+ * @param newPosition The new position as an OkPoint.
+ */
 void OkObject::setPosition(const OkPoint &newPosition) {
   // OkPoint copy assignment operator
   position = newPosition;
   updateTransform();
 }
 
+/**
+ * @brief Move the object by a specified distance in local coordinates.
+ *       This method updates the position and recalculates the transform
+ *       matrix.
+ * @param dx The distance to move in the x-direction.
+ * @param dy The distance to move in the y-direction.
+ * @param dz The distance to move in the z-direction.
+ */
 void OkObject::move(float dx, float dy, float dz) {
   position = position + OkPoint(dx, dy, dz);
   updateTransform();
 }
 
+/**
+ * @brief Get the rotation of the object in world coordinates.
+ *        If the object has a parent, the rotation is transformed by the
+ *        parent's rotation.
+ * @return The world rotation of the object.
+ */
 OkRotation OkObject::getRotation() const {
   if (_parent) {
     return _parent->getRotation().combine(rotation);
@@ -52,22 +93,49 @@ OkRotation OkObject::getRotation() const {
   return rotation;
 }
 
+/**
+ * @brief Set the rotation of the object in local coordinates.
+ *        This method updates the rotation and recalculates the transform
+ *        matrix.
+ * @param x The rotation around the x-axis in degrees.
+ * @param y The rotation around the y-axis in degrees.
+ * @param z The rotation around the z-axis in degrees.
+ */
 void OkObject::setRotation(float x, float y, float z) {
   rotation.setRotation(x, y, z);
   updateTransform();
 }
 
+/**
+ * @brief Set the rotation of the object using an OkRotation.
+ *        This method updates the rotation and recalculates the transform
+ *        matrix.
+ * @param newRotation The new rotation as an OkRotation.
+ */
 void OkObject::setRotation(const OkRotation &newRotation) {
   // OkPoint copy assignment operator
   rotation = newRotation;
   updateTransform();
 }
 
+/**
+ * @brief Rotate the object by a specified angle in local coordinates.
+ *        This method updates the rotation and recalculates the transform
+ *        matrix.
+ * @param dx The rotation around the x-axis in degrees.
+ * @param dy The rotation around the y-axis in degrees.
+ * @param dz The rotation around the z-axis in degrees.
+ */
 void OkObject::rotate(float dx, float dy, float dz) {
   rotation.rotate(dx, dy, dz);
   updateTransform();
 }
 
+/**
+ * @brief Attach this object to a parent object.
+ *        This method updates the parent-child relationship and recalculates
+ *        the transform matrix.
+ */
 void OkObject::attachTo(OkObject *parent) {
   if (_parent == parent)
     return;
@@ -83,6 +151,11 @@ void OkObject::attachTo(OkObject *parent) {
   updateTransform();
 }
 
+/**
+ * @brief Detach this object from its parent.
+ *        This method updates the parent-child relationship and recalculates
+ *        the transform matrix.
+ */
 void OkObject::detachFromParent() {
   if (!_parent)
     return;
@@ -102,12 +175,22 @@ void OkObject::detachFromParent() {
   updateTransform();
 }
 
+/**
+ * @brief Detach all children from this object.
+ *        This method updates the parent-child relationship for all children.
+ */
 void OkObject::detachAllChildren() {
   while (_firstChild) {
     _firstChild->detachFromParent();
   }
 }
 
+/**
+ * @brief Get the transformation matrix for this object.
+ *        This method combines the parent's transformation with the local
+ *        transformation.
+ * @return The transformation matrix as a glm::mat4.
+ */
 glm::mat4 OkObject::getTransformMatrix() const {
   glm::mat4 matrix(1.0f);
 
@@ -125,6 +208,11 @@ glm::mat4 OkObject::getTransformMatrix() const {
   return matrix;
 }
 
+/**
+ * @brief Update the transform matrix for this object.
+ *        This method is called to recalculate the transformation matrix.
+ * @note  This is a virtual function that can be overridden by derived classes.
+ */
 void OkObject::updateTransform() {
   // Virtual function that derived classes can override to handle transform
   // updates
