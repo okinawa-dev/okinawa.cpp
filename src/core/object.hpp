@@ -12,10 +12,20 @@ protected:
   OkRotation rotation;
   OkPoint    scaling;
 
+  // Physics
+  OkPoint speed;
+  float   maxVel;
+  float   accel;
+
+  // Rotation velocities
+  OkPoint vRot;
+  OkPoint maxVRot;
+  OkPoint accelRot;
+
   // Hierarchy
-  OkObject *_parent{nullptr};
-  OkObject *_firstChild{nullptr};
-  OkObject *_nextSibling{nullptr};
+  OkObject *_parent;
+  OkObject *_firstChild;
+  OkObject *_nextSibling;
 
 public:
   OkObject();
@@ -34,6 +44,11 @@ public:
   // Scale
   OkPoint getScaling() const { return scaling; }
   void    setScaling(float x, float y, float z) { scaling = OkPoint(x, y, z); }
+
+  // Physics
+  OkPoint getSpeed() const { return speed; }
+  void    setSpeed(float x, float y, float z) { speed = OkPoint(x, y, z); }
+  float   getSpeedMagnitude() const { return speed.magnitude(); }
 
   // Hierarchy
   void      attachTo(OkObject *parent);

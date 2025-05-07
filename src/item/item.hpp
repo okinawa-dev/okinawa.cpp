@@ -37,16 +37,6 @@ private:
   GLuint     VAO, VBO, EBO;
   OkTexture *texture;
 
-  // Physics
-  OkPoint speed;
-  float   maxVel;
-  float   accel;
-
-  // Rotation velocities
-  OkPoint vRot;
-  OkPoint maxVRot;
-  OkPoint accelRot;
-
 protected:
   // Geometry
   void _calculateRadius();
@@ -69,11 +59,6 @@ public:
 
   // Texture methods
   void setTexture(const std::string &texturePath);
-
-  // Physics
-  OkPoint getSpeed() const;
-  void    setSpeed(float x, float y, float z);
-  float   getSpeedMagnitude() const;
 
   void setWireframe(bool wireframe) { drawWireframe = wireframe; }
 

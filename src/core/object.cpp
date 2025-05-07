@@ -1,6 +1,18 @@
 #include "object.hpp"
 
-OkObject::OkObject() : position(0.0f, 0.0f, 0.0f), scaling(1.0f, 1.0f, 1.0f) {
+OkObject::OkObject() {
+  position = OkPoint(0.0f, 0.0f, 0.0f);
+  scaling  = OkPoint(1.0f, 1.0f, 1.0f);
+  speed    = OkPoint(0.0f, 0.0f, 0.0f);
+  maxVel   = 0.0f;
+  accel    = 0.0f;
+  vRot     = OkPoint(0.0f, 0.0f, 0.0f);
+  maxVRot  = OkPoint(0.0f, 0.0f, 0.0f);
+  accelRot = OkPoint(0.0f, 0.0f, 0.0f);
+
+  _parent      = nullptr;
+  _firstChild  = nullptr;
+  _nextSibling = nullptr;
 }
 
 OkObject::~OkObject() {

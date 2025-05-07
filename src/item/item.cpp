@@ -29,15 +29,6 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   numIndices    = indexCount;
   texture       = nullptr;
 
-  speed = OkPoint(0.0f, 0.0f, 0.0f);
-
-  maxVel = 0;
-  accel  = 0;
-
-  vRot     = OkPoint(0.0f, 0.0f, 0.0f);
-  maxVRot  = OkPoint(0.0f, 0.0f, 0.0f);
-  accelRot = OkPoint(0.0f, 0.0f, 0.0f);
-
   // Allocate and copy vertex data
   vertices = new float[vertexCount];
   std::memcpy(vertices, vertexData, vertexCount * sizeof(float));
