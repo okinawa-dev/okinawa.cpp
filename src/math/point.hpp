@@ -40,6 +40,11 @@ public:
   float   dot(const OkPoint &other) const;
   OkPoint cross(const OkPoint &other) const;
 
+  // Static methods for common points
+  static OkPoint Forward() { return OkPoint(0, 0, 1); }
+  static OkPoint Right() { return OkPoint(1, 0, 0); }
+  static OkPoint Up() { return OkPoint(0, 1, 0); }
+
   // Getters/Setters
   float x() const { return v.x; }
   float y() const { return v.y; }

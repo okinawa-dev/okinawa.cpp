@@ -61,7 +61,11 @@ float OkPoint::magnitude() const {
  * @return A new OkPoint object with the normalized vector.
  */
 OkPoint OkPoint::normalize() const {
-  return OkPoint(glm::normalize(v));
+  // return OkPoint(glm::normalize(v));
+  float len = magnitude();
+  if (len < 1e-6f)  // Small epsilon value
+    return OkPoint(0, 0, 0);
+  return OkPoint(v / len);
 }
 
 /**
