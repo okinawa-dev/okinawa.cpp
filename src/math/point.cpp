@@ -82,3 +82,21 @@ std::string OkPoint::toString() const {
   ss << "(" << v.x << ", " << v.y << ", " << v.z << ")";
   return ss.str();
 }
+
+/**
+ * @brief Calculate the dot product of two points.
+ * @param other The other OkPoint object.
+ * @return The dot product of the two points.
+ */
+float OkPoint::dot(const OkPoint &other) const {
+  return glm::dot(v, other.v);
+}
+
+/**
+ * @brief Calculate the cross product of two points.
+ * @param other The other OkPoint object.
+ * @return A new OkPoint object representing the cross product.
+ */
+OkPoint OkPoint::cross(const OkPoint &other) const {
+  return OkPoint(glm::cross(v, other.v));
+}
