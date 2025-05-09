@@ -25,9 +25,11 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
 
   visible       = true;
   drawWireframe = false;
-  numVertices   = vertexCount;
-  numIndices    = indexCount;
-  texture       = nullptr;
+  drawMode      = GL_TRIANGLES;  // Default drawing mode
+
+  numVertices = vertexCount;
+  numIndices  = indexCount;
+  texture     = nullptr;
 
   // Allocate and copy vertex data
   vertices = new float[vertexCount];
@@ -287,7 +289,7 @@ void OkItem::draw() {
       glUniform1i(hasTexLoc, 1);
     }
 
-    glDrawElements(GL_TRIANGLES, (GLsizei)numIndices, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT, nullptr);
   }
 
   // Second pass: Draw wireframe
@@ -304,7 +306,7 @@ void OkItem::draw() {
       glUniform4f(colorLoc, 1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    glDrawElements(GL_TRIANGLES, (GLsizei)numIndices, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT, nullptr);
   }
 
   // Fallback if no texture and no wireframe
@@ -321,7 +323,7 @@ void OkItem::draw() {
       glUniform4f(colorLoc, 1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    glDrawElements(GL_TRIANGLES, (GLsizei)numIndices, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT, nullptr);
   }
 
   // Reset polygon mode to default if needed

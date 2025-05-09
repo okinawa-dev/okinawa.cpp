@@ -23,8 +23,9 @@ private:
   std::string name;
 
   // Flags
-  bool visible;
-  bool drawWireframe;  // Flag to control wireframe rendering
+  bool   visible;
+  bool   drawWireframe;  // Flag to control wireframe rendering
+  GLenum drawMode;       // GL_TRIANGLES, GL_LINES, etc.
 
   // Geometry
   float        *vertices;
@@ -60,7 +61,10 @@ public:
   // Texture methods
   void setTexture(const std::string &texturePath);
 
-  void setWireframe(bool wireframe) { drawWireframe = wireframe; }
+  // Flags
+  void   setWireframe(bool wireframe) { drawWireframe = wireframe; }
+  void   setDrawMode(GLenum mode) { drawMode = mode; }
+  GLenum getDrawMode() const { return drawMode; }
 
   // Update and render
   void step(float dt);
