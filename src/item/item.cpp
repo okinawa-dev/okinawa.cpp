@@ -110,26 +110,52 @@ void OkItem::_initBuffers() {
  *        the item to any vertex.
  */
 void OkItem::_calculateRadius() {
-  float minX = std::numeric_limits<float>::max();
-  float maxX = std::numeric_limits<float>::lowest();
-  float minY = std::numeric_limits<float>::max();
-  float maxY = std::numeric_limits<float>::lowest();
-  float minZ = std::numeric_limits<float>::max();
-  float maxZ = std::numeric_limits<float>::lowest();
 
-  for (long i = 0; i < numVertices * 5; i += 5) {  // 5 components per vertex
-    minX = std::min(minX, vertices[i]);
-    maxX = std::max(maxX, vertices[i]);
-    minY = std::min(minY, vertices[i + 1]);
-    maxY = std::max(maxY, vertices[i + 1]);
-    minZ = std::min(minZ, vertices[i + 2]);
-    maxZ = std::max(maxZ, vertices[i + 2]);
+  // Return early if no vertices
+  if (numVertices <= 0 || !vertices) {
+    radius = 0.0f;
+    OkLogger::warning("Item :: No vertices to calculate radius");
+    return;
+  }
+
+  float minX = vertices[0];
+  float maxX = vertices[0];
+  float minY = vertices[1];
+  float maxY = vertices[1];
+  float minZ = vertices[2];
+  float maxZ = vertices[2];
+
+  // Each vertex has 5 components: 3 for position (xyz) and 2 for UV
+  const int  stride            = 5;
+  const long actualVertexCount = numVertices / stride;
+
+  // Iterate through actual vertices
+  for (long i = 0; i < actualVertexCount; i++) {
+    long  offset = i * stride;
+    float x      = vertices[offset];      // Position X
+    float y      = vertices[offset + 1];  // Position Y
+    float z      = vertices[offset + 2];  // Position Z
+    // vertices[offset + 3] and [offset + 4] are UV coordinates
+
+    minX = std::min(minX, x);
+    maxX = std::max(maxX, x);
+    minY = std::min(minY, y);
+    maxY = std::max(maxY, y);
+    minZ = std::min(minZ, z);
+    maxZ = std::max(maxZ, z);
   }
 
   float width  = maxX - minX;
   float height = maxY - minY;
   float depth  = maxZ - minZ;
-  radius       = std::max(std::max(width, height), depth);
+  // Calculate radius as half the diagonal of the bounding box
+  radius = sqrt(width * width + height * height + depth * depth) * 0.5f;
+
+  OkLogger::info("Item :: Bounds: (" + std::to_string(minX) + ", " +
+                 std::to_string(minY) + ", " + std::to_string(minZ) + ") to (" +
+                 std::to_string(maxX) + ", " + std::to_string(maxY) + ", " +
+                 std::to_string(maxZ) + ")");
+  OkLogger::info("Item :: Calculated radius: " + std::to_string(radius));
 }
 
 /**
