@@ -21,14 +21,6 @@ OkCamera::OkCamera(float width, float height) : OkObject() {
   // Create projection matrix
   projection = glm::perspective(glm::radians(fov), aspectRatio, near, far);
 
-  // Initialize direction vectors and angles
-  front = OkPoint(0.0f, 0.0f, -1.0f);
-  up    = OkPoint(0.0f, 1.0f, 0.0f);
-  pitch = 0.0f;
-  yaw   = -90.0f;  // -90 degrees to look along negative Z
-
-  // Set initial position and update view
-  setPosition(0.0f, 0.0f, 3.0f);
   updateView();
 }
 
@@ -48,26 +40,16 @@ void OkCamera::setPerspective(float fovDegrees, float nearPlane,
 }
 
 /**
- * @brief Set the camera direction using an OkPoint.
- *        This method allows you to set the camera's direction using an
- *        OkPoint.
- * @param direction The direction vector as an OkPoint.
- */
-void OkCamera::setDirection(const OkPoint &direction) {
-  front = direction.normalize();
-  OkMath::directionVectorToAngles(front, pitch, yaw);
-  updateView();
-}
-
-/**
  * @brief Update the view matrix based on the camera's position and direction.
  *        This method recalculates the view matrix using the current position,
  *        front vector, and up vector.
  */
 void OkCamera::updateView() {
+
   glm::vec3 pos(position.x(), position.y(), position.z());
-  glm::vec3 frontVec = front.toVec3();
-  glm::vec3 upVec    = up.toVec3();
+  OkPoint   forward  = rotation.getForwardVector();
+  glm::vec3 frontVec = forward.toVec3();
+  glm::vec3 upVec    = glm::vec3(0.0f, 1.0f, 0.0f);  // World up vector
   view               = glm::lookAt(pos, pos + frontVec, upVec);
 }
 

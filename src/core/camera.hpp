@@ -24,12 +24,6 @@ public:
   const float     *getViewPtr() const { return glm::value_ptr(view); }
   const float *getProjectionPtr() const { return glm::value_ptr(projection); }
 
-  // Camera-specific direction handling
-  void           setDirection(const OkPoint &direction);
-  const OkPoint &getFront() const { return front; }
-  float          getPitch() const { return pitch; }
-  float          getYaw() const { return yaw; }
-
 protected:
   // Override OkObject's transform update
   void updateTransform() override;
@@ -41,11 +35,6 @@ private:
   float     fov;
   float     near;
   float     far;
-
-  OkPoint front;
-  OkPoint up;
-  float   pitch;  // Vertical rotation in degrees
-  float   yaw;    // Horizontal rotation in degrees
 
   void updateView();
 };

@@ -204,26 +204,32 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
   }
 
   float xoffset = xpos - lastX;
+  // Reversed since y-coordinates range from bottom to top
   float yoffset = lastY - ypos;
   lastX         = xpos;
   lastY         = ypos;
 
-  const float sensitivity = 0.1f;
+  const float sensitivity = 0.05f;
   xoffset *= sensitivity;
   yoffset *= sensitivity;
 
-  // Get current angles from camera
-  float yaw   = _camera->getYaw() + xoffset;
-  float pitch = _camera->getPitch() + yoffset;
+  // Get current rotation from camera
+  OkRotation currentRotation = _camera->getRotation();
+  float      pitch           = currentRotation.getPitch();
+  float      yaw             = currentRotation.getYaw();
 
-  // Constrain pitch
-  if (pitch > 89.0f)
-    pitch = 89.0f;
-  if (pitch < -89.0f)
-    pitch = -89.0f;
+  // Update angles
+  // Convert to radians since OkRotation works in radians
+  pitch += glm::radians(yoffset);
+  yaw += glm::radians(xoffset);
 
-  // Calculate new direction vector
-  // OkPoint direction = OkMath::anglesToDirectionVector(pitch, yaw, 0.0f);
-  OkPoint direction = OkRotation(pitch, yaw, 0.0f).getForwardVector();
-  _camera->setDirection(direction);
+  // Constrain pitch to avoid flipping (in radians)
+  const float maxPitch = glm::radians(89.0f);
+  if (pitch > maxPitch)
+    pitch = maxPitch;
+  if (pitch < -maxPitch)
+    pitch = -maxPitch;
+
+  // Set new rotation
+  _camera->setRotation(pitch, yaw, 0.0f);
 }
