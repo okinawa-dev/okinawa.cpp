@@ -19,21 +19,11 @@ public:
   OkRotation(const OkRotation &other) = default;
 
   // Getters
-  const glm::mat4 &getMatrix() const {
-    return matrix;
-  }
-  const glm::vec3 &getAngles() const {
-    return angles;
-  }
-  float getPitch() const {
-    return angles.x;
-  }
-  float getYaw() const {
-    return angles.y;
-  }
-  float getRoll() const {
-    return angles.z;
-  }
+  const glm::mat4 &getMatrix() const { return matrix; }
+  const glm::vec3 &getAngles() const { return angles; }
+  float            getPitch() const { return angles.x; }
+  float            getYaw() const { return angles.y; }
+  float            getRoll() const { return angles.z; }
 
   // Setters
   void rotate(float dx, float dy, float dz);
@@ -49,6 +39,11 @@ public:
 
   // String representation
   std::string toString() const;
+
+  // Direction vectors
+  OkPoint getForwardVector() const;
+  OkPoint getRightVector() const;
+  OkPoint getUpVector() const;
 };
 
 #endif

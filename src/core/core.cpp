@@ -223,6 +223,7 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
     pitch = -89.0f;
 
   // Calculate new direction vector
-  OkPoint direction = OkMath::anglesToDirectionVector(pitch, yaw, 0.0f);
+  // OkPoint direction = OkMath::anglesToDirectionVector(pitch, yaw, 0.0f);
+  OkPoint direction = OkRotation(pitch, yaw, 0.0f).getForwardVector();
   _camera->setDirection(direction);
 }

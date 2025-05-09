@@ -20,30 +20,6 @@ OkRotation::OkRotation(float pitch, float yaw, float roll)
   _updateMatrix();
 }
 
-// 3D Rotation matrices for each axis:
-//
-// X rotation (Pitch):
-//   | 1    0      0    |
-//   | 0  cos(x) -sin(x)|
-//   | 0  sin(x)  cos(x)|
-//
-// Y rotation (Yaw):
-//   |  cos(y)  0  sin(y)|
-//   |    0     1    0   |
-//   | -sin(y)  0  cos(y)|
-//
-// Z rotation (Roll):
-//   | cos(z) -sin(z)  0 |
-//   | sin(z)  cos(z)  0 |
-//   |   0       0     1 |
-//
-// Combined rotation matrix (ZYX order):
-//   | cy*cz  cz*sx*sy-cx*sz  cx*cz*sy+sx*sz |
-//   | cy*sz  cx*cz+sx*sy*sz  -cz*sx+cx*sy*sz|
-//   |  -sy      cy*sx            cx*cy      |
-//
-// Where: cx = cos(x), sx = sin(x), etc.
-
 /**
  * @brief Update the rotation matrix based on the current angles.
  * This function computes the rotation matrix using the ZYX order of
@@ -53,14 +29,10 @@ void OkRotation::_updateMatrix() {
   // Reset matrix to identity
   matrix = glm::mat4(1.0f);
 
-  // experimental GLM feature
-  // Apply rotations in ZYX order using GLM
-  // matrix = glm::eulerAngleXYZ(angles.x, angles.y, angles.z);
-
   // Get angles for readability
-  float pitch = angles.x;  // X rotation
-  float yaw   = angles.y;  // Y rotation
-  float roll  = angles.z;  // Z rotation
+  float pitch = angles.x;  // X rotation (looking up/down)
+  float yaw   = angles.y;  // Y rotation (looking left/right)
+  float roll  = angles.z;  // Z rotation (tilting head)
 
   // Precompute trigonometric values
   float cp = std::cos(pitch);
@@ -70,13 +42,14 @@ void OkRotation::_updateMatrix() {
   float cr = std::cos(roll);
   float sr = std::sin(roll);
 
-  // Build rotation matrix (ZYX order)
+  // Build rotation matrix (YXZ order - yaw, then pitch, then roll)
+  // This matches standard FPS camera systems
   // clang-format off
   matrix = glm::mat4(
-      cy * cr,                   -cy * sr,                 sy,        0.0f,
-      cp * sr + cr * sp * sy,    cp * cr - sp * sy * sr,  -cy * sp,  0.0f,
-      sp * sr - cp * cr * sy,    cr * sp + cp * sy * sr,   cp * cy,  0.0f,
-      0.0f,                      0.0f,                     0.0f,      1.0f
+      cy * cr + sy * sp * sr,    -cy * sr + sy * sp * cr,    sy * cp,    0.0f,
+      cp * sr,                    cp * cr,                   -sp,        0.0f,
+      -sy * cr + cy * sp * sr,    sy * sr + cy * sp * cr,    cy * cp,    0.0f,
+      0.0f,                       0.0f,                      0.0f,       1.0f
   );
   // clang-format on
 }
@@ -123,20 +96,50 @@ OkPoint OkRotation::transformPoint(const OkPoint &point) const {
  *       then applying the other rotation.
  */
 OkRotation OkRotation::combine(const OkRotation &other) const {
-  // Get the matrices for both rotations
-  glm::mat4 thisMatrix = glm::eulerAngleXYZ(angles.x, angles.y, angles.z);
-  glm::mat4 otherMatrix =
-      glm::eulerAngleXYZ(other.angles.x, other.angles.y, other.angles.z);
+  // Simply multiply the matrices
+  glm::mat4 combined = other.matrix * matrix;
 
-  // Combine matrices (multiply in correct order)
-  glm::mat4 combined = otherMatrix * thisMatrix;
+  // The combined rotation needs to be converted back to Euler angles
+  // This is a complex process because extracting Euler angles from a rotation
+  // matrix can have multiple solutions (gimbal lock issue)
 
-  // Extract Euler angles from the combined matrix
-  glm::vec3 combinedAngles;
-  glm::extractEulerAngleXYZ(combined, combinedAngles.x, combinedAngles.y,
-                            combinedAngles.z);
+  // For simplicity and consistency with our conventions, we'll extract the
+  // key vectors and compute angles from them
 
-  return OkRotation(combinedAngles.x, combinedAngles.y, combinedAngles.z);
+  // Extract the main axes from the combined matrix
+  glm::vec3 forward(combined[2][0], combined[2][1], combined[2][2]);
+  glm::vec3 up(combined[1][0], combined[1][1], combined[1][2]);
+
+  // Normalize to ensure we have unit vectors
+  forward = glm::normalize(forward);
+  up      = glm::normalize(up);
+
+  // Calculate pitch from forward vector (elevation angle)
+  float pitch = -asin(forward.y);
+
+  // Calculate yaw from forward vector (azimuth angle)
+  float yaw = atan2(forward.x, forward.z);
+
+  // Calculate roll by finding the angle between the up vector and the expected
+  // up vector after applying pitch and yaw (but before roll)
+
+  // Create a rotation matrix for just pitch and yaw
+  glm::mat4 pitchYawMatrix = glm::mat4(1.0f);
+  float     cp             = cos(pitch);
+  float     sp             = sin(pitch);
+  float     cy             = cos(yaw);
+  float     sy             = sin(yaw);
+
+  // For no-roll orientation, the up vector would be:
+  glm::vec3 noRollUp(-sy * sp, cp, -cy * sp);
+  noRollUp = glm::normalize(noRollUp);
+
+  // Find the angle between the actual up and the no-roll up
+  // projected onto the plane perpendicular to forward
+  glm::vec3 right = glm::cross(noRollUp, forward);
+  float     roll  = atan2(glm::dot(up, right), glm::dot(up, noRollUp));
+
+  return OkRotation(pitch, yaw, roll);
 }
 
 /**
@@ -156,4 +159,47 @@ std::string OkRotation::toString() const {
   std::stringstream ss;
   ss << "(" << angles.x << ", " << angles.y << ", " << angles.z << ")";
   return ss.str();
+}
+
+/**
+ * @brief Get the forward vector based on the rotation.
+ * @return The forward vector as an OkPoint.
+ * @note The forward vector is calculated using the angles of the rotation.
+ */
+OkPoint OkRotation::getForwardVector() const {
+  // Forward vector = (sin(yaw)cos(pitch), sin(pitch), cos(yaw)cos(pitch))
+  float pitch = angles.x;
+  float yaw   = angles.y;
+  float cp    = std::cos(pitch);
+  float sp    = std::sin(pitch);
+  float cy    = std::cos(yaw);
+  float sy    = std::sin(yaw);
+
+  return OkPoint(-sy * cp, sp, -cy * cp);
+}
+
+/**
+ * @brief Get the right vector based on the rotation.
+ * @return The right vector as an OkPoint.
+ * @note The right vector is calculated using the yaw angle of the rotation.
+ */
+OkPoint OkRotation::getRightVector() const {
+  // Right vector = (cos(yaw), 0, -sin(yaw))
+  float yaw = angles.y;
+  float cy  = std::cos(yaw);
+  float sy  = std::sin(yaw);
+
+  return OkPoint(cy, 0.0f, -sy);
+}
+
+/**
+ * @brief Get the up vector based on the rotation.
+ * @return The up vector as an OkPoint.
+ * @note The up vector is calculated as the cross product of the right and
+ *       forward vectors.
+ */
+OkPoint OkRotation::getUpVector() const {
+  // We can calculate the up vector as the cross product of right and forward
+  // Up = Right × Forward
+  return getRightVector().cross(getForwardVector());
 }

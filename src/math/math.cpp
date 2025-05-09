@@ -1,34 +1,41 @@
 #include "math.hpp"
-#include <glm/gtx/rotate_vector.hpp>
+// #include <glm/gtx/rotate_vector.hpp>
+#include <iostream>
 
 /**
  * @brief Convert Euler angles to a direction vector.
  *        This method converts pitch, yaw, and roll angles to a direction
- *        vector using GLM.
- * @param pitch The pitch angle in degrees.
- * @param yaw   The yaw angle in degrees.
- * @param roll  The roll angle in degrees.
+ *        vector consistent with the OkRotation class implementation.
+ * @param pitch The pitch angle in radians.
+ * @param yaw   The yaw angle in radians.
+ * @param roll  The roll angle in radians (unused for direction).
  * @return A normalized direction vector as an OkPoint.
  */
-OkPoint OkMath::anglesToDirectionVector(float pitch, float yaw, float roll) {
-  // Convert angles to direction vector using GLM
-  glm::vec3 direction(
-      cos(glm::radians(yaw)) * cos(glm::radians(pitch)),  // x component
-      sin(glm::radians(pitch)),                           // y component
-      sin(glm::radians(yaw)) * cos(glm::radians(pitch))   // z component
-  );
+// OkPoint OkMath::anglesToDirectionVector(float pitch, float yaw, float roll) {
+//   // Calculate direction vector components using the same convention as
+//   // OkRotation::getForwardVector
+//   float cp = std::cos(pitch);
+//   float sp = std::sin(pitch);
+//   float cy = std::cos(yaw);
+//   float sy = std::sin(yaw);
 
-  // Normalize using GLM
-  return OkPoint(glm::normalize(direction));
-}
+//   // Forward vector = (sin(yaw)cos(pitch), sin(pitch), cos(yaw)cos(pitch))
+//   glm::vec3 direction(sy * cp,  // x component
+//                       sp,       // y component
+//                       cy * cp   // z component
+//   );
+
+//   // Return normalized direction vector
+//   return OkPoint(glm::normalize(direction));
+// }
 
 /**
  * @brief Convert a direction vector to Euler angles.
  *        This method converts a direction vector to pitch and yaw angles
- *        using GLM.
+ *        consistent with the OkRotation class implementation.
  * @param direction The direction vector as an OkPoint.
- * @param outPitch  The output pitch angle in degrees.
- * @param outYaw    The output yaw angle in degrees.
+ * @param outPitch  The output pitch angle in radians.
+ * @param outYaw    The output yaw angle in radians.
  * @note There is no roll in this conversion, a single direction vector doesn't
  * contain enough information to determine roll. Roll is a rotation around the
  * direction vector itself, so it cannot be extracted from just the direction
@@ -41,59 +48,119 @@ void OkMath::directionVectorToAngles(const OkPoint &direction, float &outPitch,
   float y = direction.y();
   float z = direction.z();
 
-  // Calculate pitch (up/down) - convert to degrees
-  outPitch = glm::degrees(asin(y));
+  // Normalize the direction vector to ensure accurate angle calculations
+  glm::vec3 normalized = glm::normalize(glm::vec3(x, y, z));
+  x                    = normalized.x;
+  y                    = normalized.y;
+  z                    = normalized.z;
 
-  // Calculate yaw (left/right) - convert to degrees
-  outYaw = glm::degrees(atan2(z, x));
+  // Calculate pitch (up/down)
+  outPitch = asin(y);
+
+  // Calculate yaw (left/right)
+  // We need to handle the case where cos(pitch) is close to 0 (looking straight
+  // up/down)
+  float cp = cos(outPitch);
+  if (cp > 0.001f) {
+    // Normal case - not looking straight up/down
+    outYaw = atan2(x / cp, -z / cp);
+  } else {
+    // Special case - looking straight up or down
+    // In this case, yaw becomes arbitrary, so we can maintain the previous yaw
+    // or set it to a default value. Here we'll use atan2 but be aware it may be
+    // unstable.
+    outYaw = atan2(x, -z);
+  }
 }
 
 /**
- * @brief Get the forward vector based on the rotation.
- *        This method calculates the forward vector using the rotation angles.
- * @param rotation The rotation as an OkRotation.
- * @return The forward vector as an OkPoint.
+ * @brief Checks if two floating point values are approximately equal
+ * @param a First value
+ * @param b Second value
+ * @param epsilon The maximum difference (default: 1e-6)
+ * @return True if values are approximately equal
  */
-OkPoint OkMath::getForwardVector(const OkRotation &rotation) {
-  const auto &angles = rotation.getAngles();
-  float       yaw    = angles.y;  // Y rotation
-  float       pitch  = angles.x;  // X rotation
-
-  glm::vec3 forward(cos(yaw) * cos(pitch), -sin(pitch), sin(yaw) * cos(pitch));
-
-  return OkPoint(forward);
-}
+// static bool approximatelyEqual(float a, float b, float epsilon = 1e-6f) {
+//   return fabs(a - b) <= epsilon;
+// }
 
 /**
- * @brief Get the right vector based on the rotation.
- *        This method calculates the right vector using the rotation angles.
- * @param rotation The rotation as an OkRotation.
- * @return The right vector as an OkPoint.
+ * @brief Creates a rotation that orients an object to look at a target
+ * @param eye The position of the viewer/object
+ * @param target The position to look at
+ * @param up The up vector that defines the orientation (defaults to world up)
+ * @return An OkRotation that will orient an object at 'eye' to face 'target'
  */
-OkPoint OkMath::getRightVector(const OkRotation &rotation) {
-  const auto &angles = rotation.getAngles();
-  float       yaw    = angles.y;
+OkRotation OkMath::lookAt(const OkPoint &eye, const OkPoint &target,
+                          const OkPoint &up) {
+  // Calculate forward direction (from eye to target)
+  glm::vec3 eyePos(eye.x(), eye.y(), eye.z());
+  glm::vec3 targetPos(target.x(), target.y(), target.z());
+  glm::vec3 worldUp(up.x(), up.y(), up.z());
 
-  glm::vec3 right(cos(yaw + glm::half_pi<float>()), 0.0f,
-                  sin(yaw + glm::half_pi<float>()));
+  // Normalize the up vector
+  worldUp = glm::normalize(worldUp);
 
-  return OkPoint(right);
-}
+  // Calculate the forward vector (direction from eye to target)
+  glm::vec3 forward = glm::normalize(targetPos - eyePos);
 
-/**
- * @brief Get the up vector based on the rotation.
- *        This method calculates the up vector using the rotation angles.
- * @param rotation The rotation as an OkRotation.
- * @return The up vector as an OkPoint.
- */
-OkPoint OkMath::getUpVector(const OkRotation &rotation) {
-  // Get forward and right vectors
-  OkPoint forward = getForwardVector(rotation);
-  OkPoint right   = getRightVector(rotation);
+  // Special case: if forward and up are parallel, nudge the up vector
+  if (glm::abs(glm::dot(forward, worldUp)) > 0.999999f) {
+    // Choose a different up vector if they're nearly parallel
+    if (glm::abs(forward.y) < 0.999999f) {
+      worldUp = glm::vec3(0, 0, 1);  // Use world Z as up instead
+    } else {
+      worldUp = glm::vec3(1, 0, 0);  // Use world X as up instead
+    }
+  }
 
-  // Calculate cross product using GLM
-  glm::vec3 up = glm::cross(glm::vec3(forward.x(), forward.y(), forward.z()),
-                            glm::vec3(right.x(), right.y(), right.z()));
+  // Calculate the right vector
+  glm::vec3 right = glm::normalize(glm::cross(forward, worldUp));
 
-  return OkPoint(up);
+  // Recalculate the orthogonal up vector
+  glm::vec3 upDir = glm::cross(right, forward);
+
+  // Extract the rotation angles from these vectors
+
+  // 1. Calculate pitch: angle between forward and the xz-plane
+  // The dot product of forward and (0,1,0) gives us the sine of the pitch angle
+  float pitch = -asin(forward.y);
+
+  // 2. Calculate yaw: angle between the projection of forward on the xz-plane
+  // and the z-axis Project forward onto xz-plane by zeroing y component
+  glm::vec3 forwardXZ = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z));
+  float     yaw       = atan2(forwardXZ.x, forwardXZ.z);
+
+  // 3. Calculate roll: measure how much the up vector is rotated around the
+  // forward axis First, create the "expected" up vector for this pitch and yaw
+  // (without roll)
+  float cp = cos(pitch);
+  float sp = sin(pitch);
+  float cy = cos(yaw);
+  float sy = sin(yaw);
+
+  // Expected up vector if roll=0 (derived from rotation matrix)
+  glm::vec3 expectedUp = glm::normalize(glm::vec3(-sy * sp, cp, -cy * sp));
+
+  // Project actual up vector onto the plane perpendicular to forward
+  glm::vec3 projectedUp = upDir - forward * glm::dot(upDir, forward);
+  projectedUp           = glm::normalize(projectedUp);
+
+  // Project expected up onto the same plane
+  glm::vec3 projectedExpectedUp =
+      expectedUp - forward * glm::dot(expectedUp, forward);
+  projectedExpectedUp = glm::normalize(projectedExpectedUp);
+
+  // Calculate roll by finding the angle between these two projections
+  float roll =
+      acos(glm::clamp(glm::dot(projectedUp, projectedExpectedUp), -1.0f, 1.0f));
+
+  // Determine roll sign by testing which side of the expected up the actual up
+  // is
+  glm::vec3 rollTest = glm::cross(projectedExpectedUp, projectedUp);
+  if (glm::dot(rollTest, forward) < 0) {
+    roll = -roll;
+  }
+
+  return OkRotation(pitch, yaw, roll);
 }

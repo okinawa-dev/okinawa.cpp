@@ -13,19 +13,14 @@ public:
   // Static class - no instantiation
   OkMath() = delete;
 
-  // Convert Euler angles to direction vector
-  static OkPoint anglesToDirectionVector(float pitch, float yaw, float roll);
-
-  // Convert direction vector to angles
+  // static OkPoint anglesToDirectionVector(float pitch, float yaw, float roll);
   static void directionVectorToAngles(const OkPoint &direction, float &outPitch,
                                       float &outYaw);
 
-  // Movement vectors
-  static OkPoint getForwardVector(const OkRotation &rotation);
-  static OkPoint getRightVector(const OkRotation &rotation);
-  static OkPoint getUpVector(const OkRotation &rotation);
+  static OkRotation lookAt(const OkPoint &eye, const OkPoint &target,
+                           const OkPoint &up = OkPoint(0, 1, 0));
 
-private:
+  // static bool approximatelyEqual(float a, float b, float epsilon = 1e-6f);
 };
 
 #endif
