@@ -221,7 +221,7 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
   // Update angles
   // Convert to radians since OkRotation works in radians
   pitch += glm::radians(yoffset);
-  yaw += glm::radians(xoffset);
+  yaw += glm::radians(-xoffset);
 
   // Constrain pitch to avoid flipping (in radians)
   const float maxPitch = glm::radians(89.0f);
