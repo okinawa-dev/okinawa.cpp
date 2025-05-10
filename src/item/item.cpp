@@ -183,8 +183,8 @@ void OkItem::loadTextureFromFile(const std::string &texturePath) {
     textureName = "";
   }
 
-  // Get texture from handler
-  texture = OkTextureHandler::getInstance()->getTexture(texturePath);
+  // Create texture through handler
+  texture = OkTextureHandler::getInstance()->createTextureFromFile(texturePath);
   if (texture) {
     textureName = texturePath;
   }

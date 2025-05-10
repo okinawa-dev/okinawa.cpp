@@ -29,13 +29,16 @@ public:
   // Get singleton instance
   static OkTextureHandler *getInstance();
 
-  // Get or create texture from file
-  OkTexture *getTexture(const std::string &path);
+  // Get an existing texture by name (returns nullptr if not found)
+  OkTexture *getTexture(const std::string &name);
 
-  // Get or create texture from raw data
-  OkTexture *getTextureFromRawData(const std::string   &name,
-                                   const unsigned char *data, int width,
-                                   int height, int channels);
+  // Create and store a texture from file
+  OkTexture *createTextureFromFile(const std::string &path);
+
+  // Create and store a texture from raw data
+  OkTexture *createTextureFromRawData(const std::string   &name,
+                                      const unsigned char *data, int width,
+                                      int height, int channels);
 
   // Reference counting
   void addReference(const std::string &name);
