@@ -25,9 +25,30 @@ std::string OkStrings::trimRight(const std::string &str) {
   return str.substr(0, last + 1);
 }
 
-std::string OkStrings::trimFixedString(const char *str, size_t maxLen) {
-  std::string result(str, strnlen(str, maxLen));
-  return trimRight(result);
+/**
+ * @brief Trims a string to a maximum length and removes trailing whitespace
+ * @param str The input string to trim
+ * @param maxLen The maximum length to trim to
+ * @return The trimmed string
+ */
+std::string OkStrings::trimFixedString(const std::string &str, size_t maxLen) {
+  static const std::string whitespace = " \t\n\r\f\v\0";
+
+  // First limit the string length if needed
+  std::string result;
+  if (str.length() > maxLen) {
+    result = str.substr(0, maxLen);
+  } else {
+    result = str;
+  }
+
+  // Then find last non-whitespace character
+  size_t last = result.find_last_not_of(whitespace);
+  if (last == std::string::npos) {
+    return "";  // String is empty or contains only whitespace
+  }
+
+  return result.substr(0, last + 1);
 }
 
 std::string OkStrings::toUpper(const std::string &str) {
