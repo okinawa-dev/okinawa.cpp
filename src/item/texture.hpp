@@ -23,8 +23,15 @@ private:
   int         channels;
 
 public:
-  // Constructor loads the texture
+  // Constructor loads the texture from file
   explicit OkTexture(const std::string &path);
+
+  // Constructor for creating texture from raw data
+  OkTexture(int width, int height, int channels);
+
+  // Constructor for creating and initializing texture from raw data
+  OkTexture(const unsigned char *data, int width, int height, int channels);
+
   // Destructor handles cleanup
   ~OkTexture();
 

@@ -56,6 +56,70 @@ OkTexture::OkTexture(const std::string &path) {
 }
 
 /**
+ * @brief Constructor for creating an empty texture with specified dimensions.
+ * @param width Width of the texture.
+ * @param height Height of the texture.
+ * @param channels Number of color channels (3 for RGB, 4 for RGBA).
+ */
+OkTexture::OkTexture(int width, int height, int channels) {
+  this->path     = "";  // No file path for raw textures
+  this->width    = width;
+  this->height   = height;
+  this->channels = channels;
+  this->loaded   = false;
+  this->id       = 0;
+
+  // Create OpenGL texture
+  glGenTextures(1, &id);
+  glBindTexture(GL_TEXTURE_2D, id);
+
+  // Set texture parameters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
+/**
+ * @brief Constructor for creating and initializing texture from raw data.
+ * @param data Pointer to raw pixel data
+ * @param width Width of the texture
+ * @param height Height of the texture
+ * @param channels Number of color channels (3 for RGB, 4 for RGBA)
+ */
+OkTexture::OkTexture(const unsigned char *data, int width, int height,
+                     int channels) {
+  this->path     = "";  // No file path for raw textures
+  this->width    = width;
+  this->height   = height;
+  this->channels = channels;
+  this->loaded   = false;
+  this->id       = 0;
+
+  // Create OpenGL texture
+  glGenTextures(1, &id);
+  glBindTexture(GL_TEXTURE_2D, id);
+
+  // Set texture parameters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  // Load the raw data
+  GLenum format = channels == 4 ? GL_RGBA : GL_RGB;
+  glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(format), width, height, 0,
+               format, GL_UNSIGNED_BYTE, data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  loaded = true;
+  OkLogger::info("Texture :: Created texture from raw data (" +
+                 std::to_string(width) + "x" + std::to_string(height) + ")");
+}
+
+/**
  * @brief Destructor for the OkTexture class.
  *        Cleans up the texture resources.
  */
@@ -94,31 +158,20 @@ bool OkTexture::createFromRawData(const unsigned char *data, int width,
                                   int height, GLenum format,
                                   GLenum internalFormat) {
   if (!data || width <= 0 || height <= 0) {
-    OkLogger::error("Texture :: Invalid raw data parameters");
     return false;
   }
 
   this->width    = width;
   this->height   = height;
-  this->channels = (format == GL_RGBA) ? 4 : 3;
+  this->channels = format == GL_RGBA ? 4 : 3;
 
-  // Create OpenGL texture if not already created
-  if (id == 0) {
+  if (!loaded) {
     glGenTextures(1, &id);
   }
 
   glBindTexture(GL_TEXTURE_2D, id);
-
-  // Set texture parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  // Upload texture data
-  glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format,
-               GL_UNSIGNED_BYTE, data);
+  glTexImage2D(GL_TEXTURE_2D, 0, static_cast<GLint>(internalFormat), width,
+               height, 0, format, GL_UNSIGNED_BYTE, data);
   glGenerateMipmap(GL_TEXTURE_2D);
 
   loaded = true;
