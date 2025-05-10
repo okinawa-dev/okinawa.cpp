@@ -11,14 +11,15 @@ class OkInputState {
 public:
   // Constructor
   OkInputState() {
-    forward     = false;
-    backward    = false;
-    strafeLeft  = false;
-    strafeRight = false;
-    turnLeft    = false;
-    turnRight   = false;
-    turnUp      = false;
-    turnDown    = false;
+    forward      = false;
+    backward     = false;
+    strafeLeft   = false;
+    strafeRight  = false;
+    turnLeft     = false;
+    turnRight    = false;
+    turnUp       = false;
+    turnDown     = false;
+    changeCamera = -1;
   }
 
   // Movement state
@@ -32,6 +33,9 @@ public:
   bool turnRight;
   bool turnUp;
   bool turnDown;
+
+  // Camera selection (-1 if no camera key was pressed)
+  int changeCamera;
 };
 
 /**

@@ -5,14 +5,16 @@
 #include "../utils/files.hpp"
 #include "../utils/logger.hpp"
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <string>
 
-// Initialize static members
-GLFWwindow     *OkCore::_window        = nullptr;
-OkCamera       *OkCore::_camera        = nullptr;
-OkSceneHandler *OkCore::_sceneHandler  = nullptr;
-GLuint          OkCore::_shaderProgram = 0;
-OkInput        *OkCore::_input         = nullptr;
+// Static member initialization
+GLFWwindow             *OkCore::_window = nullptr;
+std::vector<OkCamera *> OkCore::_cameras;
+int                     OkCore::_currentCamera = 0;
+OkSceneHandler         *OkCore::_sceneHandler  = nullptr;
+GLuint                  OkCore::_shaderProgram = 0;
+OkInput                *OkCore::_input         = nullptr;
 
 /**
  * @brief Initialize the core engine.
@@ -41,8 +43,8 @@ bool OkCore::initialize() {
   // Initialize scene handler
   _sceneHandler = new OkSceneHandler();
 
-  // Initialize camera
-  _camera = new OkCamera(width, height);
+  // Initialize default camera
+  _cameras.push_back(new OkCamera(width, height));
 
   // Initialize input system
   _input = new OkInput(_window, &OkCore::mouseCallback);
@@ -123,6 +125,11 @@ bool OkCore::initializeShaders() {
  *       The step and draw callbacks are called every frame.
  */
 void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
+  if (!_window || _cameras.empty()) {
+    OkLogger::error("Core :: Cannot start loop without window or camera");
+    return;
+  }
+
   double lastFrameTime = glfwGetTime() * 1000.0;
   float  timePerFrame  = OkConfig::getFloat("graphics.time-per-frame");
 
@@ -136,6 +143,12 @@ void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
 
       // Process input
       _input->process();
+
+      // Handle camera switching based on input state
+      OkInputState state = _input->getState();
+      if (state.changeCamera != -1) {
+        switchCamera(state.changeCamera);
+      }
 
       OkScene *currentScene = _sceneHandler->getCurrentScene();
 
@@ -158,8 +171,12 @@ void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
       // Set view and projection matrices
       GLint viewLoc = glGetUniformLocation(_shaderProgram, "view");
       GLint projLoc = glGetUniformLocation(_shaderProgram, "projection");
-      glUniformMatrix4fv(viewLoc, 1, GL_FALSE, _camera->getViewPtr());
-      glUniformMatrix4fv(projLoc, 1, GL_FALSE, _camera->getProjectionPtr());
+
+      // Use the current camera for view and projection
+      glUniformMatrix4fv(viewLoc, 1, GL_FALSE,
+                         _cameras[_currentCamera]->getViewPtr());
+      glUniformMatrix4fv(projLoc, 1, GL_FALSE,
+                         _cameras[_currentCamera]->getProjectionPtr());
 
       if (viewLoc == -1 || projLoc == -1) {
         OkLogger::error("Core :: Cannot find view/projection uniforms");
@@ -214,7 +231,7 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
   yoffset *= sensitivity;
 
   // Get current rotation from camera
-  OkRotation currentRotation = _camera->getRotation();
+  OkRotation currentRotation = _cameras[_currentCamera]->getRotation();
   float      pitch           = currentRotation.getPitch();
   float      yaw             = currentRotation.getYaw();
 
@@ -231,5 +248,23 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
     pitch = -maxPitch;
 
   // Set new rotation
-  _camera->setRotation(pitch, yaw, 0.0f);
+  _cameras[_currentCamera]->setRotation(pitch, yaw, 0.0f);
+}
+
+/**
+ * @brief Add a camera to the engine.
+ * @param camera The camera to add.
+ */
+void OkCore::addCamera(OkCamera *camera) {
+  _cameras.push_back(camera);
+}
+
+/**
+ * @brief Switch to a different camera.
+ * @param index The index of the camera to switch to.
+ */
+void OkCore::switchCamera(int index) {
+  if (index >= 0 && index < static_cast<int>(_cameras.size())) {
+    _currentCamera = index;
+  }
 }

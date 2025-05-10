@@ -12,6 +12,7 @@
 #include "./camera.hpp"
 #include <GLFW/glfw3.h>
 #include <functional>
+#include <vector>
 
 /**
  * @brief Core class for the Okinawa engine.
@@ -33,20 +34,25 @@ public:
   static OkSceneHandler *getSceneHandler() { return _sceneHandler; }
 
   // Getters
-  static OkCamera   *getCamera() { return _camera; }
+  static OkCamera   *getCamera() { return _cameras[_currentCamera]; }
   static GLFWwindow *getWindow() { return _window; }
   static GLuint      getShaderProgram() { return _shaderProgram; }
   static OkInput    *getInput() { return _input; }
+
+  // Camera management
+  static void addCamera(OkCamera *camera);
+  static void switchCamera(int index);
 
 private:
   static bool initializeOpenGL(int width, int height);
   static bool initializeShaders();
 
-  static GLFWwindow     *_window;
-  static OkCamera       *_camera;
-  static OkSceneHandler *_sceneHandler;
-  static GLuint          _shaderProgram;
-  static OkInput        *_input;
+  static GLFWwindow             *_window;
+  static std::vector<OkCamera *> _cameras;
+  static int                     _currentCamera;
+  static OkSceneHandler         *_sceneHandler;
+  static GLuint                  _shaderProgram;
+  static OkInput                *_input;
 
   static void mouseCallback(GLFWwindow *window, double xpos, double ypos);
 };

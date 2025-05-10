@@ -53,5 +53,14 @@ OkInputState OkInput::getState() {
   state.turnUp    = glfwGetKey(_window, GLFW_KEY_UP) == GLFW_PRESS;
   state.turnDown  = glfwGetKey(_window, GLFW_KEY_DOWN) == GLFW_PRESS;
 
+  // Check number keys for camera selection (1-9)
+  state.changeCamera = -1;
+  for (int i = 0; i < 9; i++) {
+    if (glfwGetKey(_window, GLFW_KEY_1 + i) == GLFW_PRESS) {
+      state.changeCamera = i;
+      break;
+    }
+  }
+
   return state;
 }
