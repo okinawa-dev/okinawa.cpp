@@ -1,5 +1,6 @@
 #include "item.hpp"
 #include "../config/config.hpp"
+#include "../handlers/textures.hpp"
 #include "../utils/logger.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -30,6 +31,7 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   numVertices = vertexCount;
   numIndices  = indexCount;
   texture     = nullptr;
+  textureName = "";
 
   // Allocate and copy vertex data
   vertices = new float[vertexCount];
@@ -59,7 +61,11 @@ OkItem::~OkItem() {
   // Free allocated memory
   delete[] vertices;
   delete[] indices;
-  delete texture;
+
+  // Remove texture reference
+  if (texture && !textureName.empty()) {
+    OkTextureHandler::getInstance()->removeReference(textureName);
+  }
 }
 
 /**
@@ -170,13 +176,18 @@ void OkItem::loadTextureFromFile(const std::string &texturePath) {
     return;
   }
 
-  // Delete existing texture if any
-  if (texture) {
-    delete texture;
+  // Remove old texture reference if any
+  if (texture && !textureName.empty()) {
+    OkTextureHandler::getInstance()->removeReference(textureName);
+    texture     = nullptr;
+    textureName = "";
   }
 
-  // Create new texture
-  texture = new OkTexture(texturePath);
+  // Get texture from handler
+  texture = OkTextureHandler::getInstance()->getTexture(texturePath);
+  if (texture) {
+    textureName = texturePath;
+  }
 }
 
 /**

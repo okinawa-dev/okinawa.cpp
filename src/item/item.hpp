@@ -9,6 +9,7 @@
 #endif
 
 #include "../core/object.hpp"
+#include "../handlers/textures.hpp"
 #include "../item/texture.hpp"
 #include "../math/point.hpp"
 #include "../math/rotation.hpp"
@@ -35,8 +36,11 @@ private:
   float         radius;  // Maximum dimension
 
   // OpenGL objects
-  GLuint     VAO, VBO, EBO;
-  OkTexture *texture;
+  GLuint VAO, VBO, EBO;
+
+  // Texture
+  std::string textureName;  // Name/path of the texture for reference counting
+  OkTexture  *texture;
 
 protected:
   // Geometry
@@ -60,11 +64,12 @@ public:
 
   // Texture methods
   void loadTextureFromFile(const std::string &texturePath);
-  void setTexture(OkTexture *tex) {
-    if (texture) {
-      delete texture;
+  void setTexture(const std::string &name, OkTexture *tex) {
+    if (texture && !textureName.empty()) {
+      OkTextureHandler::getInstance()->removeReference(textureName);
     }
-    texture = tex;
+    texture     = tex;
+    textureName = name;
   }
 
   // Flags
