@@ -164,7 +164,7 @@ void OkItem::_calculateRadius() {
  * @brief Set the texture for the item.
  * @param texturePath The path to the texture file.
  */
-void OkItem::setTexture(const std::string &texturePath) {
+void OkItem::loadTextureFromFile(const std::string &texturePath) {
   if (texturePath.empty()) {
     OkLogger::error("Item :: Invalid texture path");
     return;

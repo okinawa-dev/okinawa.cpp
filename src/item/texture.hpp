@@ -35,23 +35,17 @@ public:
   // Texture operations
   void        bind() const;
   static void unbind();
-  bool        isLoaded() const {
-    return loaded;
-  }
+  bool        isLoaded() const { return loaded; }
 
   // Getters
-  int getWidth() const {
-    return width;
-  }
-  int getHeight() const {
-    return height;
-  }
-  int getChannels() const {
-    return channels;
-  }
-  const std::string &getPath() const {
-    return path;
-  }
+  int                getWidth() const { return width; }
+  int                getHeight() const { return height; }
+  int                getChannels() const { return channels; }
+  const std::string &getPath() const { return path; }
+
+  // Create texture from raw data
+  bool createFromRawData(const unsigned char *data, int width, int height,
+                         GLenum format, GLenum internalFormat = GL_RGBA);
 };
 
 #endif

@@ -59,7 +59,13 @@ public:
   float getRadius() const { return radius; }
 
   // Texture methods
-  void setTexture(const std::string &texturePath);
+  void loadTextureFromFile(const std::string &texturePath);
+  void setTexture(OkTexture *tex) {
+    if (texture) {
+      delete texture;
+    }
+    texture = tex;
+  }
 
   // Flags
   void   setWireframe(bool wireframe) { drawWireframe = wireframe; }

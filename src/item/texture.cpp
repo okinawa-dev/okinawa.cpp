@@ -80,3 +80,47 @@ void OkTexture::bind() const {
 void OkTexture::unbind() {
   glBindTexture(GL_TEXTURE_2D, 0);
 }
+
+/**
+ * @brief Creates a texture from raw data.
+ * @param data Pointer to the raw image data.
+ * @param width Width of the texture.
+ * @param height Height of the texture.
+ * @param format Format of the texture (GL_RGBA, GL_RGB, etc.).
+ * @param internalFormat Internal format of the texture (default: GL_RGBA).
+ * @return True if the texture was created successfully, false otherwise.
+ */
+bool OkTexture::createFromRawData(const unsigned char *data, int width,
+                                  int height, GLenum format,
+                                  GLenum internalFormat) {
+  if (!data || width <= 0 || height <= 0) {
+    OkLogger::error("Texture :: Invalid raw data parameters");
+    return false;
+  }
+
+  this->width    = width;
+  this->height   = height;
+  this->channels = (format == GL_RGBA) ? 4 : 3;
+
+  // Create OpenGL texture if not already created
+  if (id == 0) {
+    glGenTextures(1, &id);
+  }
+
+  glBindTexture(GL_TEXTURE_2D, id);
+
+  // Set texture parameters
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  // Upload texture data
+  glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format,
+               GL_UNSIGNED_BYTE, data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  loaded = true;
+  return true;
+}
