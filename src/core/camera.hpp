@@ -24,6 +24,10 @@ public:
   const float     *getViewPtr() const { return glm::value_ptr(view); }
   const float *getProjectionPtr() const { return glm::value_ptr(projection); }
 
+  // Update and render
+  void step(float dt);
+  void draw();
+
 protected:
   // Override OkObject's transform update
   void updateTransform() override;

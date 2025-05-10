@@ -191,31 +191,13 @@ void OkItem::loadTextureFromFile(const std::string &texturePath) {
 }
 
 /**
- * @brief Update the item position and rotation based on speed and rotation
- * vectors.
+ * @brief Update the item state.
+ *        This method is called every frame to update the item.
  * @param dt The delta time since the last update.
  */
 void OkItem::step(float dt) {
-  float frameTime = dt / OkConfig::getFloat("graphics.time-per-frame");
-
-  // Process movement if there's any speed
-  if (speed.x() != 0 || speed.y() != 0 || speed.z() != 0) {
-    move(speed.x() * frameTime, speed.y() * frameTime, speed.z() * frameTime);
-  }
-
-  // Process rotation if there's any rotational speed
-  if (vRot.x() != 0 || vRot.y() != 0 || vRot.z() != 0) {
-    rotate(vRot.x() * frameTime, vRot.y() * frameTime, vRot.z() * frameTime);
-  }
-
-  // Update children recursively
-  OkObject *current = _firstChild;
-  while (current != nullptr) {
-    if (auto *item = dynamic_cast<OkItem *>(current)) {
-      item->step(dt);
-    }
-    current = current->getNextSibling();
-  }
+  // Call parent class step function first
+  OkObject::step(dt);
 }
 
 /**
@@ -230,6 +212,9 @@ void OkItem::updateTransform() {
  * @note  This method handles the rendering of the item and its children.
  */
 void OkItem::draw() {
+  // Call parent class draw function first
+  OkObject::draw();
+
   // Draw children recursively
   OkObject *current = _firstChild;
   while (current != nullptr) {

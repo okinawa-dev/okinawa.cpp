@@ -1,4 +1,5 @@
 #include "object.hpp"
+#include "../config/config.hpp"
 
 /**
  * @brief Constructor for the OkObject class.
@@ -217,3 +218,39 @@ void OkObject::updateTransform() {
   // Virtual function that derived classes can override to handle transform
   // updates
 }
+
+/**
+ * @brief Step function for updating the object.
+ *        This function is called every frame.
+ *        Updates the item position and rotation based on speed and rotation
+ *        vectors.
+ * @param dt The time delta since the last frame.
+ */
+void OkObject::step(float dt) {
+  float frameTime = dt / OkConfig::getFloat("graphics.time-per-frame");
+
+  // Process movement if there's any speed
+  if (speed.x() != 0 || speed.y() != 0 || speed.z() != 0) {
+    move(speed.x() * frameTime, speed.y() * frameTime, speed.z() * frameTime);
+  }
+
+  // Process rotation if there's any rotational speed
+  if (vRot.x() != 0 || vRot.y() != 0 || vRot.z() != 0) {
+    rotate(vRot.x() * frameTime, vRot.y() * frameTime, vRot.z() * frameTime);
+  }
+
+  // Update children recursively
+  OkObject *current = _firstChild;
+  while (current != nullptr) {
+    if (auto *item = dynamic_cast<OkObject *>(current)) {
+      item->step(dt);
+    }
+    current = current->getNextSibling();
+  }
+}
+
+/**
+ * @brief Draw function for rendering the object.
+ *        This function is called every frame to render the object.
+ */
+void OkObject::draw() {}

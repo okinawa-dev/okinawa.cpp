@@ -62,3 +62,20 @@ void OkCamera::updateTransform() {
   // Update the view matrix when transform changes
   updateView();
 }
+
+void OkCamera::step(float dt) {
+  // Call parent's step function
+  OkObject::step(dt);
+
+  // Update the view matrix
+  updateView();
+}
+
+/**
+ * @brief Draw the camera.
+ */
+void OkCamera::draw() {
+  // No drawing needed for the camera itself
+  // Call parent's draw function
+  OkObject::draw();
+}

@@ -150,6 +150,9 @@ void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
         switchCamera(state.changeCamera);
       }
 
+      // Call step function for the current camera
+      _cameras[_currentCamera]->step(dt);
+
       OkScene *currentScene = _sceneHandler->getCurrentScene();
 
       // Update current scene

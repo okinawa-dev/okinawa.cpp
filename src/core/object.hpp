@@ -64,6 +64,10 @@ public:
   glm::mat4 getTransformMatrix() const;
 
   virtual void updateTransform() = 0;
+
+  // Update and render
+  void step(float dt);
+  void draw();
 };
 
 #endif
