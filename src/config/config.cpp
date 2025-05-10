@@ -8,8 +8,9 @@
 OkConfig::OkConfig() {
   // NOLINTBEGIN(readability-magic-numbers)
   // Graphics settings
-  boolValues["graphics.wireframe"] = false;
-  boolValues["graphics.textures"]  = true;
+  boolValues["graphics.wireframe"]   = false;
+  boolValues["graphics.textures"]    = true;
+  boolValues["graphics.drawCameras"] = true;
 
   // Window settings
   intValues["window.width"]  = 800;

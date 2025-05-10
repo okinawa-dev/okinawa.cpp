@@ -195,6 +195,13 @@ void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
         drawCallback(dt);
       }
 
+      // Draw cameras for debugging
+      if (OkConfig::getBool("graphics.drawCameras")) {
+        for (int i = 0; i < _cameras.size(); ++i) {
+          _cameras[i]->draw();
+        }
+      }
+
       glfwSwapBuffers(_window);
       glfwPollEvents();
     }

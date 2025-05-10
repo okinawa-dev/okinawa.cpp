@@ -1,5 +1,15 @@
+#if (__APPLE__)
+#define GL_SILENCE_DEPRECATION
+#include <OpenGL/gl3.h>
+#else
+#include <GL/glew.h>
+#endif
+
 #include "camera.hpp"
+#include "core.hpp"
+#include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 /**
  * @brief Constructor for the OkCamera class.
@@ -84,7 +94,105 @@ void OkCamera::step(float dt) {
  * @brief Draw the camera.
  */
 void OkCamera::draw() {
-  // No drawing needed for the camera itself
-  // Call parent's draw function
+  // Call parent's draw function first
   OkObject::draw();
+
+  // Only draw camera visualization if it's not the active camera
+  if (this != OkCore::getCamera()) {
+    // Create camera body vertices (cube)
+    float size       = 10.0f;  // Size of camera cube
+    float vertices[] = {
+        // Camera body - cube vertices (x, y, z, u, v)
+        -size, -size, -size, 0.0f, 0.0f,   // 0
+        -size, size, -size, 0.0f, 1.0f,    // 1
+        size, size, -size, 1.0f, 1.0f,     // 2
+        size, -size, -size, 1.0f, 0.0f,    // 3
+        -size, -size, size, 0.0f, 0.0f,    // 4
+        -size, size, size, 0.0f, 1.0f,     // 5
+        size, size, size, 1.0f, 1.0f,      // 6
+        size, -size, size, 1.0f, 0.0f,     // 7
+                                           // Pyramid vertices for lens
+        0.0f, 0.0f, size * 2, 0.5f, 1.0f,  // 8 - pyramid tip
+        size, size, size, 1.0f, 0.0f,      // 9  - pyramid base
+        size, -size, size, 1.0f, 1.0f,     // 10
+        -size, -size, size, 0.0f, 1.0f,    // 11
+        -size, size, size, 0.0f, 0.0f      // 12
+    };
+
+    // Rest of indices array unchanged...
+    unsigned int indices[] = {                   // Cube indices
+                              0, 1, 2, 0, 2, 3,  // Front
+                              4, 5, 6, 4, 6, 7,  // Back
+                              0, 4, 7, 0, 7, 3,  // Bottom
+                              1, 5, 6, 1, 6, 2,  // Top
+                              0, 1, 5, 0, 5, 4,  // Left
+                              3, 2, 6, 3, 6, 7,  // Right
+                                                 // Pyramid indices
+                              8, 9, 10,          // Pyramid sides
+                              8, 10, 11, 8, 11, 12, 8, 12, 9};
+
+    // Get current shader program
+    GLint current_program;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &current_program);
+    if (current_program == 0)
+      return;
+
+    // Set the model matrix uniform
+    GLint modelLoc = glGetUniformLocation(current_program, "model");
+    if (modelLoc != -1) {
+      glUniformMatrix4fv(modelLoc, 1, GL_FALSE,
+                         glm::value_ptr(getTransformMatrix()));
+    }
+
+    // Disable texturing for camera visualization
+    GLint hasTexLoc = glGetUniformLocation(current_program, "hasTexture");
+    if (hasTexLoc != -1) {
+      glUniform1i(hasTexLoc, 0);
+    }
+
+    // Set wireframe color
+    GLint colorLoc = glGetUniformLocation(current_program, "wireframeColor");
+    if (colorLoc != -1) {
+      glUniform4f(colorLoc, 0.2f, 0.8f, 0.2f, 1.0f);  // Green color for camera
+    }
+
+    // Create and bind temporary VAO/VBO/EBO
+    GLuint VAO, VBO, EBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+
+    // Buffer vertex data
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // Buffer index data
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+                 GL_STATIC_DRAW);
+
+    // Set up vertex attributes
+    // Position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                          (void *)0);
+    glEnableVertexAttribArray(0);
+
+    // Texture coord attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                          (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // Draw in wireframe mode
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int),
+                   GL_UNSIGNED_INT, 0);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    // Clean up
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+  }
 }
