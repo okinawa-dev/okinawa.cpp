@@ -31,18 +31,10 @@ public:
   void goBack();
 
   // Getters
-  OkScene *getCurrentScene() const {
-    return currentScene;
-  }
-  const std::string &getCurrentSceneName() const {
-    return currentSceneName;
-  }
-  size_t getCurrentSceneIndex() const {
-    return currentSceneIndex;
-  }
-  size_t getSceneCount() const {
-    return collection.size();
-  }
+  OkScene           *getCurrentScene() const { return currentScene; }
+  const std::string &getCurrentSceneName() const { return currentSceneName; }
+  size_t             getCurrentSceneIndex() const { return currentSceneIndex; }
+  size_t             getSceneCount() const { return collection.size(); }
 
 private:
   static constexpr size_t  MAX_SCENES = 32;

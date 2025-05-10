@@ -30,23 +30,13 @@ public:
   static void loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback);
 
   // Scene handler
-  static OkSceneHandler *getSceneHandler() {
-    return _sceneHandler;
-  }
+  static OkSceneHandler *getSceneHandler() { return _sceneHandler; }
 
   // Getters
-  static OkCamera *getCamera() {
-    return _camera;
-  }
-  static GLFWwindow *getWindow() {
-    return _window;
-  }
-  static GLuint getShaderProgram() {
-    return _shaderProgram;
-  }
-  static OkInput *getInput() {
-    return _input;
-  }
+  static OkCamera   *getCamera() { return _camera; }
+  static GLFWwindow *getWindow() { return _window; }
+  static GLuint      getShaderProgram() { return _shaderProgram; }
+  static OkInput    *getInput() { return _input; }
 
 private:
   static bool initializeOpenGL(int width, int height);

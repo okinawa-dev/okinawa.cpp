@@ -26,21 +26,11 @@ public:
   void deactivate();
 
   // Getters
-  bool isActive() const {
-    return _isActive;
-  }
-  bool isPlayable() const {
-    return _isPlayable;
-  }
-  bool isCurrent() const {
-    return _isCurrent;
-  }
-  const std::string &getName() const {
-    return name;
-  }
-  size_t getItemCount() const {
-    return rootItems.size();
-  }
+  bool               isActive() const { return _isActive; }
+  bool               isPlayable() const { return _isPlayable; }
+  bool               isCurrent() const { return _isCurrent; }
+  const std::string &getName() const { return name; }
+  size_t             getItemCount() const { return rootItems.size(); }
 
 private:
   std::string           name;

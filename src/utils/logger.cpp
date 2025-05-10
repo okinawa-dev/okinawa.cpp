@@ -18,14 +18,14 @@ namespace {
    */
   const char *getLevelString(LogLevel level) {
     switch (level) {
-    case LogLevel::Info:
-      return "INFO";
-    case LogLevel::Warning:
-      return "WARNING";
-    case LogLevel::Error:
-      return "ERROR";
-    default:
-      return "UNKNOWN";
+      case LogLevel::Info:
+        return "INFO";
+      case LogLevel::Warning:
+        return "WARNING";
+      case LogLevel::Error:
+        return "ERROR";
+      default:
+        return "UNKNOWN";
     }
   }
 
@@ -48,14 +48,14 @@ namespace {
    */
   const char *getLevelColor(LogLevel level) {
     switch (level) {
-    case LogLevel::Info:
-      return INFO_COLOR;
-    case LogLevel::Warning:
-      return WARNING_COLOR;
-    case LogLevel::Error:
-      return ERROR_COLOR;
-    default:
-      return RESET_COLOR;
+      case LogLevel::Info:
+        return INFO_COLOR;
+      case LogLevel::Warning:
+        return WARNING_COLOR;
+      case LogLevel::Error:
+        return ERROR_COLOR;
+      default:
+        return RESET_COLOR;
     }
   }
 }  // namespace
