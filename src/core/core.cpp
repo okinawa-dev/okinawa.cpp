@@ -150,6 +150,11 @@ void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
         switchCamera(state.changeCamera);
       }
 
+      // User step callback first to process input
+      if (stepCallback) {
+        stepCallback(dt);
+      }
+
       // Call step function for the current camera
       _cameras[_currentCamera]->step(dt);
 
@@ -158,11 +163,6 @@ void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
       // Update current scene
       if (currentScene) {
         currentScene->step(dt);
-      }
-
-      // User step callback
-      if (stepCallback) {
-        stepCallback(dt);
       }
 
       // Render

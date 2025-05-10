@@ -231,6 +231,13 @@ void OkObject::step(float dt) {
 
   // Process movement if there's any speed
   if (speed.x() != 0 || speed.y() != 0 || speed.z() != 0) {
+    // Check if speed exceeds maxVel
+    if (maxVel > 0.0f) {
+      float currentSpeed = speed.magnitude();
+      if (currentSpeed > maxVel) {
+        speed = speed.normalize() * maxVel;
+      }
+    }
     move(speed.x() * frameTime, speed.y() * frameTime, speed.z() * frameTime);
   }
 

@@ -18,6 +18,15 @@ OkCamera::OkCamera(float width, float height) : OkObject() {
   near        = 0.1f;
   far         = 100.0f;
 
+  // Set default movement parameters (inherited from OkObject)
+  maxVel = 500.0f;   // Maximum velocity in units per second
+  accel  = 2000.0f;  // Acceleration in units per second squared
+
+  // Set default rotation parameters
+  maxVRot = OkPoint(2.0f, 2.0f, 2.0f);  // Maximum rotation speed in radians/sec
+  accelRot =
+      OkPoint(8.0f, 8.0f, 8.0f);  // Rotation acceleration in radians/sec^2
+
   // Create projection matrix
   projection = glm::perspective(glm::radians(fov), aspectRatio, near, far);
 

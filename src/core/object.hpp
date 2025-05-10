@@ -52,6 +52,9 @@ public:
   void    setSpeed(float x, float y, float z) { speed = OkPoint(x, y, z); }
   float   getSpeedMagnitude() const { return speed.magnitude(); }
 
+  void setMaxVelocity(float maxVelocity) { maxVel = maxVelocity; }
+  void setAcceleration(float acceleration) { accel = acceleration; }
+
   // Hierarchy
   void      attachTo(OkObject *parent);
   void      detachFromParent();
