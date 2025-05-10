@@ -1,5 +1,5 @@
-#ifndef OK_UTILS_HPP
-#define OK_UTILS_HPP
+#ifndef OK_FILES_HPP
+#define OK_FILES_HPP
 
 #include <string>
 
