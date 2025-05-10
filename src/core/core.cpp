@@ -67,7 +67,7 @@ bool OkCore::initializeOpenGL(int width, int height) {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-  _window = glfwCreateWindow(width, height, "Heist", nullptr, nullptr);
+  _window = glfwCreateWindow(width, height, "WADViewer", nullptr, nullptr);
   if (!_window) {
     OkLogger::error("Core :: Failed to create GLFW window");
     glfwTerminate();
