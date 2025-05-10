@@ -103,20 +103,20 @@ void OkCamera::draw() {
     float size       = 10.0f;  // Size of camera cube
     float vertices[] = {
         // Camera body - cube vertices (x, y, z, u, v)
-        -size, -size, -size, 0.0f, 0.0f,   // 0
-        -size, size, -size, 0.0f, 1.0f,    // 1
-        size, size, -size, 1.0f, 1.0f,     // 2
-        size, -size, -size, 1.0f, 0.0f,    // 3
-        -size, -size, size, 0.0f, 0.0f,    // 4
-        -size, size, size, 0.0f, 1.0f,     // 5
-        size, size, size, 1.0f, 1.0f,      // 6
-        size, -size, size, 1.0f, 0.0f,     // 7
-                                           // Pyramid vertices for lens
-        0.0f, 0.0f, size * 2, 0.5f, 1.0f,  // 8 - pyramid tip
-        size, size, size, 1.0f, 0.0f,      // 9  - pyramid base
-        size, -size, size, 1.0f, 1.0f,     // 10
-        -size, -size, size, 0.0f, 1.0f,    // 11
-        -size, size, size, 0.0f, 0.0f      // 12
+        -size, -size, -size, 0.0f, 0.0f,  // 0
+        -size, size, -size, 0.0f, 1.0f,   // 1
+        size, size, -size, 1.0f, 1.0f,    // 2
+        size, -size, -size, 1.0f, 0.0f,   // 3
+        -size, -size, size, 0.0f, 0.0f,   // 4
+        -size, size, size, 0.0f, 1.0f,    // 5
+        size, size, size, 1.0f, 1.0f,     // 6
+        size, -size, size, 1.0f, 0.0f,    // 7
+                                        // Pyramid vertices for lens (now at -z)
+        0.0f, 0.0f, -size, 0.5f, 1.0f,  // 8 - pyramid tip (attached to cube)
+        size, size, -size * 2, 1.0f, 0.0f,    // 9  - pyramid base
+        size, -size, -size * 2, 1.0f, 1.0f,   // 10
+        -size, -size, -size * 2, 0.0f, 1.0f,  // 11
+        -size, size, -size * 2, 0.0f, 0.0f    // 12
     };
 
     // Rest of indices array unchanged...
@@ -137,11 +137,12 @@ void OkCamera::draw() {
     if (current_program == 0)
       return;
 
-    // Set the model matrix uniform
+    // Set the model matrix uniform using the inverse of the view matrix
+    // This ensures the visualization matches exactly what the camera sees
     GLint modelLoc = glGetUniformLocation(current_program, "model");
     if (modelLoc != -1) {
-      glUniformMatrix4fv(modelLoc, 1, GL_FALSE,
-                         glm::value_ptr(getTransformMatrix()));
+      glm::mat4 invView = glm::inverse(view);
+      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(invView));
     }
 
     // Disable texturing for camera visualization
