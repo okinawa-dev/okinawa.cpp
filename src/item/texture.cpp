@@ -51,8 +51,6 @@ OkTexture::OkTexture(const std::string &path) {
   stbi_image_free(data);
 
   loaded = true;
-  OkLogger::info("Texture :: Loaded texture: " + path + " (" +
-                 std::to_string(width) + "x" + std::to_string(height) + ")");
 }
 
 /**
@@ -115,8 +113,6 @@ OkTexture::OkTexture(const unsigned char *data, int width, int height,
   glGenerateMipmap(GL_TEXTURE_2D);
 
   loaded = true;
-  OkLogger::info("Texture :: Created texture from raw data (" +
-                 std::to_string(width) + "x" + std::to_string(height) + ")");
 }
 
 /**

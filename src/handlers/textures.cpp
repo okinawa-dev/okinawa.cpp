@@ -42,6 +42,7 @@ OkTexture *OkTextureHandler::createTextureFromFile(const std::string &path) {
   entry.refCount   = 1;
   textureMap[path] = entry;
 
+  OkLogger::info("TextureHandler :: Created texture '" + path + "' from file");
   return texture;
 }
 
@@ -69,7 +70,10 @@ OkTexture *OkTextureHandler::createTextureFromRawData(const std::string   &name,
   entry.refCount   = 1;
   textureMap[name] = entry;
 
-  OkLogger::info("TextureHandler :: Created new texture: " + name);
+  OkLogger::info("TextureHandler :: Created texture '" + name +
+                 "' from raw data (" + std::to_string(width) + "x" +
+                 std::to_string(height) + ")");
+
   return texture;
 }
 
