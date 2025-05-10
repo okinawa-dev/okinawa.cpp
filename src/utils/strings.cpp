@@ -1,21 +1,25 @@
 #include "./strings.hpp"
 
 std::string OkStrings::trim(const std::string &str) {
-  size_t first = str.find_first_not_of(" \0");
-  size_t last  = str.find_last_not_of(" \0");
+  // Match C++ standard library whitespace definition
+  static const std::string whitespace = " \t\n\r\f\v\0";
+  size_t                   first      = str.find_first_not_of(whitespace);
+  size_t                   last       = str.find_last_not_of(whitespace);
 
   if (first == std::string::npos || last == std::string::npos) {
-    return "";  // String is empty or contains only spaces/nulls
+    return "";  // String is empty or contains only whitespace
   }
 
   return str.substr(first, (last - first + 1));
 }
 
 std::string OkStrings::trimRight(const std::string &str) {
-  size_t last = str.find_last_not_of(" \0");
+  // Match C++ standard library whitespace definition
+  static const std::string whitespace = " \t\n\r\f\v\0";
+  size_t                   last       = str.find_last_not_of(whitespace);
 
   if (last == std::string::npos) {
-    return "";  // String is empty or contains only spaces/nulls
+    return "";  // String is empty or contains only whitespace
   }
 
   return str.substr(0, last + 1);
