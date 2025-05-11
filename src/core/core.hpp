@@ -29,6 +29,8 @@ public:
   // Core initialization and loop
   static bool initialize();
   static void loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback);
+  static void askForExit();
+  static void exit();
 
   // Scene handler
   static OkSceneHandler *getSceneHandler() { return _sceneHandler; }

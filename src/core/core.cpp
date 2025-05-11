@@ -54,6 +54,55 @@ bool OkCore::initialize() {
 }
 
 /**
+ * @brief Mark the window for closing. In the next main loop iteration,
+ *        the window will be closed and the engine will exit.
+ */
+void OkCore::askForExit() {
+  glfwSetWindowShouldClose(_window, true);
+}
+
+/**
+ * @brief Exit the engine and clean up resources.
+ *        This method deletes the scene handler, input handler,
+ *        and all cameras, and terminates GLFW.
+ */
+void OkCore::exit() {
+  OkLogger::info("Core :: Exiting engine...");
+
+  // Delete scene and input handlers first
+  delete _sceneHandler;
+  _sceneHandler = nullptr;
+
+  delete _input;
+  _input = nullptr;
+
+  // Delete all cameras
+  for (int i = 0; i < _cameras.size(); i++) {
+    delete _cameras[i];
+  }
+  _cameras.clear();
+
+  // Make sure we clean up OpenGL resources before destroying window
+  if (_shaderProgram != 0) {
+    glDeleteProgram(_shaderProgram);
+    _shaderProgram = 0;
+  }
+
+  // Release OpenGL context before destroying window
+  if (_window != nullptr) {
+    glfwMakeContextCurrent(nullptr);
+    glfwSetWindowShouldClose(_window, GLFW_TRUE);
+    glfwDestroyWindow(_window);
+    _window = nullptr;
+  }
+
+  // Finally terminate GLFW
+  glfwTerminate();
+
+  OkLogger::info("Core :: Engine exited successfully");
+}
+
+/**
  * @brief Initialize OpenGL context and window.
  *        This method sets up the GLFW window and OpenGL context.
  * @param width  The width of the window.
@@ -206,8 +255,7 @@ void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
     }
   }
 
-  glDeleteProgram(_shaderProgram);
-  glfwTerminate();
+  exit();
 }
 
 /**
