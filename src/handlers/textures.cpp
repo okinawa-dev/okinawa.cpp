@@ -3,8 +3,25 @@
 
 OkTextureHandler *OkTextureHandler::instance = nullptr;
 
+/**
+ * @brief Constructor for the OkTextureHandler class.
+ *        This class is a singleton that manages textures.
+ */
 OkTextureHandler::OkTextureHandler() {}
 
+/**
+ * @brief Destructor for the OkTextureHandler class.
+ *        This method cleans up all textures and clears the map.
+ */
+OkTextureHandler::~OkTextureHandler() {
+  cleanup();
+}
+
+/**
+ * @brief Get the singleton instance of the OkTextureHandler.
+ *        This method creates the instance if it doesn't exist.
+ * @return Pointer to the OkTextureHandler instance.
+ */
 OkTextureHandler *OkTextureHandler::getInstance() {
   if (!instance) {
     instance = new OkTextureHandler();
@@ -12,15 +29,36 @@ OkTextureHandler *OkTextureHandler::getInstance() {
   return instance;
 }
 
+/**
+ * @brief Get a texture by name.
+ *        This method retrieves a texture from the map and increments its
+ *        reference count.
+ * @param name The name of the texture.
+ * @return Pointer to the OkTexture if found, nullptr otherwise.
+ *         The reference count is incremented.
+ *         The caller is responsible for managing the texture's lifetime.
+ *         If the texture is not found, nullptr is returned.
+ */
 OkTexture *OkTextureHandler::getTexture(const std::string &name) {
   std::map<std::string, TextureEntry>::iterator it = textureMap.find(name);
+
   if (it != textureMap.end()) {
     it->second.refCount++;
     return it->second.texture;
   }
+
   return nullptr;
 }
 
+/**
+ * @brief Create a texture from a file.
+ *        This method checks if the texture already exists in the map.
+ *        If it does, it increments the reference count and returns the texture.
+ *        If it doesn't, it creates a new texture from the file and adds it to
+ *        the map with a reference count of 1.
+ * @param path The path to the texture file.
+ * @return Pointer to the OkTexture if created successfully, nullptr otherwise.
+ */
 OkTexture *OkTextureHandler::createTextureFromFile(const std::string &path) {
   // First check if it already exists
   std::map<std::string, TextureEntry>::iterator it = textureMap.find(path);
@@ -46,6 +84,19 @@ OkTexture *OkTextureHandler::createTextureFromFile(const std::string &path) {
   return texture;
 }
 
+/**
+ * @brief Create a texture from raw data.
+ *        This method checks if the texture already exists in the map.
+ *        If it does, it increments the reference count and returns the texture.
+ *        If it doesn't, it creates a new texture from the raw data and adds it
+ *        to the map with a reference count of 1.
+ * @param name    The name of the texture.
+ * @param data    Pointer to the raw texture data.
+ * @param width   The width of the texture.
+ * @param height  The height of the texture.
+ * @param channels The number of channels in the texture data.
+ * @return Pointer to the OkTexture if created successfully, nullptr otherwise.
+ */
 OkTexture *OkTextureHandler::createTextureFromRawData(const std::string   &name,
                                                       const unsigned char *data,
                                                       int width, int height,
@@ -77,6 +128,11 @@ OkTexture *OkTextureHandler::createTextureFromRawData(const std::string   &name,
   return texture;
 }
 
+/**
+ * @brief Add a reference to a texture.
+ *        This method increments the reference count of the texture.
+ * @param name The name of the texture.
+ */
 void OkTextureHandler::addReference(const std::string &name) {
   std::map<std::string, TextureEntry>::iterator it = textureMap.find(name);
   if (it != textureMap.end()) {
@@ -84,6 +140,13 @@ void OkTextureHandler::addReference(const std::string &name) {
   }
 }
 
+/**
+ * @brief Remove a reference to a texture.
+ *        This method decrements the reference count of the texture.
+ *        If the reference count reaches zero, the texture is deleted.
+ *        If the texture is not found, no action is taken.
+ * @param name The name of the texture.
+ */
 void OkTextureHandler::removeReference(const std::string &name) {
   std::map<std::string, TextureEntry>::iterator it = textureMap.find(name);
   if (it != textureMap.end()) {
@@ -96,14 +159,14 @@ void OkTextureHandler::removeReference(const std::string &name) {
   }
 }
 
+/**
+ * @brief Cleanup all textures.
+ *        This method deletes all textures in the map and clears the map.
+ */
 void OkTextureHandler::cleanup() {
   for (std::map<std::string, TextureEntry>::iterator it = textureMap.begin();
        it != textureMap.end(); ++it) {
     delete it->second.texture;
   }
   textureMap.clear();
-}
-
-OkTextureHandler::~OkTextureHandler() {
-  cleanup();
 }
