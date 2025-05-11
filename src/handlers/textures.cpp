@@ -26,6 +26,7 @@ OkTextureHandler *OkTextureHandler::getInstance() {
   if (!instance) {
     instance = new OkTextureHandler();
   }
+
   return instance;
 }
 
@@ -62,6 +63,7 @@ OkTexture *OkTextureHandler::getTexture(const std::string &name) {
 OkTexture *OkTextureHandler::createTextureFromFile(const std::string &path) {
   // First check if it already exists
   std::map<std::string, TextureEntry>::iterator it = textureMap.find(path);
+
   if (it != textureMap.end()) {
     it->second.refCount++;
     return it->second.texture;
@@ -149,8 +151,10 @@ void OkTextureHandler::addReference(const std::string &name) {
  */
 void OkTextureHandler::removeReference(const std::string &name) {
   std::map<std::string, TextureEntry>::iterator it = textureMap.find(name);
+
   if (it != textureMap.end()) {
     it->second.refCount--;
+
     if (it->second.refCount <= 0) {
       OkLogger::info("TextureHandler :: Removing texture: " + name);
       delete it->second.texture;
@@ -168,5 +172,22 @@ void OkTextureHandler::cleanup() {
        it != textureMap.end(); ++it) {
     delete it->second.texture;
   }
+
   textureMap.clear();
+}
+
+/**
+ * @brief Get the names of all textures.
+ *        This method returns a vector of strings containing the names of all
+ *        textures in the map.
+ * @return Vector of texture names.
+ */
+std::vector<std::string> OkTextureHandler::getTextureNames() const {
+  std::vector<std::string> names;
+
+  for (const auto &entry : textureMap) {
+    names.push_back(entry.first);
+  }
+
+  return names;
 }

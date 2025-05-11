@@ -32,6 +32,8 @@ public:
   // Get an existing texture by name (returns nullptr if not found)
   OkTexture *getTexture(const std::string &name);
 
+  std::vector<std::string> getTextureNames() const;
+
   // Create and store a texture from file
   OkTexture *createTextureFromFile(const std::string &path);
 
