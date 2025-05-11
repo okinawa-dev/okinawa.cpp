@@ -42,14 +42,13 @@ void OkRotation::_updateMatrix() {
   float cr = std::cos(roll);
   float sr = std::sin(roll);
 
-  // Build rotation matrix (YXZ order - yaw, then pitch, then roll)
-  // This matches standard FPS camera systems
+  // Build rotation matrix (YXZ order - yaw, pitch, roll)
   // clang-format off
   matrix = glm::mat4(
-      cy * cr + sy * sp * sr,    -cy * sr + sy * sp * cr,    sy * cp,    0.0f,
-      cp * sr,                    cp * cr,                   -sp,        0.0f,
-      -sy * cr + cy * sp * sr,    sy * sr + cy * sp * cr,    cy * cp,    0.0f,
-      0.0f,                       0.0f,                      0.0f,       1.0f
+      cy * cr - sy * sp * sr,    -cy * sr - sy * sp * cr,    -sy * cp,    0.0f,
+      cp * sr,                    cp * cr,                   -sp,         0.0f,
+      sy * cr + cy * sp * sr,    -sy * sr + cy * sp * cr,     cy * cp,    0.0f,
+      0.0f,                       0.0f,                       0.0f,       1.0f
   );
   // clang-format on
 }

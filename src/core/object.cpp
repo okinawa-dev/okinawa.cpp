@@ -214,17 +214,20 @@ glm::mat4 OkObject::getTransformMatrix() const {
   // First build local transform in correct order
   glm::mat4 localMatrix(1.0f);
 
-  localMatrix =
-      glm::scale(localMatrix, glm::vec3(scaling.x(), scaling.y(), scaling.z()));
-
-  localMatrix = localMatrix * rotation.getMatrix();
-
+  // 1. First translate (move to position)
   localMatrix = glm::translate(
       localMatrix, glm::vec3(position.x(), position.y(), position.z()));
 
-  // Apply parent transform if exists (order matters!)
+  // 2. Then rotate (around position)
+  localMatrix = localMatrix * rotation.getMatrix();
+
+  // 3. Finally scale (from position)
+  localMatrix =
+      glm::scale(localMatrix, glm::vec3(scaling.x(), scaling.y(), scaling.z()));
+
+  // Apply parent transform if exists (parent * local for proper inheritance)
   if (_parent) {
-    return localMatrix * _parent->getTransformMatrix();
+    return _parent->getTransformMatrix() * localMatrix;
   }
 
   return localMatrix;
