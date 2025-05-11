@@ -44,7 +44,7 @@ bool OkCore::initialize() {
   _sceneHandler = new OkSceneHandler();
 
   // Initialize default camera
-  _cameras.push_back(new OkCamera(width, height));
+  _cameras.push_back(new OkCamera("Default Camera", width, height));
 
   // Initialize input system
   _input = new OkInput(_window, &OkCore::mouseCallback);
@@ -195,11 +195,10 @@ void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
         drawCallback(dt);
       }
 
-      // Draw cameras for debugging
-      if (OkConfig::getBool("graphics.drawCameras")) {
-        for (int i = 0; i < _cameras.size(); ++i) {
-          _cameras[i]->draw();
-        }
+      // Draw cameras (both for debugging and to render elements attached to
+      // cameras, like interfaces)
+      for (int i = 0; i < _cameras.size(); ++i) {
+        _cameras[i]->draw();
       }
 
       glfwSwapBuffers(_window);

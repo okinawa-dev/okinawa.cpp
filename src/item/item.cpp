@@ -15,7 +15,7 @@
  */
 OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
                unsigned int *indexData, long indexCount)
-    : OkObject() {
+    : OkObject(name) {
 
   OkLogger::info("Item :: Creating item " + name + " with " +
                  std::to_string(vertexCount) + " vertices and " +
@@ -195,34 +195,27 @@ void OkItem::loadTextureFromFile(const std::string &texturePath) {
  *        This method is called every frame to update the item.
  * @param dt The delta time since the last update.
  */
-void OkItem::step(float dt) {
+void OkItem::stepSelf(float dt) {
   // Call parent class step function first
-  OkObject::step(dt);
+  // OkObject::step(dt);
 }
 
 /**
  * @brief Update the transform matrix of the item.
  */
-void OkItem::updateTransform() {
-  // Base class handles transform matrix updates
+void OkItem::updateTransformSelf() {
+  // Log transform update for debugging
+  OkLogger::info("Item :: Updating transform for " + name + " at position (" +
+                 std::to_string(position.x()) + ", " +
+                 std::to_string(position.y()) + ", " +
+                 std::to_string(position.z()) + ")");
 }
 
 /**
  * @brief Draw the item and its children.
  * @note  This method handles the rendering of the item and its children.
  */
-void OkItem::draw() {
-  // Call parent class draw function first
-  OkObject::draw();
-
-  // Draw children recursively
-  OkObject *current = _firstChild;
-  while (current != nullptr) {
-    if (auto *item = dynamic_cast<OkItem *>(current)) {
-      item->draw();
-    }
-    current = current->getNextSibling();
-  }
+void OkItem::drawSelf() {
 
   bool drawWireframe =
       OkConfig::getBool("graphics.wireframe") || this->drawWireframe;

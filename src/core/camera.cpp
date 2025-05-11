@@ -5,6 +5,7 @@
 #include <GL/glew.h>
 #endif
 
+#include "../config/config.hpp"
 #include "camera.hpp"
 #include "core.hpp"
 #include <GLFW/glfw3.h>
@@ -17,7 +18,8 @@
  * @param width  The width of the viewport.
  * @param height The height of the viewport.
  */
-OkCamera::OkCamera(float width, float height) : OkObject() {
+OkCamera::OkCamera(const std::string &name, float width, float height)
+    : OkObject(name) {
   // Initialize matrices
   view       = glm::mat4(1.0f);
   projection = glm::mat4(1.0f);
@@ -64,27 +66,32 @@ void OkCamera::setPerspective(float fovDegrees, float nearPlane,
  *        front vector, and up vector.
  */
 void OkCamera::updateView() {
+  OkPoint   worldPos = getPosition();  // Get transformed world position
+  glm::vec3 pos(worldPos.x(), worldPos.y(), worldPos.z());
 
-  glm::vec3 pos(position.x(), position.y(), position.z());
-  OkPoint   forward  = rotation.getForwardVector();
-  glm::vec3 frontVec = forward.toVec3();
-  glm::vec3 upVec    = glm::vec3(0.0f, 1.0f, 0.0f);  // World up vector
-  view               = glm::lookAt(pos, pos + frontVec, upVec);
+  OkRotation worldRot = getRotation();  // Get transformed world rotation
+  OkPoint    forward  = worldRot.getForwardVector();
+  glm::vec3  frontVec = forward.toVec3();
+  glm::vec3  upVec    = glm::vec3(0.0f, 1.0f, 0.0f);  // World up vector
+  view                = glm::lookAt(pos, pos + frontVec, upVec);
 }
 
 /**
  * @brief Update the camera's transform.
  */
-void OkCamera::updateTransform() {
-  // Call parent's updateTransform first
-  OkObject::updateTransform();
+void OkCamera::updateTransformSelf() {
   // Update the view matrix when transform changes
   updateView();
 }
 
-void OkCamera::step(float dt) {
+/**
+ * @brief Step function for the camera.
+ *        This method is called every frame to update the camera's state.
+ * @param dt The time since the last frame in seconds.
+ */
+void OkCamera::stepSelf(float dt) {
   // Call parent's step function
-  OkObject::step(dt);
+  // OkObject::step(dt);
 
   // Update the view matrix
   updateView();
@@ -93,107 +100,120 @@ void OkCamera::step(float dt) {
 /**
  * @brief Draw the camera.
  */
-void OkCamera::draw() {
-  // Call parent's draw function first
-  OkObject::draw();
+void OkCamera::drawSelf() {
 
-  // Only draw camera visualization if it's not the active camera
-  if (this != OkCore::getCamera()) {
-    // Create camera body vertices (cube)
-    float size       = 10.0f;  // Size of camera cube
-    float vertices[] = {
-        // Camera body - cube vertices (x, y, z, u, v)
-        -size, -size, -size, 0.0f, 0.0f,  // 0
-        -size, size, -size, 0.0f, 1.0f,   // 1
-        size, size, -size, 1.0f, 1.0f,    // 2
-        size, -size, -size, 1.0f, 0.0f,   // 3
-        -size, -size, size, 0.0f, 0.0f,   // 4
-        -size, size, size, 0.0f, 1.0f,    // 5
-        size, size, size, 1.0f, 1.0f,     // 6
-        size, -size, size, 1.0f, 0.0f,    // 7
-                                        // Pyramid vertices for lens (now at -z)
-        0.0f, 0.0f, -size, 0.5f, 1.0f,  // 8 - pyramid tip (attached to cube)
-        size, size, -size * 2, 1.0f, 0.0f,    // 9  - pyramid base
-        size, -size, -size * 2, 1.0f, 1.0f,   // 10
-        -size, -size, -size * 2, 0.0f, 1.0f,  // 11
-        -size, size, -size * 2, 0.0f, 0.0f    // 12
-    };
+  // if this is the active camera
+  if (this == OkCore::getCamera()) {
+    // Draw item hierarchy (interface, gui, etc)
+    // OkObject::draw();
+    return;
+  }
 
-    // Rest of indices array unchanged...
-    unsigned int indices[] = {                   // Cube indices
-                              0, 1, 2, 0, 2, 3,  // Front
-                              4, 5, 6, 4, 6, 7,  // Back
-                              0, 4, 7, 0, 7, 3,  // Bottom
-                              1, 5, 6, 1, 6, 2,  // Top
-                              0, 1, 5, 0, 5, 4,  // Left
-                              3, 2, 6, 3, 6, 7,  // Right
-                                                 // Pyramid indices
-                              8, 9, 10,          // Pyramid sides
-                              8, 10, 11, 8, 11, 12, 8, 12, 9};
+  // if this is not the active camera
+  // Render camera visualization for debugging
+  if (OkConfig::getBool("graphics.drawCameras")) {
 
-    // Get current shader program
-    GLint current_program;
-    glGetIntegerv(GL_CURRENT_PROGRAM, &current_program);
-    if (current_program == 0)
-      return;
+    // Only draw camera visualization if it's not the active camera
+    if (this != OkCore::getCamera()) {
+      // Create camera body vertices (cube)
+      float size       = 10.0f;  // Size of camera cube
+      float vertices[] = {
+          // Camera body - cube vertices (x, y, z, u, v)
+          -size, -size, -size, 0.0f, 0.0f,  // 0
+          -size, size, -size, 0.0f, 1.0f,   // 1
+          size, size, -size, 1.0f, 1.0f,    // 2
+          size, -size, -size, 1.0f, 0.0f,   // 3
+          -size, -size, size, 0.0f, 0.0f,   // 4
+          -size, size, size, 0.0f, 1.0f,    // 5
+          size, size, size, 1.0f, 1.0f,     // 6
+          size, -size, size, 1.0f,
+          0.0f,  // 7
+                 // Pyramid vertices for lens (now at -z)
+          0.0f, 0.0f, -size, 0.5f,
+          1.0f,  // 8 - pyramid tip (attached to cube)
+          size, size, -size * 2, 1.0f, 0.0f,    // 9  - pyramid base
+          size, -size, -size * 2, 1.0f, 1.0f,   // 10
+          -size, -size, -size * 2, 0.0f, 1.0f,  // 11
+          -size, size, -size * 2, 0.0f, 0.0f    // 12
+      };
 
-    // Set the model matrix uniform using the inverse of the view matrix
-    // This ensures the visualization matches exactly what the camera sees
-    GLint modelLoc = glGetUniformLocation(current_program, "model");
-    if (modelLoc != -1) {
-      glm::mat4 invView = glm::inverse(view);
-      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(invView));
+      // Rest of indices array unchanged...
+      unsigned int indices[] = {                   // Cube indices
+                                0, 1, 2, 0, 2, 3,  // Front
+                                4, 5, 6, 4, 6, 7,  // Back
+                                0, 4, 7, 0, 7, 3,  // Bottom
+                                1, 5, 6, 1, 6, 2,  // Top
+                                0, 1, 5, 0, 5, 4,  // Left
+                                3, 2, 6, 3, 6, 7,  // Right
+                                                   // Pyramid indices
+                                8, 9, 10,          // Pyramid sides
+                                8, 10, 11, 8, 11, 12, 8, 12, 9};
+
+      // Get current shader program
+      GLint current_program;
+      glGetIntegerv(GL_CURRENT_PROGRAM, &current_program);
+      if (current_program == 0)
+        return;
+
+      // Set the model matrix uniform using the inverse of the view matrix
+      // This ensures the visualization matches exactly what the camera sees
+      GLint modelLoc = glGetUniformLocation(current_program, "model");
+      if (modelLoc != -1) {
+        glm::mat4 invView = glm::inverse(view);
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(invView));
+      }
+
+      // Disable texturing for camera visualization
+      GLint hasTexLoc = glGetUniformLocation(current_program, "hasTexture");
+      if (hasTexLoc != -1) {
+        glUniform1i(hasTexLoc, 0);
+      }
+
+      // Set wireframe color
+      GLint colorLoc = glGetUniformLocation(current_program, "wireframeColor");
+      if (colorLoc != -1) {
+        glUniform4f(colorLoc, 0.2f, 0.8f, 0.2f,
+                    1.0f);  // Green color for camera
+      }
+
+      // Create and bind temporary VAO/VBO/EBO
+      GLuint VAO, VBO, EBO;
+      glGenVertexArrays(1, &VAO);
+      glGenBuffers(1, &VBO);
+      glGenBuffers(1, &EBO);
+
+      glBindVertexArray(VAO);
+
+      // Buffer vertex data
+      glBindBuffer(GL_ARRAY_BUFFER, VBO);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+      // Buffer index data
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+                   GL_STATIC_DRAW);
+
+      // Set up vertex attributes
+      // Position attribute
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                            (void *)0);
+      glEnableVertexAttribArray(0);
+
+      // Texture coord attribute
+      glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                            (void *)(3 * sizeof(float)));
+      glEnableVertexAttribArray(1);
+
+      // Draw in wireframe mode
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int),
+                     GL_UNSIGNED_INT, 0);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+      // Clean up
+      glDeleteVertexArrays(1, &VAO);
+      glDeleteBuffers(1, &VBO);
+      glDeleteBuffers(1, &EBO);
     }
-
-    // Disable texturing for camera visualization
-    GLint hasTexLoc = glGetUniformLocation(current_program, "hasTexture");
-    if (hasTexLoc != -1) {
-      glUniform1i(hasTexLoc, 0);
-    }
-
-    // Set wireframe color
-    GLint colorLoc = glGetUniformLocation(current_program, "wireframeColor");
-    if (colorLoc != -1) {
-      glUniform4f(colorLoc, 0.2f, 0.8f, 0.2f, 1.0f);  // Green color for camera
-    }
-
-    // Create and bind temporary VAO/VBO/EBO
-    GLuint VAO, VBO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-
-    // Buffer vertex data
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // Buffer index data
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-                 GL_STATIC_DRAW);
-
-    // Set up vertex attributes
-    // Position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-                          (void *)0);
-    glEnableVertexAttribArray(0);
-
-    // Texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-                          (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    // Draw in wireframe mode
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int),
-                   GL_UNSIGNED_INT, 0);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    // Clean up
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
   }
 }

@@ -1,10 +1,14 @@
 #include "object.hpp"
 #include "../config/config.hpp"
+#include "../utils/logger.hpp"
 
 /**
  * @brief Constructor for the OkObject class.
  */
-OkObject::OkObject() {
+OkObject::OkObject(const std::string &name) {
+
+  this->name = name;
+
   position = OkPoint(0.0f, 0.0f, 0.0f);
   scaling  = OkPoint(1.0f, 1.0f, 1.0f);
   speed    = OkPoint(0.0f, 0.0f, 0.0f);
@@ -133,6 +137,20 @@ void OkObject::rotate(float dx, float dy, float dz) {
 }
 
 /**
+ * @brief Attach an object to this object.
+ *        This method updates the parent-child relationship and recalculates
+ *        the transform matrix.
+ * @param object The object to attach.
+ */
+void OkObject::attach(OkObject *object) {
+  if (object == nullptr)
+    return;
+
+  // Attach the object to this object
+  object->attachTo(this);
+}
+
+/**
  * @brief Attach this object to a parent object.
  *        This method updates the parent-child relationship and recalculates
  *        the transform matrix.
@@ -193,71 +211,21 @@ void OkObject::detachAllChildren() {
  * @return The transformation matrix as a glm::mat4.
  */
 glm::mat4 OkObject::getTransformMatrix() const {
-  glm::mat4 matrix(1.0f);
+  // First build local transform in correct order
+  glm::mat4 localMatrix(1.0f);
 
-  // Apply parent transform first if exists
+  localMatrix =
+      glm::scale(localMatrix, glm::vec3(scaling.x(), scaling.y(), scaling.z()));
+
+  localMatrix = localMatrix * rotation.getMatrix();
+
+  localMatrix = glm::translate(
+      localMatrix, glm::vec3(position.x(), position.y(), position.z()));
+
+  // Apply parent transform if exists (order matters!)
   if (_parent) {
-    matrix = _parent->getTransformMatrix();
+    return localMatrix * _parent->getTransformMatrix();
   }
 
-  // Apply local transform: Scale * Rotation * Translation
-  matrix = glm::translate(matrix,
-                          glm::vec3(position.x(), position.y(), position.z()));
-  matrix *= rotation.getMatrix();
-  matrix = glm::scale(matrix, glm::vec3(scaling.x(), scaling.y(), scaling.z()));
-
-  return matrix;
+  return localMatrix;
 }
-
-/**
- * @brief Update the transform matrix for this object.
- *        This method is called to recalculate the transformation matrix.
- * @note  This is a virtual function that can be overridden by derived classes.
- */
-void OkObject::updateTransform() {
-  // Virtual function that derived classes can override to handle transform
-  // updates
-}
-
-/**
- * @brief Step function for updating the object.
- *        This function is called every frame.
- *        Updates the item position and rotation based on speed and rotation
- *        vectors.
- * @param dt The time delta since the last frame.
- */
-void OkObject::step(float dt) {
-  float frameTime = dt / OkConfig::getFloat("graphics.time-per-frame");
-
-  // Process movement if there's any speed
-  if (speed.x() != 0 || speed.y() != 0 || speed.z() != 0) {
-    // Check if speed exceeds maxVel
-    if (maxVel > 0.0f) {
-      float currentSpeed = speed.magnitude();
-      if (currentSpeed > maxVel) {
-        speed = speed.normalize() * maxVel;
-      }
-    }
-    move(speed.x() * frameTime, speed.y() * frameTime, speed.z() * frameTime);
-  }
-
-  // Process rotation if there's any rotational speed
-  if (vRot.x() != 0 || vRot.y() != 0 || vRot.z() != 0) {
-    rotate(vRot.x() * frameTime, vRot.y() * frameTime, vRot.z() * frameTime);
-  }
-
-  // Update children recursively
-  OkObject *current = _firstChild;
-  while (current != nullptr) {
-    if (auto *item = dynamic_cast<OkObject *>(current)) {
-      item->step(dt);
-    }
-    current = current->getNextSibling();
-  }
-}
-
-/**
- * @brief Draw function for rendering the object.
- *        This function is called every frame to render the object.
- */
-void OkObject::draw() {}

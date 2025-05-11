@@ -21,8 +21,6 @@ class OkItem : public OkObject {
 private:
   void _initBuffers();
 
-  std::string name;
-
   // Flags
   bool   visible;
   bool   drawWireframe;  // Flag to control wireframe rendering
@@ -47,7 +45,7 @@ protected:
   void _calculateRadius();
 
   // Override OkObject's transform update
-  void updateTransform() override;
+  void updateTransformSelf() override;
 
 public:
   // Constructors
@@ -78,8 +76,8 @@ public:
   GLenum getDrawMode() const { return drawMode; }
 
   // Update and render
-  void step(float dt);
-  void draw();
+  void stepSelf(float dt) override;
+  void drawSelf() override;
 };
 
 #endif

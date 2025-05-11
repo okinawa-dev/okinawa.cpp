@@ -15,7 +15,7 @@
  */
 class OkCamera : public OkObject {
 public:
-  OkCamera(float width, float height);
+  OkCamera(const std::string &name, float width, float height);
   void setPerspective(float fovDegrees, float nearPlane, float farPlane);
 
   // Getters for matrices
@@ -25,12 +25,12 @@ public:
   const float *getProjectionPtr() const { return glm::value_ptr(projection); }
 
   // Update and render
-  void step(float dt);
-  void draw();
+  void stepSelf(float dt) override;
+  void drawSelf() override;
 
 protected:
   // Override OkObject's transform update
-  void updateTransform() override;
+  void updateTransformSelf() override;
 
 private:
   glm::mat4 view;
