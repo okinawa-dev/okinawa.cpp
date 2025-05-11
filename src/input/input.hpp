@@ -9,33 +9,32 @@
  */
 class OkInputState {
 public:
-  // Constructor
-  OkInputState() {
-    forward      = false;
-    backward     = false;
-    strafeLeft   = false;
-    strafeRight  = false;
-    turnLeft     = false;
-    turnRight    = false;
-    turnUp       = false;
-    turnDown     = false;
-    changeCamera = -1;
-  }
+  OkInputState()  = default;
+  ~OkInputState() = default;
 
   // Movement state
-  bool forward;
-  bool backward;
-  bool strafeLeft;
-  bool strafeRight;
+  bool forward     = false;
+  bool backward    = false;
+  bool strafeLeft  = false;
+  bool strafeRight = false;
 
   // Rotation state
-  bool turnLeft;
-  bool turnRight;
-  bool turnUp;
-  bool turnDown;
+  bool turnLeft  = false;
+  bool turnRight = false;
+  bool turnUp    = false;
+  bool turnDown  = false;
 
   // Camera selection (-1 if no camera key was pressed)
-  int changeCamera;
+  int changeCamera = -1;
+
+  // Action buttons - will be true only on the frame when key is first pressed
+  bool action1 = false;
+  bool action2 = false;
+  bool action3 = false;
+  bool action4 = false;
+
+  // Exit state
+  bool exit = false;
 };
 
 /**
@@ -47,14 +46,24 @@ public:
   using MouseCallback = void (*)(GLFWwindow *, double, double);
   explicit OkInput(GLFWwindow *window, MouseCallback mouseCallback = nullptr);
 
-  // No need for delete since we're not using static methods
   ~OkInput() = default;
   // Prevent copying
   OkInput(const OkInput &)            = delete;
   OkInput &operator=(const OkInput &) = delete;
 
-  void         process();
-  OkInputState getState();
+  // Process input and update states
+  void process();
+
+  // Input state retrieval methods
+  // True only on the frame when key is first pressed
+  bool isKeyJustPressed(int key) const;
+  // True while key is being held down
+  bool isKeyHeld(int key) const;
+  // True only on the frame when key is released
+  bool isKeyJustReleased(int key) const;
+
+  // Get complete input state (for compatibility)
+  OkInputState getState() const;
 
   // Constants
   static constexpr float MOVE_SPEED     = 5.0f;
@@ -63,6 +72,10 @@ public:
 private:
   GLFWwindow   *_window;
   MouseCallback _mouseCallback;
+  OkInputState  _currentState;                // Current frame's input state
+  OkInputState  _prevState;                   // Previous frame's input state
+  bool          _currentKeys[GLFW_KEY_LAST];  // Current key states
+  bool          _prevKeys[GLFW_KEY_LAST];     // Previous key states
 };
 
 #endif
