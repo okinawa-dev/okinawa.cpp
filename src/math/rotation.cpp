@@ -42,15 +42,26 @@ void OkRotation::_updateMatrix() {
   float cr = std::cos(roll);
   float sr = std::sin(roll);
 
-  // Build rotation matrix (YXZ order - yaw, pitch, roll)
-  // clang-format off
-  matrix = glm::mat4(
-      cy * cr - sy * sp * sr,    -cy * sr - sy * sp * cr,    -sy * cp,    0.0f,
-      cp * sr,                    cp * cr,                   -sp,         0.0f,
-      sy * cr + cy * sp * sr,    -sy * sr + cy * sp * cr,     cy * cp,    0.0f,
-      0.0f,                       0.0f,                       0.0f,       1.0f
-  );
-  // clang-format on
+  // Build rotation matrix - YXZ order (yaw -> pitch -> roll)
+  matrix[0][0] = cy * cr + sy * sp * sr;
+  matrix[0][1] = cp * sr;
+  matrix[0][2] = -sy * cr + cy * sp * sr;
+  matrix[0][3] = 0.0f;
+
+  matrix[1][0] = -cy * sr + sy * sp * cr;
+  matrix[1][1] = cp * cr;
+  matrix[1][2] = sy * sr + cy * sp * cr;
+  matrix[1][3] = 0.0f;
+
+  matrix[2][0] = sy * cp;
+  matrix[2][1] = -sp;
+  matrix[2][2] = cy * cp;
+  matrix[2][3] = 0.0f;
+
+  matrix[3][0] = 0.0f;
+  matrix[3][1] = 0.0f;
+  matrix[3][2] = 0.0f;
+  matrix[3][3] = 1.0f;
 }
 
 /**

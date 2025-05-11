@@ -205,10 +205,11 @@ void OkItem::stepSelf(float dt) {
  */
 void OkItem::updateTransformSelf() {
   // Log transform update for debugging
-  OkLogger::info("Item :: Updating transform for " + name + " at position (" +
-                 std::to_string(position.x()) + ", " +
-                 std::to_string(position.y()) + ", " +
-                 std::to_string(position.z()) + ")");
+  // OkLogger::info("Item :: Updating transform for " + name + " at position ("
+  // +
+  //                std::to_string(position.x()) + ", " +
+  //                std::to_string(position.y()) + ", " +
+  //                std::to_string(position.z()) + ")");
 }
 
 /**

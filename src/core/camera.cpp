@@ -71,8 +71,9 @@ void OkCamera::updateView() {
 
   OkRotation worldRot = getRotation();  // Get transformed world rotation
   OkPoint    forward  = worldRot.getForwardVector();
+  OkPoint    up       = worldRot.getUpVector();  // Get up vector from rotation
   glm::vec3  frontVec = forward.toVec3();
-  glm::vec3  upVec    = glm::vec3(0.0f, 1.0f, 0.0f);  // World up vector
+  glm::vec3  upVec    = up.toVec3();  // Use rotated up vector
   view                = glm::lookAt(pos, pos + frontVec, upVec);
 }
 
