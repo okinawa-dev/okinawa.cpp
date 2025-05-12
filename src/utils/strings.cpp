@@ -1,5 +1,13 @@
 #include "./strings.hpp"
 
+/**
+ * @brief Trims whitespace from both ends of a string
+ * @param str The input string to trim
+ * @return The trimmed string
+ * @note This function uses the C++ standard library's definition of whitespace,
+ * which includes space, tab, newline, carriage return, form feed, vertical tab,
+ * and null characters.
+ */
 std::string OkStrings::trim(const std::string &str) {
   // Match C++ standard library whitespace definition
   static const std::string whitespace = " \t\n\r\f\v\0";
@@ -13,6 +21,14 @@ std::string OkStrings::trim(const std::string &str) {
   return str.substr(first, (last - first + 1));
 }
 
+/**
+ * @brief Trims whitespace from the right end of a string
+ * @param str The input string to trim
+ * @return The trimmed string
+ * @note This function uses the C++ standard library's definition of whitespace,
+ * which includes space, tab, newline, carriage return, form feed, vertical tab,
+ * and null characters.
+ */
 std::string OkStrings::trimRight(const std::string &str) {
   // Match C++ standard library whitespace definition
   static const std::string whitespace = " \t\n\r\f\v\0";
@@ -30,6 +46,9 @@ std::string OkStrings::trimRight(const std::string &str) {
  * @param str The input string to trim
  * @param maxLen The maximum length to trim to
  * @return The trimmed string
+ * @note This function uses the C++ standard library's definition of whitespace,
+ * which includes space, tab, newline, carriage return, form feed, vertical tab,
+ * and null characters.
  */
 std::string OkStrings::trimFixedString(const std::string &str, size_t maxLen) {
   static const std::string whitespace = " \t\n\r\f\v\0";
@@ -51,6 +70,11 @@ std::string OkStrings::trimFixedString(const std::string &str, size_t maxLen) {
   return result.substr(0, last + 1);
 }
 
+/**
+ * @brief Converts a string to uppercase
+ * @param str The input string to convert
+ * @return The converted string in uppercase
+ */
 std::string OkStrings::toUpper(const std::string &str) {
   std::string result = str;
   for (char &c : result) {
@@ -59,6 +83,11 @@ std::string OkStrings::toUpper(const std::string &str) {
   return result;
 }
 
+/**
+ * @brief Converts a string to lowercase
+ * @param str The input string to convert
+ * @return The converted string in lowercase
+ */
 std::string OkStrings::toLower(const std::string &str) {
   std::string result = str;
   for (char &c : result) {
