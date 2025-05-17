@@ -29,7 +29,7 @@ TEST_CASE("OkRotation basic operations", "[rotation]") {
 }
 
 TEST_CASE("OkRotation transformations", "[rotation]") {
-  SECTION("Transform point forward") {
+  SECTION("Transform point with identity") {
     OkRotation rot;  // Identity rotation
     OkPoint    p(1.0f, 0.0f, 0.0f);
     OkPoint    transformed = rot.transformPoint(p);
@@ -46,7 +46,21 @@ TEST_CASE("OkRotation transformations", "[rotation]") {
 
     REQUIRE_THAT(transformed.x(), WithinAbs(0.0f, 0.0001f));
     REQUIRE_THAT(transformed.y(), WithinAbs(0.0f, 0.0001f));
-    REQUIRE_THAT(transformed.z(), WithinAbs(1.0f, 0.0001f));
+    REQUIRE_THAT(transformed.z(), WithinAbs(-1.0f, 0.0001f));
+  }
+
+  SECTION("90 degree Y rotation plus 90 degree X rotation") {
+    OkRotation rot1(0.0f, glm::half_pi<float>(), 0.0f);  // 90 degree Y rotation
+    OkRotation rot2(glm::half_pi<float>(), 0.0f, 0.0f);  // 90 degree X rotation
+    OkPoint    p(1.0f, 0.0f, 0.0f);
+    OkPoint    transformed = rot1.transformPoint(p);
+    transformed            = rot2.transformPoint(transformed);
+    // Expected result after both rotations
+    // (0, 1, 0)
+
+    REQUIRE_THAT(transformed.x(), WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(transformed.y(), WithinAbs(1.0f, 0.0001f));
+    REQUIRE_THAT(transformed.z(), WithinAbs(0.0f, 0.0001f));
   }
 }
 
