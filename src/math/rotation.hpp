@@ -21,9 +21,10 @@ public:
   // Getters
   const glm::mat4 &getMatrix() const { return matrix; }
   const glm::vec3 &getAngles() const { return angles; }
-  float            getPitch() const { return angles.x; }
-  float            getYaw() const { return angles.y; }
-  float            getRoll() const { return angles.z; }
+
+  float getPitch() const;
+  float getYaw() const;
+  float getRoll() const;
 
   // Setters
   void rotate(float dx, float dy, float dz);

@@ -126,14 +126,26 @@ OkRotation OkMath::lookAt(const OkPoint &eye, const OkPoint &target,
   // The dot product of forward and (0,1,0) gives us the sine of the pitch angle
   float pitch = -asin(forward.y);
 
+  // Check for vertical look (near ±90° pitch)
+  if (std::abs(std::abs(forward.y) - 1.0f) < 0.001f) {
+    // Looking straight up or down
+    return OkRotation(pitch, 0.0f, 0.0f);  // Set yaw and roll to 0
+  }
+
   // 2. Calculate yaw: angle between the projection of forward on the xz-plane
   // and the z-axis Project forward onto xz-plane by zeroing y component
   glm::vec3 forwardXZ = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z));
   float     yaw       = atan2(forwardXZ.x, forwardXZ.z);
 
-  // 3. Calculate roll: measure how much the up vector is rotated around the
-  // forward axis First, create the "expected" up vector for this pitch and yaw
-  // (without roll)
+  // When looking straight up/down (abs(pitch) near 90°), roll becomes undefined
+  // so we should return a default value (0)
+  if (std::abs(std::abs(pitch) - glm::half_pi<float>()) < 0.001f) {
+    return OkRotation(pitch, yaw, 0.0f);
+  }
+
+  // 3. Calculate roll (only for non-vertical orientations): measure how much
+  // the up vector is rotated around the forward axis First, create the
+  // "expected" up vector for this pitch and yaw (without roll)
   float cp = cos(pitch);
   float sp = sin(pitch);
   float cy = cos(yaw);

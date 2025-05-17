@@ -7,7 +7,10 @@
  * @brief Default constructor initializes rotation to identity.
  * The rotation matrix is set to the identity matrix and angles are set to zero.
  */
-OkRotation::OkRotation() : matrix(1.0f), angles(0.0f) {}
+OkRotation::OkRotation() {
+  matrix = glm::mat4(1.0f);
+  angles = glm::vec3(0.0f);
+}
 
 /**
  * @brief Constructor to initialize rotation with specified angles.
@@ -15,8 +18,8 @@ OkRotation::OkRotation() : matrix(1.0f), angles(0.0f) {}
  * @param yaw   Rotation around Y axis in radians.
  * @param roll  Rotation around Z axis in radians.
  */
-OkRotation::OkRotation(float pitch, float yaw, float roll)
-    : angles(pitch, yaw, roll) {
+OkRotation::OkRotation(float pitch, float yaw, float roll) {
+  angles = glm::vec3(pitch, yaw, roll);
   _updateMatrix();
 }
 
@@ -212,4 +215,36 @@ OkPoint OkRotation::getUpVector() const {
   // We can calculate the up vector as the cross product of right and forward
   // Up = Right × Forward
   return getRightVector().cross(getForwardVector());
+}
+
+/**
+ * @brief Get the pitch angle of the rotation.
+ * @return The pitch angle in radians.
+ * @note Pitch is the rotation around the X axis (looking up/down).
+ */
+float OkRotation::getPitch() const {
+  return angles.x;
+}
+
+/**
+ * @brief Get the yaw angle of the rotation.
+ * @return The yaw angle in radians.
+ * @note Yaw is the rotation around the Y axis (left/right).
+ */
+float OkRotation::getYaw() const {
+  return angles.y;
+}
+
+/**
+ * @brief Get the roll angle of the rotation.
+ * @return The roll angle in radians.
+ * @note Roll is the rotation around the Z axis (tilting head).
+ */
+float OkRotation::getRoll() const {
+  // Return 0 for vertical orientations where roll is undefined
+  if (std::abs(std::abs(angles.x) - glm::half_pi<float>()) < 0.001f) {
+    return 0.0f;
+  }
+
+  return angles.z;
 }

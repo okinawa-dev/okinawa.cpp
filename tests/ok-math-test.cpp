@@ -103,4 +103,49 @@ TEST_CASE("OkMath direction vector to angles", "[math]") {
   }
 }
 
+TEST_CASE("OkMath lookAt", "[math]") {
+  SECTION("Looking forward from origin") {
+    OkPoint    eye(0.0f, 0.0f, 0.0f);
+    OkPoint    target(0.0f, 0.0f, -1.0f);  // Looking along -Z
+    OkRotation rot = OkMath::lookAt(eye, target);
+
+    // Should produce a 180° yaw since forward is -Z
+    REQUIRE_THAT(rot.getPitch(), WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(rot.getYaw(), WithinAbs(glm::pi<float>(), 0.0001f));
+    REQUIRE_THAT(rot.getRoll(), WithinAbs(0.0f, 0.0001f));
+  }
+
+  SECTION("Looking right from origin") {
+    OkPoint    eye(0.0f, 0.0f, 0.0f);
+    OkPoint    target(1.0f, 0.0f, 0.0f);  // Looking along +X
+    OkRotation rot = OkMath::lookAt(eye, target);
+
+    // Should be 90° yaw
+    REQUIRE_THAT(rot.getPitch(), WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(rot.getYaw(), WithinAbs(glm::half_pi<float>(), 0.0001f));
+    REQUIRE_THAT(rot.getRoll(), WithinAbs(0.0f, 0.0001f));
+  }
+
+  SECTION("Looking up from origin") {
+    OkPoint eye(0.0f, 0.0f, 0.0f);
+    OkPoint target(0.0f, 1.0f, 0.0f);  // Looking along +Y
+    // default up world vector (not passed as parameter)
+    OkRotation rot = OkMath::lookAt(eye, target);
+
+    // When looking straight up: Pitch should be -90°
+    REQUIRE_THAT(rot.getPitch(), WithinAbs(-glm::half_pi<float>(), 0.0001f));
+    REQUIRE_THAT(rot.getYaw(), WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(rot.getRoll(), WithinAbs(0.0f, 0.0001f));
+
+    // Verify forward vector points up regardless of yaw/roll
+    OkPoint forward = rot.getForwardVector();
+    REQUIRE_THAT(forward.y(), WithinAbs(-1.0f, 0.0001f));
+
+    // Only verify magnitude of x and z components combined is near zero
+    float xzMagnitude =
+        std::sqrt(forward.x() * forward.x() + forward.z() * forward.z());
+    REQUIRE_THAT(xzMagnitude, WithinAbs(0.0f, 0.0001f));
+  }
+}
+
 // NOLINTEND(readability-magic-numbers)
