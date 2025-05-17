@@ -74,11 +74,34 @@ TEST_CASE("OkPoint vector operations", "[point]") {
     REQUIRE(normalized.magnitude() == Catch::Approx(1.0f));
   }
 
+  SECTION("Normalization of near-zero vector") {
+    // Create a very small vector that should be below epsilon
+    OkPoint tiny(1e-7f, 1e-7f, 1e-7f);
+    OkPoint normalized = tiny.normalize();
+    // Should return zero vector when magnitude is below epsilon
+    REQUIRE(normalized.x() == 0.0f);
+    REQUIRE(normalized.y() == 0.0f);
+    REQUIRE(normalized.z() == 0.0f);
+  }
+
   SECTION("Distance") {
     OkPoint p1(1.0f, 1.0f, 1.0f);
     OkPoint p2(4.0f, 5.0f, 8.0f);
     float   distance = p1.distance(p2);
     REQUIRE(distance == Catch::Approx(8.602325f));
+  }
+
+  SECTION("Dot product") {
+    OkPoint v1(1.0f, 2.0f, 3.0f);
+    OkPoint v2(4.0f, 5.0f, 6.0f);
+    // dot = 1*4 + 2*5 + 3*6 = 4 + 10 + 18 = 32
+    float dotProduct = v1.dot(v2);
+    REQUIRE(dotProduct == 32.0f);
+
+    // Perpendicular vectors should have dot product = 0
+    OkPoint right(1.0f, 0.0f, 0.0f);
+    OkPoint up(0.0f, 1.0f, 0.0f);
+    REQUIRE(right.dot(up) == 0.0f);
   }
 }
 

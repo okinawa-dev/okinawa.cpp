@@ -169,4 +169,41 @@ TEST_CASE("OkRotation vectors", "[rotation]") {
   }
 }
 
+TEST_CASE("OkRotation combine operations", "[rotation]") {
+  SECTION("Combine pitch rotations") {
+    // Create two 45° pitch rotations
+    OkRotation rot1(glm::quarter_pi<float>(), 0.0f, 0.0f);  // 45° pitch
+    OkRotation rot2(glm::quarter_pi<float>(), 0.0f, 0.0f);  // 45° pitch
+
+    // Combine rotations
+    OkRotation combined = rot1.combine(rot2);
+
+    // Should result in 90° pitch
+    REQUIRE_THAT(combined.getPitch(),
+                 WithinAbs(glm::half_pi<float>(), 0.0001f));
+    REQUIRE_THAT(combined.getYaw(), WithinAbs(0.0f, 0.0001f));
+    // Don't check roll since it can be ambiguous at vertical orientations
+
+    // Verify forward vector points straight up
+    OkPoint forward = combined.getForwardVector();
+    REQUIRE_THAT(forward.x(), WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(forward.y(), WithinAbs(1.0f, 0.0001f));
+    REQUIRE_THAT(forward.z(), WithinAbs(0.0f, 0.0001f));
+  }
+
+  SECTION("Combine pitch and yaw") {
+    OkRotation rot1(0.0f, glm::half_pi<float>(), 0.0f);  // 90° yaw
+    OkRotation rot2(glm::half_pi<float>(), 0.0f, 0.0f);  // 90° pitch
+
+    // Combine rotations (first yaw, then pitch)
+    OkRotation combined = rot1.combine(rot2);
+
+    // Check resulting forward vector points right
+    OkPoint forward = combined.getForwardVector();
+    REQUIRE_THAT(forward.x(), WithinAbs(-1.0f, 0.0001f));
+    REQUIRE_THAT(forward.y(), WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(forward.z(), WithinAbs(0.0f, 0.0001f));
+  }
+}
+
 // NOLINTEND(readability-magic-numbers)
