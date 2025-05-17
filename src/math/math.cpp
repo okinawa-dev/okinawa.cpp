@@ -57,20 +57,25 @@ void OkMath::directionVectorToAngles(const OkPoint &direction, float &outPitch,
   // Calculate pitch (up/down)
   outPitch = asin(y);
 
-  // Calculate yaw (left/right)
-  // We need to handle the case where cos(pitch) is close to 0 (looking straight
-  // up/down)
+  // Handle vertical look case first (near ±90° pitch)
+  if (std::abs(std::abs(y) - 1.0f) < 0.001f) {
+    outYaw = 0.0f;  // Set default yaw for vertical look
+    return;
+  }
+
+  // Calculate yaw (left/right) only for non-vertical orientations
   float cp = cos(outPitch);
   if (cp > 0.001f) {
-    // Normal case - not looking straight up/down
     outYaw = atan2(x / cp, -z / cp);
-  } else {
-    // Special case - looking straight up or down
-    // In this case, yaw becomes arbitrary, so we can maintain the previous yaw
-    // or set it to a default value. Here we'll use atan2 but be aware it may be
-    // unstable.
-    outYaw = atan2(x, -z);
   }
+  // This code shouldn't be reached due to early return above
+  // else {
+  //   // Special case - looking straight up or down
+  //   // In this case, yaw becomes arbitrary, so we can maintain the previous
+  //   // yaw or set it to a default value. Here we'll use atan2 but be aware
+  //   // it may be unstable.
+  //   outYaw = atan2(x, -z);
+  // }
 }
 
 /**
@@ -136,12 +141,6 @@ OkRotation OkMath::lookAt(const OkPoint &eye, const OkPoint &target,
   // and the z-axis Project forward onto xz-plane by zeroing y component
   glm::vec3 forwardXZ = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z));
   float     yaw       = atan2(forwardXZ.x, forwardXZ.z);
-
-  // When looking straight up/down (abs(pitch) near 90°), roll becomes undefined
-  // so we should return a default value (0)
-  if (std::abs(std::abs(pitch) - glm::half_pi<float>()) < 0.001f) {
-    return OkRotation(pitch, yaw, 0.0f);
-  }
 
   // 3. Calculate roll (only for non-vertical orientations): measure how much
   // the up vector is rotated around the forward axis First, create the

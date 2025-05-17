@@ -101,6 +101,34 @@ TEST_CASE("OkMath direction vector to angles", "[math]") {
     REQUIRE_THAT(pitch, WithinAbs(expectedPitch, 0.0001f));
     REQUIRE_THAT(yaw, WithinAbs(expectedYaw, 0.0001f));
   }
+
+  SECTION("Direction vector straight up") {
+    OkPoint direction(0.0f, 1.0f, 0.0f);  // Looking straight up
+    float   pitch, yaw;
+    OkMath::directionVectorToAngles(direction, pitch, yaw);
+
+    // Pitch should be +90° when looking straight up
+    REQUIRE_THAT(pitch, WithinAbs(glm::half_pi<float>(), 0.0001f));
+
+    // Yaw becomes undefined when looking straight up/down, but should return
+    // a valid number (typically 0) rather than NaN
+    REQUIRE_FALSE(std::isnan(yaw));
+    REQUIRE_THAT(yaw, WithinAbs(0.0f, 0.0001f));
+  }
+
+  SECTION("Direction vector straight down") {
+    OkPoint direction(0.0f, -1.0f, 0.0f);  // Looking straight down
+    float   pitch, yaw;
+    OkMath::directionVectorToAngles(direction, pitch, yaw);
+
+    // Pitch should be -90° when looking straight down
+    REQUIRE_THAT(pitch, WithinAbs(-glm::half_pi<float>(), 0.0001f));
+
+    // Yaw becomes undefined when looking straight up/down, but should return
+    // a valid number (typically 0) rather than NaN
+    REQUIRE_FALSE(std::isnan(yaw));
+    REQUIRE_THAT(yaw, WithinAbs(0.0f, 0.0001f));
+  }
 }
 
 TEST_CASE("OkMath lookAt", "[math]") {
@@ -145,6 +173,70 @@ TEST_CASE("OkMath lookAt", "[math]") {
     float xzMagnitude =
         std::sqrt(forward.x() * forward.x() + forward.z() * forward.z());
     REQUIRE_THAT(xzMagnitude, WithinAbs(0.0f, 0.0001f));
+  }
+
+  SECTION("Looking up with alternate up vector") {
+    OkPoint eye(0.0f, 0.0f, 0.0f);
+    OkPoint target(0.0f, 1.0f, 0.0f);   // Looking straight up (+Y)
+    OkPoint worldUp(0.0f, 1.0f, 0.0f);  // Up vector parallel to look direction
+    OkRotation rot = OkMath::lookAt(eye, target, worldUp);
+
+    // Verify the resulting orientation
+    REQUIRE_THAT(rot.getPitch(), WithinAbs(-glm::half_pi<float>(), 0.0001f));
+    REQUIRE_THAT(rot.getYaw(), WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(rot.getRoll(), WithinAbs(0.0f, 0.0001f));
+
+    // Get the resulting basis vectors
+    OkPoint forward = rot.getForwardVector();
+    OkPoint right   = rot.getRightVector();
+    OkPoint up      = rot.getUpVector();
+
+    // Forward should point up
+    REQUIRE_THAT(forward.y(), WithinAbs(-1.0f, 0.0001f));
+
+    // Right should be along +X (since we use Z as temporary up)
+    REQUIRE_THAT(right.x(), WithinAbs(1.0f, 0.0001f));
+    REQUIRE_THAT(right.y(), WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(right.z(), WithinAbs(0.0f, 0.0001f));
+
+    // Up should be along -Z (cross product of forward and right)
+    REQUIRE_THAT(up.x(), WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(up.y(), WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(up.z(), WithinAbs(-1.0f, 0.0001f));
+
+    // Vectors should be orthogonal
+    float dotFR = forward.dot(right);
+    float dotFU = forward.dot(up);
+    float dotRU = right.dot(up);
+    REQUIRE_THAT(dotFR, WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(dotFU, WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(dotRU, WithinAbs(0.0f, 0.0001f));
+  }
+
+  SECTION("Looking almost straight up - parallel up vector") {
+    OkPoint eye(0.0f, 0.0f, 0.0f);
+    // Create a forward vector that is:
+    // 1. Not too vertical (y < 0.999999f) to trigger second condition
+    // 2. But parallel to worldUp to trigger first condition
+    OkPoint    target(0.1f, 0.99f, 0.0f);   // Less vertical
+    OkPoint    worldUp(0.1f, 0.99f, 0.0f);  // Same direction as target
+    OkRotation rot = OkMath::lookAt(eye, target, worldUp);
+
+    // Get the resulting basis vectors
+    OkPoint forward = rot.getForwardVector();
+    OkPoint right   = rot.getRightVector();
+    OkPoint up      = rot.getUpVector();
+
+    // Forward should NOT be exactly vertical
+    REQUIRE_THAT(std::abs(forward.y()), WithinAbs(0.99f, 0.01f));
+
+    // Right should be along +X since Z was used as temporary up
+    REQUIRE_THAT(right.x(), WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(right.y(), WithinAbs(0.0f, 0.0001f));
+    REQUIRE_THAT(right.z(), WithinAbs(-1.0f, 0.0001f));
+
+    // Up should be along -Z (cross product of forward and right)
+    REQUIRE_THAT(up.z(), WithinAbs(0.0f, 0.0001f));
   }
 }
 
