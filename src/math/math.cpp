@@ -56,18 +56,24 @@ void OkMath::directionVectorToAngles(const OkPoint &direction, float &outPitch,
 
   // Calculate pitch (up/down)
   outPitch = asin(y);
+  float cp = cos(outPitch);
 
   // Handle vertical look case first (near ±90° pitch)
-  if (std::abs(std::abs(y) - 1.0f) < 0.001f) {
+  if (std::abs(std::abs(y) - 1.0f) < 0.0001f) {
     outYaw = 0.0f;  // Set default yaw for vertical look
     return;
   }
-
-  // Calculate yaw (left/right) only for non-vertical orientations
-  float cp = cos(outPitch);
-  if (cp > 0.001f) {
+  // this second else-if is an impossible case since we already checked
+  // for vertical look above
+  // Handle near-vertical case where cos(pitch) is very small
+  // else if (cp <= 0.001f) {
+  //   outYaw = 0.0f;  // Set default yaw for near-vertical look
+  // }
+  // Normal case - calculate yaw
+  else {
     outYaw = atan2(x / cp, -z / cp);
   }
+
   // This code shouldn't be reached due to early return above
   // else {
   //   // Special case - looking straight up or down

@@ -129,6 +129,47 @@ TEST_CASE("OkMath direction vector to angles", "[math]") {
     REQUIRE_FALSE(std::isnan(yaw));
     REQUIRE_THAT(yaw, WithinAbs(0.0f, 0.0001f));
   }
+
+  SECTION("Direction vector at 45° between Y and Z") {
+    // Create a vector that points 45° upward (between Y and Z)
+    // This ensures y is not near ±1, so we'll hit the yaw calculation code
+    // Using -Z instead of +Z to match our forward direction convention
+    OkPoint direction(0.0f, 0.707f, -0.707f);
+    float   pitch, yaw;
+    OkMath::directionVectorToAngles(direction, pitch, yaw);
+
+    // Expected pitch should be ~45°
+    REQUIRE_THAT(pitch, WithinAbs(glm::quarter_pi<float>(), 0.0001f));
+
+    // Yaw should be 0° since we're in the YZ plane pointing forward (-Z)
+    REQUIRE_THAT(yaw, WithinAbs(0.0f, 0.0001f));
+
+    // Verify cos(pitch) > 0.001f condition is met
+    REQUIRE(cos(pitch) > 0.001f);
+  }
+
+  SECTION("Direction vector nearly vertical") {
+    // Using a nearly vertical vector that should trigger first check
+    OkPoint direction(0.001f, 0.99999f, 0.001f);
+
+    float pitch, yaw;
+    std::cout << "LET'S GO!!" << std::endl;
+
+    // Calculate what the normalized y value will be
+    glm::vec3 normalized =
+        glm::normalize(glm::vec3(direction.x(), direction.y(), direction.z()));
+    std::cout << "Normalized y = " << normalized.y << std::endl;
+
+    OkMath::directionVectorToAngles(direction, pitch, yaw);
+
+    // Verify we enter the first check (very close to vertical)
+    float dist = std::abs(std::abs(normalized.y) - 1.0f);
+    std::cout << "Distance from 1.0 = " << dist << std::endl;
+    REQUIRE(dist < 0.0001f);
+
+    // Yaw should be 0 for vertical looks
+    REQUIRE_THAT(yaw, WithinAbs(0.0f, 0.0001f));
+  }
 }
 
 TEST_CASE("OkMath lookAt", "[math]") {

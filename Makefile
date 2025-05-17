@@ -122,10 +122,10 @@ test: install
 	@xcrun llvm-cov show ./$(TEST_EXECUTABLE) \
 					-instr-profile=tests/okinawa.profdata \
 					-format=html \
-					-show-line-counts \
-					-show-regions \
-					-show-expansions \
+					-show-line-counts-or-regions \
+          -show-instantiations \
 					-ignore-filename-regex='.*tests' \
 					-output-dir=$(COVERAGE_DIR) \
 					$(TEST_SOURCE)
+# -show-branches=count
 	@echo "Coverage report generated in coverage/index.html"
