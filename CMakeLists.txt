@@ -123,9 +123,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # Get all source files for coverage reporting
     file(GLOB_RECURSE ALL_SOURCE_FILES 
         ${CMAKE_SOURCE_DIR}/src/*.cpp
-        ${CMAKE_SOURCE_DIR}/src/*/*.cpp
-        ${CMAKE_SOURCE_DIR}/src/*.hpp
-        ${CMAKE_SOURCE_DIR}/src/*/*.hpp)
+        ${CMAKE_SOURCE_DIR}/src/*/*.cpp)
 
     # Custom target to run tests with coverage
     add_custom_target(coverage
@@ -150,9 +148,9 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
                 -show-line-counts-or-regions
                 -show-instantiations
                 -show-expansions
-                -ignore-filename-regex='.*tests/.*'
-                -output-dir=${CMAKE_SOURCE_DIR}/coverage
                 -use-color
+                -output-dir=${CMAKE_SOURCE_DIR}/coverage
+                -ignore-filename-regex='.*tests/.*'
                 ${ALL_SOURCE_FILES}
         
         # Show completion message
