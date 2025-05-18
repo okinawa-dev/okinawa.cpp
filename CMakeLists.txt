@@ -78,8 +78,8 @@ endif()
 # =====================================
 
 # Copy test data files to build directory
-file(COPY ${CMAKE_SOURCE_DIR}/tests/*.txt
-     DESTINATION ${CMAKE_BINARY_DIR}/tests)
+file(GLOB TEST_DATA_FILES "${CMAKE_SOURCE_DIR}/tests/*.txt")
+file(COPY ${TEST_DATA_FILES} DESTINATION "${CMAKE_BINARY_DIR}/tests")
 
 # Create test executable
 file(GLOB_RECURSE TEST_SOURCES tests/*.cpp)
