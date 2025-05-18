@@ -64,16 +64,10 @@ At the moment I'm only testing the code on MacOS.
 
 ### Build
 
-First install the dependencies with Conan:
-
 ```bash
 # Install conan dependencies (do this once)
 conan install . --build=missing --output-folder=build
-```
 
-Then configure and build (from project root):
-
-```bash
 # Configure CMake
 cmake -S . -B build
 

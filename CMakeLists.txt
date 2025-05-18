@@ -96,17 +96,11 @@ target_include_directories(${PROJECT_NAME}_test
         ${CMAKE_SOURCE_DIR}/tests
 )
 
-# Set working directory and environment for tests
+# Set working directory for tests
 set_target_properties(${PROJECT_NAME}_test PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
-
-# Ensure profile data is written to build directory
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set_property(TEST ${PROJECT_NAME}_test PROPERTY
-        ENVIRONMENT "LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/default.profraw"
-    )
 
 # Set up code coverage with LLVM/Clang
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
