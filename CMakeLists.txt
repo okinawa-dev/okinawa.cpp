@@ -97,11 +97,6 @@ target_include_directories(${PROJECT_NAME}_test
         ${CMAKE_SOURCE_DIR}/tests
 )
 
-# Copy shader files for testing
-file(GLOB SHADER_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.glsl")
-file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/src/shaders")
-file(COPY ${SHADER_FILES} DESTINATION "${CMAKE_BINARY_DIR}/src/shaders")
-
 # Set working directory for tests
 set_target_properties(${PROJECT_NAME}_test PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
