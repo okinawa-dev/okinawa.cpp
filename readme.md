@@ -15,7 +15,7 @@ With just this repository, without a game, you can just run the test suite and s
 ### Tools needed
 
 - [clang](https://clang.llvm.org/): A compiler for C and C++ languages.
-- [make](https://www.gnu.org/software/make/): A build automation tool.
+- [cmake](https://cmake.org/): A cross-platform build system generator.
 - [conan](https://conan.io/): A package manager for C and C++ libraries.
 
 For development:
@@ -50,10 +50,6 @@ Apple clang version 17.0.0 (clang-1700.0.13.3)
 
 cmake --version
 cmake version 4.0.1
-...
-
-make --version
-GNU Make 3.81
 ...
 
 conan --version
@@ -110,7 +106,4 @@ The tests are located in the `tests` folder and use the [Catch2](https://github.
 - [glfw](https://github.com/glfw/glfw): A multi-platform library for OpenGL, OpenGL ES, Vulkan, window and input.
 - [glm](https://github.com/g-truc/glm): OpenGL Mathematics (GLM), is a header only C++ mathematics library for graphics software.
 - [stb-image](https://github.com/nothings/stb): Single-file public domain image loading library.
-
-Only in development mode:
-
 - [Catch2](https://github.com/catchorg/Catch2): A modern, C++-native, header-only, test framework for unit-tests, TDD and BDD.
