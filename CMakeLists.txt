@@ -21,6 +21,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Always include debug info for coverage
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+
 # Set output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
@@ -35,11 +38,14 @@ find_package(stb REQUIRED)
 find_package(OpenGL REQUIRED)
 
 # Source files
-file(GLOB_RECURSE OKINAWA_SOURCES 
-    src/*/*.cpp)
+file(GLOB_RECURSE PROJECT_SOURCES 
+    src/*.cpp
+    src/*/*.cpp
+    src/*.hpp
+    src/*/*.hpp)
 
 # Create main library target
-add_library(${PROJECT_NAME}_lib STATIC ${OKINAWA_SOURCES})
+add_library(${PROJECT_NAME}_lib STATIC ${PROJECT_SOURCES})
 target_include_directories(${PROJECT_NAME}_lib
     PUBLIC
         ${CMAKE_SOURCE_DIR}/src
@@ -63,14 +69,9 @@ if(APPLE)
     )
 endif()
 
-# Create main executable
-add_executable(${PROJECT_NAME} src/main.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_lib)
-
-# Enable warnings for both targets
+# Enable warnings for library target
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(${PROJECT_NAME}_lib PRIVATE -Wall -Wextra -Wpedantic)
-    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 # =====================================
@@ -96,35 +97,71 @@ target_include_directories(${PROJECT_NAME}_test
         ${CMAKE_SOURCE_DIR}/tests
 )
 
+# Copy shader files for testing
+file(GLOB SHADER_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.glsl")
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/src/shaders")
+file(COPY ${SHADER_FILES} DESTINATION "${CMAKE_BINARY_DIR}/src/shaders")
+
 # Set working directory for tests
 set_target_properties(${PROJECT_NAME}_test PROPERTIES
-    VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
 # Set up code coverage with LLVM/Clang
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    # Enable code coverage flags
-    target_compile_options(${PROJECT_NAME}_test PRIVATE -fprofile-instr-generate -fcoverage-mapping)
-    target_link_options(${PROJECT_NAME}_test PRIVATE -fprofile-instr-generate)
+    # Set coverage compile flags for both the library and test executable
+    set(COVERAGE_FLAGS -fprofile-instr-generate -fcoverage-mapping)
+    set(COVERAGE_LINK_FLAGS -fprofile-instr-generate)
+    
+    # Enable coverage for the library
+    target_compile_options(${PROJECT_NAME}_lib PRIVATE ${COVERAGE_FLAGS})
+    target_link_options(${PROJECT_NAME}_lib PRIVATE ${COVERAGE_LINK_FLAGS})
+    
+    # Enable coverage for tests
+    target_compile_options(${PROJECT_NAME}_test PRIVATE ${COVERAGE_FLAGS})
+    target_link_options(${PROJECT_NAME}_test PRIVATE ${COVERAGE_LINK_FLAGS})
 
     # Create coverage directory
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/coverage)
+    file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/coverage)
+
+    # Get all source files for coverage reporting
+    file(GLOB_RECURSE ALL_SOURCE_FILES 
+        ${CMAKE_SOURCE_DIR}/src/*.cpp
+        ${CMAKE_SOURCE_DIR}/src/*/*.cpp
+        ${CMAKE_SOURCE_DIR}/src/*.hpp
+        ${CMAKE_SOURCE_DIR}/src/*/*.hpp)
 
     # Custom target to run tests with coverage
     add_custom_target(coverage
-        COMMAND ${CMAKE_COMMAND} -E env LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/okinawa.profraw $<TARGET_FILE:${PROJECT_NAME}_test> --reporter=console
-        COMMAND llvm-profdata merge -sparse ${CMAKE_BINARY_DIR}/okinawa.profraw -o ${CMAKE_BINARY_DIR}/okinawa.profdata
-        COMMAND llvm-cov show $<TARGET_FILE:${PROJECT_NAME}_test>
-                -instr-profile=${CMAKE_BINARY_DIR}/okinawa.profdata
+        # Clean old coverage data
+        COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.profraw ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.profdata
+        
+        # Run tests and generate coverage data
+        COMMAND ${CMAKE_COMMAND} -E env 
+            LLVM_PROFILE_FILE=${CMAKE_BINARY_DIR}/${PROJECT_NAME}.profraw 
+            CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            $<TARGET_FILE:${PROJECT_NAME}_test> 
+            --reporter=console
+        
+        # Process coverage data
+        COMMAND llvm-profdata merge -sparse ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.profraw -o ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.profdata
+        
+        # Generate coverage report
+        COMMAND llvm-cov show 
+                $<TARGET_FILE:${PROJECT_NAME}_lib>
+                -instr-profile=${CMAKE_BINARY_DIR}/${PROJECT_NAME}.profdata
                 -format=html
                 -show-line-counts-or-regions
                 -show-instantiations
-                -ignore-filename-regex='.*tests'
-                -output-dir=${CMAKE_BINARY_DIR}/coverage
-                ${CMAKE_SOURCE_DIR}/tests/*.cpp
-                ${CMAKE_SOURCE_DIR}/src/*/*.cpp
-        COMMAND ${CMAKE_COMMAND} -E echo "Coverage report generated in ${CMAKE_BINARY_DIR}/coverage/index.html"
+                -show-expansions
+                -ignore-filename-regex='.*tests/.*'
+                -output-dir=${CMAKE_SOURCE_DIR}/coverage
+                -use-color
+                ${ALL_SOURCE_FILES}
+        
+        # Show completion message
+        COMMAND ${CMAKE_COMMAND} -E echo "Coverage report generated in ${CMAKE_SOURCE_DIR}/coverage/index.html"
         DEPENDS ${PROJECT_NAME}_test
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Running tests and generating coverage report..."

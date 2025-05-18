@@ -34,11 +34,11 @@ xcode-select --install
 # Install Conan using Homebrew (package manager for macOS)
 brew install conan
 
-# Optional: Install clang-format and clang-tidy
-# These are not strictly necessary for building, but are useful for code formatting and linting
-brew install clang-format
-# If you want to use clang-tidy, it usually comes with some plugin for your IDE, or included with llvm
-# brew install llvm
+# Install LLVM tools for code formatting, analysis and coverage
+brew install llvm
+
+# Add LLVM tools to your PATH (add this to your ~/.zshrc or ~/.bashrc)
+export PATH="/opt/homebrew/opt/llvm/bin/:$PATH"
 ```
 
 Verify installations (versions used at the time of writing):
