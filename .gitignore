@@ -38,16 +38,13 @@
 *.x86_64
 *.hex
 
-# libraries
-lib/*/build/
-lib/*/CMakeCache.txt
-lib/*/CMakeFiles
-lib/*/.github
-
 # build
 .conan
 build/
 !build/.gitkeep
+
+# cmake
+CMakeUserPresets.json
 
 # tests
 coverage/

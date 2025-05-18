@@ -48,6 +48,10 @@ clang --version
 Apple clang version 17.0.0 (clang-1700.0.13.3)
 ...
 
+cmake --version
+cmake version 4.0.1
+...
+
 make --version
 GNU Make 3.81
 ...
@@ -60,23 +64,51 @@ At the moment I'm only testing the code on MacOS.
 
 ### Build
 
-Compile for a development environment (it will include tests):
+First install the dependencies with Conan:
 
 ```bash
-# Install conan dependencies
-make dev
+# Install conan dependencies (do this once)
+conan install . --build=missing --output-folder=build
+```
+
+Then configure and build (from project root):
+
+```bash
+# Configure CMake
+cmake -S . -B build
+
+# Build everything (library, executable and tests)
+cmake --build build
+
+# Or build specific targets
+cmake --build build --target okinawa       # Just the executable
+cmake --build build --target okinawa_lib   # Just the library
+cmake --build build --target okinawa_test  # Just the tests
 ```
 
 ### Tests
 
-Run the tests and generate coverage report:
+To run the tests (from project root):
 
 ```bash
-# Run tests
-make test
+# Run tests through CTest
+ctest --test-dir build --output-on-failure
+
+# Or run test executable directly for more verbose output
+cd build && ./bin/okinawa_test && cd ..
 ```
 
-The test coverage report will be generated in `coverage/index.html`. Open it in a browser to see the coverage details. The tests are located in the `tests` folder, and are written using the [Catch2](https://github.com/catchorg/Catch2) testing framework.
+To generate a code coverage report:
+
+```bash
+# Build and run tests with coverage 
+cmake --build build --target coverage
+
+# Open the coverage report
+open build/coverage/index.html
+```
+
+The tests are located in the `tests` folder and use the [Catch2](https://github.com/catchorg/Catch2) testing framework. The coverage report shows detailed line-by-line code coverage information.
 
 ## Libraries used
 
