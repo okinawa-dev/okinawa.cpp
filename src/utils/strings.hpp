@@ -4,6 +4,12 @@
 #include <cstring>
 #include <string>
 
+/**
+ * @brief Static class providing string manipulation utilities.
+ * @note All trim functions use the C++ standard library's definition of
+ * whitespace, which includes space, tab, newline, carriage return, form feed,
+ * and vertical tab. Null characters are not considered whitespace.
+ */
 class OkStrings {
 public:
   // Static class - no instantiation

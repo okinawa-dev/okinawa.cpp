@@ -9,15 +9,18 @@
  * and null characters.
  */
 std::string OkStrings::trim(const std::string &str) {
-  // Match C++ standard library whitespace definition
-  static const std::string whitespace = " \t\n\r\f\v\0";
+  // Only use printable whitespace characters for trimming
+  // Note: null character is NOT included here
+  static const std::string whitespace = " \t\n\r\f\v";
   size_t                   first      = str.find_first_not_of(whitespace);
-  size_t                   last       = str.find_last_not_of(whitespace);
 
-  if (first == std::string::npos || last == std::string::npos) {
+  if (first == std::string::npos) {
     return "";  // String is empty or contains only whitespace
   }
 
+  size_t last = str.find_last_not_of(whitespace);
+  // Note: last cannot be npos here because we already found a non-whitespace
+  // char
   return str.substr(first, (last - first + 1));
 }
 
@@ -30,8 +33,9 @@ std::string OkStrings::trim(const std::string &str) {
  * and null characters.
  */
 std::string OkStrings::trimRight(const std::string &str) {
-  // Match C++ standard library whitespace definition
-  static const std::string whitespace = " \t\n\r\f\v\0";
+  // Only use printable whitespace characters for trimming
+  // Note: null character is NOT included here
+  static const std::string whitespace = " \t\n\r\f\v";
   size_t                   last       = str.find_last_not_of(whitespace);
 
   if (last == std::string::npos) {
@@ -51,7 +55,9 @@ std::string OkStrings::trimRight(const std::string &str) {
  * and null characters.
  */
 std::string OkStrings::trimFixedString(const std::string &str, size_t maxLen) {
-  static const std::string whitespace = " \t\n\r\f\v\0";
+  // Only use printable whitespace characters for trimming
+  // Note: null character is NOT included here
+  static const std::string whitespace = " \t\n\r\f\v";
 
   // First limit the string length if needed
   std::string result;

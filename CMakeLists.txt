@@ -148,6 +148,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
                 -show-line-counts-or-regions
                 -show-instantiations
                 -show-expansions
+                # -show-branches=count
                 -use-color
                 -output-dir=${CMAKE_SOURCE_DIR}/coverage
                 -ignore-filename-regex='.*tests/.*'
