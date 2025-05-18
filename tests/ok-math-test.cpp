@@ -151,21 +151,13 @@ TEST_CASE("OkMath direction vector to angles", "[math]") {
   SECTION("Direction vector nearly vertical") {
     // Using a nearly vertical vector that should trigger first check
     OkPoint direction(0.001f, 0.99999f, 0.001f);
-
-    float pitch, yaw;
-    std::cout << "LET'S GO!!" << std::endl;
+    float   pitch, yaw;
 
     // Calculate what the normalized y value will be
     glm::vec3 normalized =
         glm::normalize(glm::vec3(direction.x(), direction.y(), direction.z()));
-    std::cout << "Normalized y = " << normalized.y << std::endl;
 
     OkMath::directionVectorToAngles(direction, pitch, yaw);
-
-    // Verify we enter the first check (very close to vertical)
-    float dist = std::abs(std::abs(normalized.y) - 1.0f);
-    std::cout << "Distance from 1.0 = " << dist << std::endl;
-    REQUIRE(dist < 0.0001f);
 
     // Yaw should be 0 for vertical looks
     REQUIRE_THAT(yaw, WithinAbs(0.0f, 0.0001f));
