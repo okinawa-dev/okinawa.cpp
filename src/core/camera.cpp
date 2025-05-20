@@ -13,14 +13,14 @@
  * @param width  The width of the viewport.
  * @param height The height of the viewport.
  */
-OkCamera::OkCamera(const std::string &name, float width, float height)
+OkCamera::OkCamera(const std::string &name, int width, int height)
     : OkObject(name) {
   // Initialize matrices
   view       = glm::mat4(1.0f);
   projection = glm::mat4(1.0f);
 
   // Set camera properties
-  aspectRatio = width / height;
+  aspectRatio = (float)width / (float)height;
   fov         = 45.0f;
   near        = 0.1f;
   far         = 100.0f;

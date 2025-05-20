@@ -15,7 +15,7 @@
  */
 class OkCamera : public OkObject {
 public:
-  OkCamera(const std::string &name, float width, float height);
+  OkCamera(const std::string &name, int width, int height);
   void setPerspective(float fovDegrees, float nearPlane, float farPlane);
 
   // Getters for matrices

@@ -319,6 +319,10 @@ void OkItem::drawSelf() {
   }
 
   if (texture) {
-    texture->unbind();
+    // static call to unbind texture, opengl does not need to know which
+    // texture was bound before, it will just unbind the currently bound
+    // texture with
+    // glBindTexture(GL_TEXTURE_2D, 0);
+    OkTexture::unbind();
   }
 }
