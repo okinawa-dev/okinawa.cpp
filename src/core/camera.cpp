@@ -197,7 +197,7 @@ void OkCamera::drawSelf() {
       // Set up vertex attributes
       // Position attribute
       glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-                            (void *)0);
+                            nullptr);
       glEnableVertexAttribArray(0);
 
       // Texture coord attribute
@@ -208,7 +208,7 @@ void OkCamera::drawSelf() {
       // Draw in wireframe mode
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int),
-                     GL_UNSIGNED_INT, 0);
+                     GL_UNSIGNED_INT, nullptr);
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
       // Clean up

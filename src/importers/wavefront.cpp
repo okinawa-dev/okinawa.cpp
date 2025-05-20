@@ -188,27 +188,26 @@ OkItem *OkWavefrontImporter::importFile(const std::string &filename) {
 
     return new OkItem(getItemName(filename), vertices.data(), vertices.size(),
                       indices.data(), indices.size());
-  } else {
-    TempMesh mesh;
-    if (!parseGeometryWithUV(filename, mesh)) {
-      OkLogger::error("Wavefront :: Failed to parse geometry with UV from " +
-                      filename);
-      return nullptr;
-    }
-
-    // Create combined vertex data (3 pos + 2 tex = 5 floats per vertex)
-    std::vector<float> vertexData;
-    vertexData.reserve(mesh.vertices.size() * 5);
-
-    for (const auto &vertex : mesh.vertices) {
-      vertexData.insert(vertexData.end(), std::begin(vertex.position),
-                        std::end(vertex.position));
-      vertexData.insert(vertexData.end(), std::begin(vertex.texcoord),
-                        std::end(vertex.texcoord));
-    }
-
-    return new OkItem(getItemName(filename), vertexData.data(),
-                      vertexData.size(), mesh.indices.data(),
-                      mesh.indices.size());
   }
+  // else {
+  TempMesh mesh;
+  if (!parseGeometryWithUV(filename, mesh)) {
+    OkLogger::error("Wavefront :: Failed to parse geometry with UV from " +
+                    filename);
+    return nullptr;
+  }
+
+  // Create combined vertex data (3 pos + 2 tex = 5 floats per vertex)
+  std::vector<float> vertexData;
+  vertexData.reserve(mesh.vertices.size() * 5);
+
+  for (const auto &vertex : mesh.vertices) {
+    vertexData.insert(vertexData.end(), std::begin(vertex.position),
+                      std::end(vertex.position));
+    vertexData.insert(vertexData.end(), std::begin(vertex.texcoord),
+                      std::end(vertex.texcoord));
+  }
+
+  return new OkItem(getItemName(filename), vertexData.data(), vertexData.size(),
+                    mesh.indices.data(), mesh.indices.size());
 }

@@ -137,11 +137,10 @@ OkRotation OkRotation::combine(const OkRotation &other) const {
   // up vector after applying pitch and yaw (but before roll)
 
   // Create a rotation matrix for just pitch and yaw
-  glm::mat4 pitchYawMatrix = glm::mat4(1.0f);
-  float     cp             = cos(pitch);
-  float     sp             = sin(pitch);
-  float     cy             = cos(yaw);
-  float     sy             = sin(yaw);
+  float cp = cos(pitch);
+  float sp = sin(pitch);
+  float cy = cos(yaw);
+  float sy = sin(yaw);
 
   // For no-roll orientation, the up vector would be:
   glm::vec3 noRollUp(-sy * sp, cp, -cy * sp);
