@@ -188,7 +188,7 @@ void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
 
     if (deltaTime >= timePerFrame) {
       lastFrameTime = currentTime;
-      float dt      = static_cast<float>(deltaTime);
+      float dt      = (float)deltaTime;
 
       // Process input
       _input->process();
@@ -266,22 +266,18 @@ void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
  * @param ypos   The y-coordinate of the mouse cursor.
  */
 void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
-  static float lastX      = xpos;
-  static float lastY      = ypos;
+  static float lastX      = (float)xpos;
+  static float lastY      = (float)ypos;
   static bool  firstMouse = true;
 
   if (firstMouse) {
-    lastX      = xpos;
-    lastY      = ypos;
     firstMouse = false;
     return;
   }
 
-  float xoffset = xpos - lastX;
+  float xoffset = (float)xpos - lastX;
   // Reversed since y-coordinates range from bottom to top
-  float yoffset = lastY - ypos;
-  lastX         = xpos;
-  lastY         = ypos;
+  float yoffset = lastY - (float)ypos;
 
   const float sensitivity = 0.05f;
   xoffset *= sensitivity;

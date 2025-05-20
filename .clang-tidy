@@ -11,6 +11,7 @@ Checks: '
   -modernize-return-braced-init-list,
   -modernize-avoid-c-arrays,
   -modernize-use-emplace,
+  -modernize-use-auto,
   -modernize-use-nodiscard,
   -clang-diagnostic-c++17-extensions,
   -bugprone-easily-swappable-parameters,
