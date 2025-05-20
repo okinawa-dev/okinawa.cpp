@@ -1,15 +1,17 @@
 cmake_minimum_required(VERSION 3.15)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+# Set the build type if not already defined
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+endif()
 option(OKINAWA_BUILD_TESTS "Build okinawa tests" OFF)
 
-
 # Conan 2.x + CMake integration requires setting the toolchain before project()
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan_toolchain.cmake")
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/build/conan_toolchain.cmake")
     message(FATAL_ERROR "The file conan_toolchain.cmake doesn't exist, you must install dependencies first:\nconan install . --output-folder=build --build=missing")
 endif()
-include("${CMAKE_BINARY_DIR}/conan_toolchain.cmake")
+include("${CMAKE_SOURCE_DIR}/build/conan_toolchain.cmake")
 
 project(okinawa 
     VERSION 0.1.0
