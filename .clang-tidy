@@ -15,6 +15,7 @@ Checks: '
   -clang-diagnostic-c++17-extensions,
   -bugprone-easily-swappable-parameters,
   -bugprone-reserved-identifier,
+  -performance-no-int-to-ptr,
   -readability-braces-around-statements,
   -readability-uppercase-literal-suffix,
   -readability-math-missing-parentheses,
@@ -23,4 +24,5 @@ Checks: '
   -readability-implicit-bool-conversion,
   -readability-identifier-length,
   -readability-magic-numbers,
+  -readability-container-size-empty,
 '

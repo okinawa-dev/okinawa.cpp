@@ -9,15 +9,9 @@
 class CerrCapture {
 public:
   CerrCapture() : oldCerr(std::cerr.rdbuf(capture.rdbuf())) {}
-  ~CerrCapture() {
-    std::cerr.rdbuf(oldCerr);
-  }
-  std::string getOutput() {
-    return capture.str();
-  }
-  void clear() {
-    capture.str("");
-  }
+  ~CerrCapture() { std::cerr.rdbuf(oldCerr); }
+  std::string getOutput() { return capture.str(); }
+  void        clear() { capture.str(""); }
 
 private:
   std::stringstream capture;

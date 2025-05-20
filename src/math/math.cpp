@@ -61,7 +61,6 @@ void OkMath::directionVectorToAngles(const OkPoint &direction, float &outPitch,
   // Handle vertical look case first (near ±90° pitch)
   if (std::abs(std::abs(y) - 1.0f) < 0.0001f) {
     outYaw = 0.0f;  // Set default yaw for vertical look
-    return;
   }
   // this second else-if is an impossible case since we already checked
   // for vertical look above

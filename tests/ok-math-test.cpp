@@ -154,8 +154,9 @@ TEST_CASE("OkMath direction vector to angles", "[math]") {
     float   pitch, yaw;
 
     // Calculate what the normalized y value will be
-    glm::vec3 normalized =
-        glm::normalize(glm::vec3(direction.x(), direction.y(), direction.z()));
+    // glm::vec3 normalized =
+    //     glm::normalize(glm::vec3(direction.x(), direction.y(),
+    //     direction.z()));
 
     OkMath::directionVectorToAngles(direction, pitch, yaw);
 
