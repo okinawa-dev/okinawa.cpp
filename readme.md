@@ -65,7 +65,7 @@ At the moment I'm only testing the code on MacOS.
 conan install . --build=missing --output-folder=build
 
 # Configure CMake
-cmake -S . -B build
+cmake -S . -B build -DOKINAWA_BUILD_TESTS=ON
 
 # Build everything (library, executable and tests)
 cmake --build build
