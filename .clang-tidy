@@ -6,10 +6,12 @@ Checks: '
   performance-*,
   bugprone-*,
   -modernize-macro-to-enum,
+  -modernize-loop-convert,
   -modernize-use-trailing-return-type,
   -modernize-return-braced-init-list,
   -modernize-avoid-c-arrays,
   -modernize-use-emplace,
+  -modernize-use-nodiscard,
   -clang-diagnostic-c++17-extensions,
   -bugprone-easily-swappable-parameters,
   -bugprone-reserved-identifier,
@@ -17,7 +19,8 @@ Checks: '
   -readability-uppercase-literal-suffix,
   -readability-math-missing-parentheses,
   -readability-function-cognitive-complexity,
-  -readability-implicit-bool-conversion,
-  -readability-identifier-length
   -readability-isolate-declaration,
+  -readability-implicit-bool-conversion,
+  -readability-identifier-length,
+  -readability-magic-numbers,
 '
