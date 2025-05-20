@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.15)
 
-# Set the build type if not already defined
-if(NOT CMAKE_BUILD_TYPE)
+# Set the build type if not already definoption(OKINAWA_BUILD_TESTS "Build okinawa tests" OFF)
+
+if(OKINAWA_BUILD_TESTS)
+    # Find Catch2 only if we're building tests
+    find_package(Catch2 REQUIRED)
+    
+    # Copy test data files to build directoryf(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
@@ -33,7 +38,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Find dependencies (Conan 2.x style)
 find_package(glm REQUIRED)
 find_package(glfw3 REQUIRED)
-find_package(Catch2 REQUIRED)
 find_package(stb REQUIRED)
 find_package(OpenGL REQUIRED)
 
@@ -75,58 +79,64 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
 endif()
 
 # =====================================
-# Testing with code coverage
+# Testing with code coverage (if enabled)
 # =====================================
 
-# Copy test data files to build directory
-file(GLOB TEST_DATA_FILES "${CMAKE_SOURCE_DIR}/tests/*.txt")
-file(COPY ${TEST_DATA_FILES} DESTINATION "${CMAKE_BINARY_DIR}/tests")
+option(OKINAWA_BUILD_TESTS "Build okinawa tests" OFF)
 
-# Create test executable
-file(GLOB_RECURSE TEST_SOURCES tests/*.cpp)
-add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})
-target_link_libraries(${PROJECT_NAME}_test
-    PRIVATE
-        ${PROJECT_NAME}_lib
-        Catch2::Catch2WithMain
-)
+if(OKINAWA_BUILD_TESTS)
+    # Find Catch2 only if we're building tests
+    find_package(Catch2 REQUIRED)
 
-# Include directories for tests
-target_include_directories(${PROJECT_NAME}_test
-    PRIVATE
-        ${CMAKE_SOURCE_DIR}/tests
-)
+    # Copy test data files to build directory
+    file(GLOB TEST_DATA_FILES "${CMAKE_SOURCE_DIR}/tests/*.txt")
+    file(COPY ${TEST_DATA_FILES} DESTINATION "${CMAKE_BINARY_DIR}/tests")
 
-# Set working directory for tests
-set_target_properties(${PROJECT_NAME}_test PROPERTIES
-    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
+    # Create test executable
+    file(GLOB_RECURSE TEST_SOURCES tests/*.cpp)
+    add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})
+    target_link_libraries(${PROJECT_NAME}_test
+        PRIVATE
+            ${PROJECT_NAME}_lib
+            Catch2::Catch2WithMain
+    )
 
-# Set up code coverage with LLVM/Clang
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    # Set coverage compile flags for both the library and test executable
-    set(COVERAGE_FLAGS -fprofile-instr-generate -fcoverage-mapping)
-    set(COVERAGE_LINK_FLAGS -fprofile-instr-generate)
-    
-    # Enable coverage for the library
-    target_compile_options(${PROJECT_NAME}_lib PRIVATE ${COVERAGE_FLAGS})
-    target_link_options(${PROJECT_NAME}_lib PRIVATE ${COVERAGE_LINK_FLAGS})
-    
-    # Enable coverage for tests
-    target_compile_options(${PROJECT_NAME}_test PRIVATE ${COVERAGE_FLAGS})
-    target_link_options(${PROJECT_NAME}_test PRIVATE ${COVERAGE_LINK_FLAGS})
+    # Include directories for tests
+    target_include_directories(${PROJECT_NAME}_test
+        PRIVATE
+            ${CMAKE_SOURCE_DIR}/tests
+    )
 
-    # Create coverage directory
-    file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/coverage)
+    # Set working directory for tests
+    set_target_properties(${PROJECT_NAME}_test PROPERTIES
+        VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    )
 
-    # Get all source files for coverage reporting
-    file(GLOB_RECURSE ALL_SOURCE_FILES 
-        ${CMAKE_SOURCE_DIR}/src/*.cpp
-        ${CMAKE_SOURCE_DIR}/src/*/*.cpp)
+    # Set up code coverage with LLVM/Clang
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        # Set coverage compile flags for both the library and test executable
+        set(COVERAGE_FLAGS -fprofile-instr-generate -fcoverage-mapping)
+        set(COVERAGE_LINK_FLAGS -fprofile-instr-generate)
+        
+        # Enable coverage for the library
+        target_compile_options(${PROJECT_NAME}_lib PRIVATE ${COVERAGE_FLAGS})
+        target_link_options(${PROJECT_NAME}_lib PRIVATE ${COVERAGE_LINK_FLAGS})
+        
+        # Enable coverage for tests
+        target_compile_options(${PROJECT_NAME}_test PRIVATE ${COVERAGE_FLAGS})
+        target_link_options(${PROJECT_NAME}_test PRIVATE ${COVERAGE_LINK_FLAGS})
 
-    # Custom target to run tests with coverage
-    add_custom_target(coverage
+        # Create coverage directory
+        file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/coverage)
+
+        # Get all source files for coverage reporting
+        file(GLOB_RECURSE ALL_SOURCE_FILES 
+            ${CMAKE_SOURCE_DIR}/src/*.cpp
+            ${CMAKE_SOURCE_DIR}/src/*/*.cpp)
+
+        # Custom target to run tests with coverage
+        add_custom_target(coverage
         # Clean old coverage data
         COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.profraw ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.profdata
         
@@ -160,10 +170,13 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Running tests and generating coverage report..."
     )
+    endif()
 endif()
 
-# Add CTest integration
-include(CTest)
-include(Catch)
-catch_discover_tests(${PROJECT_NAME}_test)
+# Add CTest integration if tests are enabled
+if(OKINAWA_BUILD_TESTS)
+    include(CTest)
+    include(Catch)
+    catch_discover_tests(${PROJECT_NAME}_test)
+endif()
 
