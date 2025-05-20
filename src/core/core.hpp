@@ -24,7 +24,8 @@ public:
 
   // Core initialization and loop
   static bool initialize();
-  static void loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback);
+  static void loop(const OkCoreCallback &stepCallback,
+                   const OkCoreCallback &drawCallback);
   static void askForExit();
   static void exit();
 

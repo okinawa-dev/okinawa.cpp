@@ -173,7 +173,8 @@ bool OkCore::initializeShaders() {
  * @note The loop will run until the window is closed.
  *       The step and draw callbacks are called every frame.
  */
-void OkCore::loop(OkCoreCallback stepCallback, OkCoreCallback drawCallback) {
+void OkCore::loop(const OkCoreCallback &stepCallback,
+                  const OkCoreCallback &drawCallback) {
   if (!_window || _cameras.empty()) {
     OkLogger::error("Core :: Cannot start loop without window or camera");
     return;
@@ -295,10 +296,8 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
 
   // Constrain pitch to avoid flipping (in radians)
   const float maxPitch = glm::radians(89.0f);
-  if (pitch > maxPitch)
-    pitch = maxPitch;
-  if (pitch < -maxPitch)
-    pitch = -maxPitch;
+  pitch                = std::min(pitch, maxPitch);
+  pitch                = std::max(pitch, -maxPitch);
 
   // Set new rotation
   _cameras[_currentCamera]->setRotation(pitch, yaw, 0.0f);
