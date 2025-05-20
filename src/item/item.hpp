@@ -49,8 +49,8 @@ protected:
 
 public:
   // Constructors
-  OkItem(const std::string &name, float *vertices, long vertexCount,
-         unsigned int *indices, long indexCount);
+  OkItem(const std::string &name, float *vertexData, long vertexCount,
+         unsigned int *indexData, long indexCount);
   ~OkItem();
 
   // Delete copy constructor and assignment

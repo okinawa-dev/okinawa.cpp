@@ -21,9 +21,6 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
                  std::to_string(vertexCount) + " vertices and " +
                  std::to_string(indexCount) + " indices");
 
-  // Direct assignment - string will handle copying internally
-  this->name = name;
-
   visible       = true;
   drawWireframe = false;
   drawMode      = GL_TRIANGLES;  // Default drawing mode

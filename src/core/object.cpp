@@ -7,6 +7,7 @@
  */
 OkObject::OkObject(const std::string &name) {
 
+  // Direct assignment - string will handle copying internally
   this->name = name;
 
   position = OkPoint(0.0f, 0.0f, 0.0f);
