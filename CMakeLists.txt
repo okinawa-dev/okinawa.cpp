@@ -1,14 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
 
-# Set the build type if not already definoption(OKINAWA_BUILD_TESTS "Build okinawa tests" OFF)
+# set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
+option(OKINAWA_BUILD_TESTS "Build okinawa tests" OFF)
 
-if(OKINAWA_BUILD_TESTS)
-    # Find Catch2 only if we're building tests
-    find_package(Catch2 REQUIRED)
-    
-    # Copy test data files to build directoryf(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
-endif()
 
 # Conan 2.x + CMake integration requires setting the toolchain before project()
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan_toolchain.cmake")
@@ -20,6 +15,19 @@ project(okinawa
     VERSION 0.1.0
     DESCRIPTION "A C++ 3D game engine"
     LANGUAGES CXX)
+
+# Enable clang-tidy
+find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
+if(CLANG_TIDY_EXE)
+    set(CMAKE_CXX_CLANG_TIDY 
+        ${CLANG_TIDY_EXE};
+        -extra-arg=-Wno-unknown-warning-option;
+        -p=${CMAKE_BINARY_DIR}
+    )
+    message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+else()
+    message(WARNING "clang-tidy not found!")
+endif()
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -40,6 +48,11 @@ find_package(glm REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(stb REQUIRED)
 find_package(OpenGL REQUIRED)
+
+if(OKINAWA_BUILD_TESTS)
+    # Find Catch2 only if we're building tests
+    find_package(Catch2 REQUIRED)
+endif()
 
 # Source files
 file(GLOB_RECURSE PROJECT_SOURCES 
@@ -75,7 +88,15 @@ endif()
 
 # Enable warnings for library target
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    target_compile_options(${PROJECT_NAME}_lib PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(${PROJECT_NAME}_lib PRIVATE
+        -Wall 
+        # -Wextra 
+        # -Wpedantic
+        -Wundef                      # Warn on undefined macro usage
+        # -Wreserved-macro-identifier  # Warn on reserved macro names
+        -Wmacro-redefined            # Warn on macro redefinition
+        -Wextra-semi                 # Warn on redundant semicolons
+    )    
 endif()
 
 # =====================================

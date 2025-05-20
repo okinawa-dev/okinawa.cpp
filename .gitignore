@@ -43,10 +43,6 @@
 build/
 !build/.gitkeep
 
-# cmake
-CMakePresets.json
-CMakeUserPresets.json
-
 # tests
 coverage/
 

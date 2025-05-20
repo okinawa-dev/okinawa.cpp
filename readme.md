@@ -60,20 +60,48 @@ At the moment I'm only testing the code on MacOS.
 
 ### Build
 
+#### Debug build
+
 ```bash
 # Install conan dependencies (do this once)
-conan install . --build=missing --output-folder=build
+conan install . --output-folder=build -s build_type=Debug --build=missing
 
 # Configure CMake
-cmake -S . -B build -DOKINAWA_BUILD_TESTS=ON
+cmake --preset debug
 
 # Build everything (library, executable and tests)
-cmake --build build
+cmake --build --preset debug
 
 # Or build specific targets
-cmake --build build --target okinawa       # Just the executable
-cmake --build build --target okinawa_lib   # Just the library
-cmake --build build --target okinawa_test  # Just the tests
+cmake --build --preset debug --target okinawa       # Just the executable
+cmake --build --preset debug --target okinawa_lib   # Just the library
+cmake --build --preset debug --target okinawa_test  # Just the tests
+```
+
+#### Release build
+
+```bash
+# Install conan dependencies (do this once)
+conan install . --output-folder=build -s build_type=Release --build=missing
+
+# Configure CMake
+cmake --preset release
+
+# Build everything (library and executable)
+cmake --build --preset release
+
+# Or build specific targets
+cmake --build --preset release --target okinawa       # Just the executable
+cmake --build --preset release --target okinawa_lib   # Just the library
+```
+
+### Other tools
+
+#### Code checking
+
+```bash
+# Check code formatting
+clang-tidy -p=build src/*.cpp src/*/*.cpp
 ```
 
 ### Tests
