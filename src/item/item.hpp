@@ -1,19 +1,12 @@
 #ifndef OK_ITEM_HPP
 #define OK_ITEM_HPP
 
-#if (__APPLE__)
-#define GL_SILENCE_DEPRECATION
-#include <OpenGL/gl3.h>
-#else
-#include <GL/glew.h>
-#endif
-
+#include "../core/gl_config.hpp"
 #include "../core/object.hpp"
 #include "../handlers/textures.hpp"
 #include "../item/texture.hpp"
 #include "../math/point.hpp"
 #include "../math/rotation.hpp"
-#include <GLFW/glfw3.h>
 #include <string>
 #include <vector>
 

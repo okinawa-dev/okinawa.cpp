@@ -1,11 +1,7 @@
 #ifndef OK_CORE_HPP
 #define OK_CORE_HPP
 
-#if (__APPLE__)
-#define GL_SILENCE_DEPRECATION
-#define GLFW_INCLUDE_GLCOREARB
-#endif
-
+#include "../core/gl_config.hpp"
 #include "../handlers/scenes.hpp"
 #include "../input/input.hpp"
 #include "../scene/scene.hpp"

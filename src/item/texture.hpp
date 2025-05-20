@@ -1,13 +1,7 @@
 #ifndef OK_TEXTURE_HPP
 #define OK_TEXTURE_HPP
 
-#if (__APPLE__)
-#define GL_SILENCE_DEPRECATION
-#include <OpenGL/gl3.h>
-#else
-#include <GL/glew.h>
-#endif
-
+#include "../core/gl_config.hpp"
 #include <string>
 
 /**

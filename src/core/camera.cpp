@@ -1,12 +1,7 @@
-#if (__APPLE__)
-#define GL_SILENCE_DEPRECATION
-#include <OpenGL/gl3.h>
-#else
-#include <GL/glew.h>
-#endif
 
-#include "../config/config.hpp"
 #include "camera.hpp"
+#include "../config/config.hpp"
+#include "../core/gl_config.hpp"
 #include "core.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
