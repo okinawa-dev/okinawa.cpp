@@ -267,18 +267,22 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
  * @param ypos   The y-coordinate of the mouse cursor.
  */
 void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
-  static float lastX      = (float)xpos;
-  static float lastY      = (float)ypos;
+  static float lastX      = static_cast<float>(xpos);
+  static float lastY      = static_cast<float>(ypos);
   static bool  firstMouse = true;
 
   if (firstMouse) {
+    lastX      = static_cast<float>(xpos);
+    lastY      = static_cast<float>(ypos);
     firstMouse = false;
     return;
   }
 
-  float xoffset = (float)xpos - lastX;
+  float xoffset = static_cast<float>(xpos) - lastX;
   // Reversed since y-coordinates range from bottom to top
-  float yoffset = lastY - (float)ypos;
+  float yoffset = lastY - static_cast<float>(ypos);
+  lastX         = static_cast<float>(xpos);
+  lastY         = static_cast<float>(ypos);
 
   const float sensitivity = 0.05f;
   xoffset *= sensitivity;
