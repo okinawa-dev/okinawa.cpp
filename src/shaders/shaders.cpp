@@ -1,10 +1,6 @@
-#if (__APPLE__)
-// use this define to silence deprecation warning messages
-#define GL_SILENCE_DEPRECATION
-#endif
-
 #include "shaders.hpp"
 #include "../config/config.hpp"
+#include "../core/gl_config.hpp"
 #include "../utils/logger.hpp"
 
 /**
