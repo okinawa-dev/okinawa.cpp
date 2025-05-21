@@ -66,7 +66,7 @@ void OkInput::process() {
 
   // Update action states (just pressed)
   _currentState.action1 = isKeyJustPressed(GLFW_KEY_SPACE);
-  _currentState.action2 = isKeyJustPressed(GLFW_KEY_E);
+  _currentState.action2 = isKeyJustPressed(GLFW_KEY_T);
   _currentState.action3 = isKeyJustPressed(GLFW_KEY_R);
   _currentState.action4 = isKeyJustPressed(GLFW_KEY_F);
 
