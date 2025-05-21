@@ -67,6 +67,8 @@ public:
   void   setWireframe(bool wireframe) { drawWireframe = wireframe; }
   void   setDrawMode(GLenum mode) { drawMode = mode; }
   GLenum getDrawMode() const { return drawMode; }
+  void   setVisible(bool visible) { this->visible = visible; }
+  bool   isVisible() const { return visible; }
 
   // Update and render
   void stepSelf(float dt) override;
