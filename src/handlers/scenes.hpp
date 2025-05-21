@@ -25,21 +25,21 @@ public:
 
   // Scene management
   void addScene(OkScene *scene, const std::string &name);
-  void insertScene(OkScene *scene, const std::string &name, size_t index);
-  void setScene(size_t index);
+  void insertScene(OkScene *scene, const std::string &name, int index);
+  void setScene(int index);
   void advance();
   void goBack();
 
   // Getters
   OkScene           *getCurrentScene() const { return currentScene; }
   const std::string &getCurrentSceneName() const { return currentSceneName; }
-  size_t             getCurrentSceneIndex() const { return currentSceneIndex; }
-  size_t             getSceneCount() const { return collection.size(); }
+  int                getCurrentSceneIndex() const { return currentSceneIndex; }
+  int                getSceneCount() const { return collection.size(); }
 
 private:
-  static constexpr size_t  MAX_SCENES = 32;
+  static constexpr int     MAX_SCENES = 32;
   std::vector<OkSceneInfo> collection;
-  size_t                   currentSceneIndex;
+  int                      currentSceneIndex;
   std::string              currentSceneName;
   OkScene                 *currentScene;
 };

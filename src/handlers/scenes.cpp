@@ -34,7 +34,7 @@ void OkSceneHandler::addScene(OkScene *scene, const std::string &name) {
  * @param index  The index at which to insert the scene.
  */
 void OkSceneHandler::insertScene(OkScene *scene, const std::string &name,
-                                 size_t index) {
+                                 int index) {
   if (collection.size() >= MAX_SCENES) {
     OkLogger::error("Scenes :: Cannot add more scenes, maximum reached");
     return;
@@ -52,7 +52,7 @@ void OkSceneHandler::insertScene(OkScene *scene, const std::string &name,
  * @brief Set the current scene by index.
  * @param index The index of the scene to set as current.
  */
-void OkSceneHandler::setScene(size_t index) {
+void OkSceneHandler::setScene(int index) {
   if (index >= collection.size()) {
     OkLogger::error("Scenes :: Invalid scene index");
     return;
