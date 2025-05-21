@@ -7,7 +7,7 @@ OkTextureHandler *OkTextureHandler::instance = nullptr;
  * @brief Constructor for the OkTextureHandler class.
  *        This class is a singleton that manages textures.
  */
-OkTextureHandler::OkTextureHandler() {}
+OkTextureHandler::OkTextureHandler() = default;
 
 /**
  * @brief Destructor for the OkTextureHandler class.
@@ -168,9 +168,8 @@ void OkTextureHandler::removeReference(const std::string &name) {
  *        This method deletes all textures in the map and clears the map.
  */
 void OkTextureHandler::cleanup() {
-  for (std::map<std::string, TextureEntry>::iterator it = textureMap.begin();
-       it != textureMap.end(); ++it) {
-    delete it->second.texture;
+  for (const auto &entry : textureMap) {
+    delete entry.second.texture;
   }
 
   textureMap.clear();
@@ -184,6 +183,7 @@ void OkTextureHandler::cleanup() {
  */
 std::vector<std::string> OkTextureHandler::getTextureNames() const {
   std::vector<std::string> names;
+  names.reserve(textureMap.size());
 
   for (const auto &entry : textureMap) {
     names.push_back(entry.first);

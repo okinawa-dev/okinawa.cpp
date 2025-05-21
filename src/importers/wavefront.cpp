@@ -133,9 +133,16 @@ bool OkWavefrontImporter::parseGeometryWithUV(const std::string &filename,
       // Triangulate face
       for (size_t i = 2; i < face.size(); ++i) {
         for (size_t j = 0; j < 3; ++j) {
-          size_t idx = (j == 0) ? 0 : (j == 1) ? i - 1 : i;
-          int    v   = face[idx].first;   // vertex index
-          int    t   = face[idx].second;  // texture index
+          size_t idx;
+          if (j == 0) {
+            idx = 0;
+          } else if (j == 1) {
+            idx = i - 1;
+          } else {
+            idx = i;
+          }
+          size_t v = static_cast<size_t>(face[idx].first);   // vertex index
+          size_t t = static_cast<size_t>(face[idx].second);  // texture index
 
           TempVertex vertex;
           std::copy_n(&mesh.positions[v * 3], 3, vertex.position);
@@ -186,8 +193,9 @@ OkItem *OkWavefrontImporter::importFile(const std::string &filename) {
       return nullptr;
     }
 
-    return new OkItem(getItemName(filename), vertices.data(), vertices.size(),
-                      indices.data(), indices.size());
+    return new OkItem(getItemName(filename), vertices.data(),
+                      static_cast<int>(vertices.size()), indices.data(),
+                      static_cast<int>(indices.size()));
   }
   // else {
   TempMesh mesh;
@@ -208,6 +216,7 @@ OkItem *OkWavefrontImporter::importFile(const std::string &filename) {
                       std::end(vertex.texcoord));
   }
 
-  return new OkItem(getItemName(filename), vertexData.data(), vertexData.size(),
-                    mesh.indices.data(), mesh.indices.size());
+  return new OkItem(getItemName(filename), vertexData.data(),
+                    static_cast<int>(vertexData.size()), mesh.indices.data(),
+                    static_cast<int>(mesh.indices.size()));
 }
