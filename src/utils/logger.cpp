@@ -3,6 +3,7 @@
 #include <ctime>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 
 namespace {
   const char *RESET_COLOR   = "\x1b[0m";

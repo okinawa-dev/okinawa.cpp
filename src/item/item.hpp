@@ -1,14 +1,10 @@
 #ifndef OK_ITEM_HPP
 #define OK_ITEM_HPP
 
-#include "../core/gl_config.hpp"
 #include "../core/object.hpp"
 #include "../handlers/textures.hpp"
 #include "../item/texture.hpp"
-#include "../math/point.hpp"
-#include "../math/rotation.hpp"
 #include <string>
-#include <vector>
 
 class OkItem : public OkObject {
 private:

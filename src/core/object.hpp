@@ -4,7 +4,6 @@
 #include "../config/config.hpp"
 #include "../math/point.hpp"
 #include "../math/rotation.hpp"
-#include "../utils/logger.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 

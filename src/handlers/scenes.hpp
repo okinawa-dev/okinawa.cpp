@@ -34,7 +34,7 @@ public:
   OkScene           *getCurrentScene() const { return currentScene; }
   const std::string &getCurrentSceneName() const { return currentSceneName; }
   int                getCurrentSceneIndex() const { return currentSceneIndex; }
-  int                getSceneCount() const { return collection.size(); }
+  int getSceneCount() const { return static_cast<int>(collection.size()); }
 
 private:
   static constexpr int     MAX_SCENES = 32;

@@ -1,6 +1,5 @@
 #include "math.hpp"
 // #include <glm/gtx/rotate_vector.hpp>
-#include <iostream>
 
 /**
  * @brief Convert Euler angles to a direction vector.

@@ -1,10 +1,8 @@
 #ifndef OK_CORE_HPP
 #define OK_CORE_HPP
 
-#include "../core/gl_config.hpp"
 #include "../handlers/scenes.hpp"
 #include "../input/input.hpp"
-#include "../scene/scene.hpp"
 #include "./camera.hpp"
 #include <GLFW/glfw3.h>
 #include <functional>

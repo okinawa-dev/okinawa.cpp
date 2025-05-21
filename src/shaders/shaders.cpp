@@ -1,7 +1,7 @@
 #include "shaders.hpp"
 #include "../config/config.hpp"
-#include "../core/gl_config.hpp"
 #include "../utils/logger.hpp"
+#include <vector>
 
 /**
  * @brief Compile a shader from source code.

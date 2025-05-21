@@ -1,11 +1,10 @@
 #ifndef OK_LOGGER_HPP
 #define OK_LOGGER_HPP
 
-#include <memory>
-#include <sstream>
+#include <cstdint>
 #include <string>
 
-enum class LogLevel {
+enum class LogLevel : std::uint8_t {
   Info,
   Warning,
   Error

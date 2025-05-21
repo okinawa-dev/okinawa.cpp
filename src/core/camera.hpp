@@ -2,8 +2,6 @@
 #define OK_CAMERA_HPP
 
 #include "../core/object.hpp"
-#include "../math/math.hpp"
-#include "../math/point.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>

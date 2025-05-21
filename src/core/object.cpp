@@ -1,6 +1,4 @@
 #include "object.hpp"
-#include "../config/config.hpp"
-#include "../utils/logger.hpp"
 
 /**
  * @brief Constructor for the OkObject class.
