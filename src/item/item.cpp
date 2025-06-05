@@ -214,6 +214,10 @@ void OkItem::updateTransformSelf() {
  * @note  This method handles the rendering of the item and its children.
  */
 void OkItem::drawSelf() {
+  if (!this->visible) {
+    // If the item is not visible, skip rendering
+    return;
+  }
 
   bool drawWireframe =
       OkConfig::getBool("graphics.wireframe") || this->drawWireframe;
