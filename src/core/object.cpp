@@ -23,6 +23,8 @@ OkObject::OkObject(const std::string &name) {
   _parent      = nullptr;
   _firstChild  = nullptr;
   _nextSibling = nullptr;
+
+  drawOriginAxis = false;  // Default to not showing axes
 }
 
 /**
@@ -296,7 +298,10 @@ void OkObject::draw() {
   // Call the derived class's specific drawing logic
   drawSelf();
 
-  drawAxis();
+  // Only draw axes if enabled for this object
+  if (drawOriginAxis) {
+    drawAxis();
+  }
 
   // Draw children recursively (this stays in OkObject)
   OkObject *current = _firstChild;
