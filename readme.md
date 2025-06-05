@@ -115,6 +115,7 @@ ctest --test-dir build --output-on-failure
 # Or run test executable directly for more verbose output
 cd build 
 ./bin/okinawa_test
+cd ..
 ```
 
 To generate a code coverage report:

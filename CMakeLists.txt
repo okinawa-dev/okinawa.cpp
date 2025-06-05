@@ -49,7 +49,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(glm REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(stb REQUIRED)
-find_package(OpenGL REQUIRED)
+find_package(opengl_system REQUIRED)
 
 if(OKINAWA_BUILD_TESTS)
     # Find Catch2 only if we're building tests
@@ -76,7 +76,7 @@ target_link_libraries(${PROJECT_NAME}_lib
         glm::glm
         glfw
         stb::stb
-        OpenGL::GL
+        opengl::opengl
 )
 
 if(APPLE)
