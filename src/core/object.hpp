@@ -1,7 +1,6 @@
 #ifndef OK_OBJECT_HPP
 #define OK_OBJECT_HPP
 
-#include "../config/config.hpp"
 #include "../math/point.hpp"
 #include "../math/rotation.hpp"
 #include <glm/glm.hpp>
@@ -30,6 +29,9 @@ protected:
   OkObject *_firstChild;
   OkObject *_nextSibling;
 
+  // Flags
+  bool drawOriginAxis;  // Flag to draw origin axis
+
   // Pure virtual method for derived classes to implement their specific drawing
   // and update
   virtual void drawSelf()            = 0;
@@ -45,6 +47,10 @@ public:
   void    setPosition(float x, float y, float z);
   void    setPosition(const OkPoint &newPosition);
   void    move(float dx, float dy, float dz);
+
+  void setDrawOriginAxis(bool drawAxis) { drawOriginAxis = drawAxis; }
+  bool getDrawOriginAxis() const { return drawOriginAxis; }
+  void drawAxis() const;
 
   // Rotation
   OkRotation getRotation() const;
@@ -77,64 +83,13 @@ public:
   glm::mat4 getTransformMatrix() const;
 
   // Final transform update that enforces hierarchy
-  virtual void updateTransform() final {
-    // First update our local transform
-    updateTransformSelf();
-
-    // Then recursively update all children's transforms
-    OkObject *current = _firstChild;
-    while (current != nullptr) {
-      current->updateTransform();
-      current = current->getNextSibling();
-    }
-  }
+  virtual void updateTransform() final;
 
   // Final step method that enforces the update sequence
-  virtual void step(float dt) final {
-    float frameTime = dt / OkConfig::getFloat("graphics.time-per-frame");
-
-    // Process movement if there's any speed
-    if (speed.x() != 0 || speed.y() != 0 || speed.z() != 0) {
-      // Check if speed exceeds maxVel
-      if (maxVel > 0.0f) {
-        float currentSpeed = speed.magnitude();
-        if (currentSpeed > maxVel) {
-          speed = speed.normalize() * maxVel;
-        }
-      }
-      move(speed.x() * frameTime, speed.y() * frameTime, speed.z() * frameTime);
-    }
-
-    // Process rotation if there's any rotational speed
-    if (vRot.x() != 0 || vRot.y() != 0 || vRot.z() != 0) {
-      rotate(vRot.x() * frameTime, vRot.y() * frameTime, vRot.z() * frameTime);
-    }
-
-    // Call the derived class's specific update logic
-    stepSelf(dt);
-
-    // Update children recursively (this stays in OkObject)
-    OkObject *current = _firstChild;
-    while (current != nullptr) {
-      current->step(dt);
-      current = current->getNextSibling();
-    }
-  }
+  virtual void step(float dt) final;
 
   // Final draw method that enforces the drawing sequence
-  virtual void draw() final {
-    // OkLogger::info("Drawing object in hierarchy, name: " + name);
-
-    // Call the derived class's specific drawing logic
-    drawSelf();
-
-    // Draw children recursively (this stays in OkObject)
-    OkObject *current = _firstChild;
-    while (current != nullptr) {
-      current->draw();
-      current = current->getNextSibling();
-    }
-  }
+  virtual void draw() final;
 };
 
 #endif
