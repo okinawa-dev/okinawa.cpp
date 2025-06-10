@@ -1,7 +1,8 @@
 #ifndef OK_INPUT_HPP
 #define OK_INPUT_HPP
 
-#include <GLFW/glfw3.h>
+#include "../core/gl_config.hpp"
+#include "keys.hpp"
 
 /**
  * @brief Input state structure to hold the current state of input.
@@ -56,11 +57,11 @@ public:
 
   // Input state retrieval methods
   // True only on the frame when key is first pressed
-  bool isKeyJustPressed(int key) const;
+  bool isKeyJustPressed(OkKey key) const;
   // True while key is being held down
-  bool isKeyHeld(int key) const;
+  bool isKeyHeld(OkKey key) const;
   // True only on the frame when key is released
-  bool isKeyJustReleased(int key) const;
+  bool isKeyJustReleased(OkKey key) const;
 
   // Get complete input state (for compatibility)
   OkInputState getState() const;
@@ -72,10 +73,10 @@ public:
 private:
   GLFWwindow   *_window;
   MouseCallback _mouseCallback;
-  OkInputState  _currentState;                // Current frame's input state
-  OkInputState  _prevState;                   // Previous frame's input state
-  bool          _currentKeys[GLFW_KEY_LAST];  // Current key states
-  bool          _prevKeys[GLFW_KEY_LAST];     // Previous key states
+  OkInputState  _currentState;               // Current frame's input state
+  OkInputState  _prevState;                  // Previous frame's input state
+  bool          _currentKeys[OK_KEY_COUNT];  // Current key states
+  bool          _prevKeys[OK_KEY_COUNT];     // Previous key states
 };
 
 #endif

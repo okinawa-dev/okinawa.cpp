@@ -1,5 +1,6 @@
 #include "input.hpp"
 #include "../utils/logger.hpp"
+#include "keys.hpp"
 #include <cstring>
 
 /**
@@ -38,40 +39,48 @@ void OkInput::process() {
   std::memcpy(_prevKeys, _currentKeys, sizeof(_currentKeys));
   _prevState = _currentState;
 
-  // Update current key states
-  for (int i = 0; i < GLFW_KEY_LAST; i++) {
-    _currentKeys[i] = glfwGetKey(_window, i) == GLFW_PRESS;
+  // Update current key states - convert from GLFW to OkKeys
+  for (int i = 0; i < OK_KEY_COUNT; i++) {
+    OkKey okKey   = static_cast<OkKey>(i);
+    int   glfwKey = OkKeys::okKeyToGLFW(okKey);
+    if (glfwKey != GLFW_KEY_UNKNOWN) {
+      _currentKeys[i] = glfwGetKey(_window, glfwKey) == GLFW_PRESS;
+    } else {
+      _currentKeys[i] = false;
+    }
   }
 
-  // Update movement state (continuous press)
-  _currentState.forward     = _currentKeys[GLFW_KEY_W];
-  _currentState.backward    = _currentKeys[GLFW_KEY_S];
-  _currentState.strafeLeft  = _currentKeys[GLFW_KEY_A];
-  _currentState.strafeRight = _currentKeys[GLFW_KEY_D];
+  // Update movement state (continuous press) - using OkKeys directly
+  _currentState.forward     = isKeyHeld(OK_KEY_W);
+  _currentState.backward    = isKeyHeld(OK_KEY_S);
+  _currentState.strafeLeft  = isKeyHeld(OK_KEY_A);
+  _currentState.strafeRight = isKeyHeld(OK_KEY_D);
 
-  // Update rotation state (continuous press)
-  _currentState.turnLeft  = _currentKeys[GLFW_KEY_LEFT];
-  _currentState.turnRight = _currentKeys[GLFW_KEY_RIGHT];
-  _currentState.turnUp    = _currentKeys[GLFW_KEY_UP];
-  _currentState.turnDown  = _currentKeys[GLFW_KEY_DOWN];
+  // Update rotation state (continuous press) - using OkKeys directly
+  _currentState.turnLeft  = isKeyHeld(OK_KEY_LEFT);
+  _currentState.turnRight = isKeyHeld(OK_KEY_RIGHT);
+  _currentState.turnUp    = isKeyHeld(OK_KEY_UP);
+  _currentState.turnDown  = isKeyHeld(OK_KEY_DOWN);
 
-  // Update camera selection
+  // Update camera selection - using OkKeys directly
   _currentState.changeCamera = -1;
   for (int i = 0; i < 9; i++) {
-    if (_currentKeys[GLFW_KEY_1 + i]) {
+    // Convert OK_KEY_1 + i to OkKey
+    OkKey okKeyNumber = static_cast<OkKey>(OK_KEY_1 + i);
+    if (okKeyNumber < OK_KEY_COUNT && _currentKeys[okKeyNumber]) {
       _currentState.changeCamera = i;
       break;
     }
   }
 
-  // Update action states (just pressed)
-  _currentState.action1 = isKeyJustPressed(GLFW_KEY_SPACE);
-  _currentState.action2 = isKeyJustPressed(GLFW_KEY_T);
-  _currentState.action3 = isKeyJustPressed(GLFW_KEY_R);
-  _currentState.action4 = isKeyJustPressed(GLFW_KEY_F);
+  // Update action states (just pressed) - using OkKeys directly
+  _currentState.action1 = isKeyJustPressed(OK_KEY_SPACE);
+  _currentState.action2 = isKeyJustPressed(OK_KEY_T);
+  _currentState.action3 = isKeyJustPressed(OK_KEY_R);
+  _currentState.action4 = isKeyJustPressed(OK_KEY_F);
 
   // Update exit state (just pressed)
-  _currentState.exit = isKeyJustPressed(GLFW_KEY_ESCAPE);
+  _currentState.exit = isKeyJustPressed(OK_KEY_ESCAPE);
 }
 
 /**
@@ -79,7 +88,10 @@ void OkInput::process() {
  * @param key The key to check.
  * @return True if the key was just pressed, false otherwise.
  */
-bool OkInput::isKeyJustPressed(int key) const {
+bool OkInput::isKeyJustPressed(OkKey key) const {
+  if (key == OK_KEY_UNKNOWN || key < 0 || key >= OK_KEY_COUNT) {
+    return false;
+  }
   return _currentKeys[key] && !_prevKeys[key];
 }
 
@@ -88,7 +100,10 @@ bool OkInput::isKeyJustPressed(int key) const {
  * @param key The key to check.
  * @return True if the key is being held down, false otherwise.
  */
-bool OkInput::isKeyHeld(int key) const {
+bool OkInput::isKeyHeld(OkKey key) const {
+  if (key == OK_KEY_UNKNOWN || key < 0 || key >= OK_KEY_COUNT) {
+    return false;
+  }
   return _currentKeys[key];
 }
 
@@ -97,7 +112,10 @@ bool OkInput::isKeyHeld(int key) const {
  * @param key The key to check.
  * @return True if the key was just released, false otherwise.
  */
-bool OkInput::isKeyJustReleased(int key) const {
+bool OkInput::isKeyJustReleased(OkKey key) const {
+  if (key == OK_KEY_UNKNOWN || key < 0 || key >= OK_KEY_COUNT) {
+    return false;
+  }
   return !_currentKeys[key] && _prevKeys[key];
 }
 
