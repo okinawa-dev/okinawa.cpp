@@ -70,6 +70,9 @@ public:
   void setMaxVelocity(float maxVelocity) { maxVel = maxVelocity; }
   void setAcceleration(float acceleration) { accel = acceleration; }
 
+  // Getters
+  const std::string &getName() const { return name; }
+
   // Hierarchy
   void      attach(OkObject *object);
   void      attachTo(OkObject *parent);
