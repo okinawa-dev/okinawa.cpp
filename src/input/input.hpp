@@ -1,7 +1,7 @@
 #ifndef OK_INPUT_HPP
 #define OK_INPUT_HPP
 
-#include "../core/gl_config.hpp"
+#include "../core/gl_config.hpp"  // IWYU pragma: keep
 #include "keys.hpp"
 
 /**

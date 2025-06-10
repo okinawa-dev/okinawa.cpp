@@ -1,5 +1,6 @@
 #include "keys.hpp"
-#include "../core/gl_config.hpp"
+
+#include "../core/gl_config.hpp"  // IWYU pragma: keep
 
 // Lookup table for OkKey to GLFW key mapping
 static const int okKeyToGLFWTable[OK_KEY_COUNT] = {
