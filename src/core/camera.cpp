@@ -3,9 +3,19 @@
 #include "../config/config.hpp"
 #include "../core/gl_config.hpp"
 #include "core.hpp"
+#include "core/object.hpp"
+#include "math/point.hpp"
+#include "math/rotation.hpp"
 #include <GLFW/glfw3.h>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_float3.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/matrix.hpp>
+#include <glm/trigonometric.hpp>
+#include <string>
 
 /**
  * @brief Constructor for the OkCamera class.

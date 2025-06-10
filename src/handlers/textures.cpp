@@ -1,5 +1,9 @@
 #include "textures.hpp"
 #include "../utils/logger.hpp"
+#include "item/texture.hpp"
+#include <map>
+#include <string>
+#include <vector>
 
 OkTextureHandler *OkTextureHandler::instance = nullptr;
 

@@ -1,7 +1,9 @@
 #include "files.hpp"
 #include "logger.hpp"
 #include <fstream>
+#include <ios>
 #include <sstream>
+#include <string>
 
 /**
  * @brief Read the contents of a file into a string.

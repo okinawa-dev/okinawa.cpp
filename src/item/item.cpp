@@ -1,9 +1,17 @@
 #include "item.hpp"
 #include "../config/config.hpp"
+#include "../core/gl_config.hpp"
 #include "../handlers/textures.hpp"
 #include "../utils/logger.hpp"
+#include "core/object.hpp"
+#include "item/texture.hpp"
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <glm/ext/matrix_float4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <string>
 
 /**
  * @brief Create a new item with the given name, vertices, and indices.

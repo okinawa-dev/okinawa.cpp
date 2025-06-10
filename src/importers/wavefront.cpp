@@ -1,7 +1,13 @@
 #include "wavefront.hpp"
 #include "../utils/logger.hpp"
+#include "item/item.hpp"
+#include <algorithm>
+#include <cstddef>
 #include <fstream>
 #include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 /**
  * @brief Method to check if the Wavefront file has texture coordinates.

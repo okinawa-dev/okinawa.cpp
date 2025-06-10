@@ -4,9 +4,17 @@
 #include "../shaders/shaders.hpp"
 #include "../utils/files.hpp"
 #include "../utils/logger.hpp"
+#include "core/camera.hpp"
+#include "gl_config.hpp"
+#include "handlers/scenes.hpp"
+#include "math/rotation.hpp"
+#include "scene/scene.hpp"
+#include <algorithm>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/trigonometric.hpp>
 #include <string>
+#include <vector>
 
 // Static member initialization
 GLFWwindow             *OkCore::_window = nullptr;

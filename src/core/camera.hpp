@@ -2,9 +2,11 @@
 #define OK_CAMERA_HPP
 
 #include "../core/object.hpp"
+#include <glm/ext/matrix_float4x4.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <string>
 
 /**
  * @brief OkCamera class to handle camera properties and transformations.

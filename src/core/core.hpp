@@ -4,7 +4,7 @@
 #include "../handlers/scenes.hpp"
 #include "../input/input.hpp"
 #include "./camera.hpp"
-#include <GLFW/glfw3.h>
+#include "gl_config.hpp"
 #include <functional>
 #include <vector>
 

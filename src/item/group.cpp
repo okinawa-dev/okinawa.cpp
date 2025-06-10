@@ -1,6 +1,11 @@
 #include "group.hpp"
 #include "../utils/logger.hpp"
+#include "core/object.hpp"
+#include "item/item.hpp"
 #include <algorithm>
+#include <cstddef>
+#include <string>
+#include <vector>
 
 /**
  * @brief Create a new item group with the given name.

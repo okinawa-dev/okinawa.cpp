@@ -1,4 +1,10 @@
 #include "math.hpp"
+#include "math/point.hpp"
+#include "math/rotation.hpp"
+#include <cmath>
+#include <glm/common.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/geometric.hpp>
 // #include <glm/gtx/rotate_vector.hpp>
 
 /**

@@ -1,5 +1,7 @@
 #include "scenes.hpp"
 #include "../utils/logger.hpp"
+#include "scene/scene.hpp"
+#include <string>
 
 /**
  * @brief Constructor for the OkSceneHandler class.

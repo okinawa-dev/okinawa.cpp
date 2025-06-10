@@ -1,4 +1,7 @@
 #include "./strings.hpp"
+#include <cctype>
+#include <cstddef>
+#include <string>
 
 /**
  * @brief Trims whitespace from both ends of a string

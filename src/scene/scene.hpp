@@ -2,6 +2,7 @@
 #define OK_SCENE_HPP
 
 #include "../core/object.hpp"
+#include <cstddef>
 #include <string>
 #include <vector>
 

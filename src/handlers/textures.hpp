@@ -4,6 +4,7 @@
 #include "../item/texture.hpp"
 #include <map>
 #include <string>
+#include <vector>
 
 class OkTextureHandler {
 private:

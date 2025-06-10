@@ -1,6 +1,7 @@
 #include "point.hpp"
 #include <glm/geometric.hpp>
 #include <sstream>
+#include <string>
 
 /**
  * @brief Constructor for OkPoint class.

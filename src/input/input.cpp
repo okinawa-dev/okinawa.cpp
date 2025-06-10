@@ -1,4 +1,5 @@
 #include "input.hpp"
+#include "../core/gl_config.hpp"
 #include "../utils/logger.hpp"
 #include "keys.hpp"
 #include <cstring>

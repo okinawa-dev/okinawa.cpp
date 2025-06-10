@@ -3,6 +3,7 @@
 
 #include "../core/object.hpp"
 #include "item.hpp"
+#include <cstddef>
 #include <string>
 #include <vector>
 

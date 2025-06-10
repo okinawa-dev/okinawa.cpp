@@ -1,10 +1,14 @@
 // NOLINTBEGIN(readability-magic-numbers)
 
 #include "../src/math/math.hpp"
+#include "math/point.hpp"
+#include "math/rotation.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <cmath>
+#include <glm/ext/scalar_constants.hpp>
 #include <glm/gtc/constants.hpp>
-#include <iostream>
 
 using Catch::Matchers::WithinAbs;
 

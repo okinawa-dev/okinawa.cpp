@@ -1,5 +1,4 @@
 
-#include "../src/config/config.hpp"
 #include "../src/core/gl_config.hpp"
 #include "../src/shaders/shaders.hpp"
 #include <catch2/catch_test_macros.hpp>

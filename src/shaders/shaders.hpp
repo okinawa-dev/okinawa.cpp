@@ -1,7 +1,7 @@
 #ifndef OK_SHADERS_HPP
 #define OK_SHADERS_HPP
 
-#include <GLFW/glfw3.h>
+#include "../core/gl_config.hpp"
 #include <string>
 
 class OkShader {

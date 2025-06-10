@@ -1,5 +1,7 @@
 #include "texture.hpp"
+#include "../core/gl_config.hpp"
 #include "../utils/logger.hpp"
+#include <string>
 
 // Include stb_image for image loading
 #define STB_IMAGE_IMPLEMENTATION

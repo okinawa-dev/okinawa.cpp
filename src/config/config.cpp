@@ -1,5 +1,7 @@
 #include "config.hpp"
 #include "../utils/logger.hpp"
+#include <exception>
+#include <string>
 
 /**
  * @brief OkConfig constructor initializes default values for the configuration.

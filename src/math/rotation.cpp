@@ -1,4 +1,12 @@
 #include "rotation.hpp"
+#include "math/point.hpp"
+#include <cmath>
+#include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/ext/vector_float4.hpp>
+#include <glm/geometric.hpp>
+#include <glm/gtc/constants.hpp>
+#include <string>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/euler_angles.hpp>
 #include <sstream>

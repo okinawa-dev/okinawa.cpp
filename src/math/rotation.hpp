@@ -2,7 +2,10 @@
 #define OK_ROTATION_HPP
 
 #include "point.hpp"
+#include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/vector_float3.hpp>
 #include <glm/glm.hpp>
+#include <string>
 
 class OkRotation {
 private:

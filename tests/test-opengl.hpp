@@ -1,10 +1,9 @@
 #ifndef TEST_OPENGL_HPP
 #define TEST_OPENGL_HPP
 
-#include "../src/config/config.hpp"
 #include "../src/core/gl_config.hpp"
-#include "../src/shaders/shaders.hpp"
 #include <GLFW/glfw3.h>
+#include <stdexcept>
 
 /**
  * @brief Test GLFW context for OpenGL rendering.

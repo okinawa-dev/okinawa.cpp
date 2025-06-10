@@ -3,8 +3,10 @@
 
 #include "../math/point.hpp"
 #include "../math/rotation.hpp"
+#include <glm/ext/matrix_float4x4.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <string>
 
 class OkObject {
 protected:

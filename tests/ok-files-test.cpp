@@ -1,5 +1,8 @@
 #include "../src/utils/files.hpp"
+#include <algorithm>
 #include <catch2/catch_test_macros.hpp>
+#include <cstddef>
+#include <string>
 
 TEST_CASE("OkFiles basic operations", "[files]") {
   SECTION("Read existing file") {
