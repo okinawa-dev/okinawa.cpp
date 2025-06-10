@@ -16,6 +16,11 @@
 #include <GL/glew.h>
 #endif
 
-#include <GLFW/glfw3.h>
+// the pragmas below are used to control include-what-you-use (iwyu) behavior
+// and ensure that the necessary OpenGL headers are exported correctly
+// and to avoid warnings about missing includes when using strict configuration
+
+#include <GLFW/glfw3.h>      // IWYU pragma: export
+#include <OpenGL/gltypes.h>  // IWYU pragma: export
 
 #endif  // OK_GL_CONFIG_HPP
