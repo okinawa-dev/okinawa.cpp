@@ -57,4 +57,7 @@ assets/test/*
 okinawa
 tests/okinawa*
 
+# copilot
+.github/copilot*
+
 .cache/
