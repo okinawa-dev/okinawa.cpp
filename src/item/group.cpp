@@ -191,6 +191,21 @@ OkItem *OkItemGroup::getItem(int index) const {
 }
 
 /**
+ * @brief Get all items in the group.
+ * @return Vector of all item pointers in the group.
+ */
+std::vector<OkItem *> OkItemGroup::getAllItems() const {
+  std::vector<OkItem *> allItems;
+  allItems.reserve(items.size());
+
+  for (size_t i = 0; i < items.size(); i++) {
+    allItems.push_back(items[i].item);
+  }
+
+  return allItems;
+}
+
+/**
  * @brief Get the index of an item.
  * @param item The item to find.
  * @return The index of the item, or -1 if not found.
@@ -343,4 +358,40 @@ void OkItemGroup::drawSelf() {
 void OkItemGroup::updateTransformSelf() {
   // Group doesn't have its own geometry, but this is needed for the hierarchy
   // Individual items maintain their own transforms
+}
+
+/**
+ * @brief Set wireframe mode for all items in the group.
+ * @param wireframe True to enable wireframe, false to disable.
+ */
+void OkItemGroup::setWireframe(bool wireframe) {
+  for (size_t i = 0; i < items.size(); i++) {
+    if (items[i].item) {
+      items[i].item->setWireframe(wireframe);
+    }
+  }
+}
+
+/**
+ * @brief Set visibility for all items in the group.
+ * @param visible True to make items visible, false to hide them.
+ */
+void OkItemGroup::setVisible(bool visible) {
+  for (size_t i = 0; i < items.size(); i++) {
+    if (items[i].item) {
+      items[i].item->setVisible(visible);
+    }
+  }
+}
+
+/**
+ * @brief Set draw origin axis for all items in the group.
+ * @param drawAxis True to enable axis drawing, false to disable.
+ */
+void OkItemGroup::setDrawOriginAxisForAll(bool drawAxis) {
+  for (size_t i = 0; i < items.size(); i++) {
+    if (items[i].item) {
+      items[i].item->setDrawOriginAxis(drawAxis);
+    }
+  }
 }

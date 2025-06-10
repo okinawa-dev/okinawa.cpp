@@ -57,6 +57,7 @@ public:
   size_t                   getItemCount() const { return items.size(); }
   OkItem                  *getItem(int index) const;
   int                      getItemIndex(OkItem *item) const;
+  std::vector<OkItem *>    getAllItems() const;
   std::vector<std::string> getItemTags(int itemIndex) const;
   std::vector<std::string> getItemTags(OkItem *item) const;
   std::vector<std::string> getAllTags() const;
@@ -65,6 +66,11 @@ public:
 
   // Statistics
   int getItemCountWithTag(const std::string &tag) const;
+
+  // Bulk operations on all items
+  void setWireframe(bool wireframe);
+  void setVisible(bool visible);
+  void setDrawOriginAxisForAll(bool drawAxis);
 };
 
 #endif  // OK_ITEM_GROUP_HPP

@@ -1,7 +1,7 @@
 #ifndef OK_SCENE_HPP
 #define OK_SCENE_HPP
 
-#include "../item/item.hpp"
+#include "../core/object.hpp"
 #include <string>
 #include <vector>
 
@@ -19,7 +19,7 @@ public:
   OkScene &operator=(const OkScene &) = delete;
 
   // Scene management
-  void addItem(OkItem *item);
+  void addObject(OkObject *object);
   void step(float dt);
   void draw();
   void activate();
@@ -30,14 +30,14 @@ public:
   bool               isPlayable() const { return _isPlayable; }
   bool               isCurrent() const { return _isCurrent; }
   const std::string &getName() const { return name; }
-  size_t             getItemCount() const { return rootItems.size(); }
+  size_t             getObjectCount() const { return rootObjects.size(); }
 
 private:
-  std::string           name;
-  bool                  _isActive;
-  bool                  _isPlayable;
-  bool                  _isCurrent;
-  std::vector<OkItem *> rootItems;  // Only stores items without parents
+  std::string             name;
+  bool                    _isActive;
+  bool                    _isPlayable;
+  bool                    _isCurrent;
+  std::vector<OkObject *> rootObjects;  // Only stores objects without parents
 };
 
 #endif

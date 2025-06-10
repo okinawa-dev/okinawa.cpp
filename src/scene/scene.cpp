@@ -16,57 +16,58 @@ OkScene::OkScene(const std::string &name) {
 
 /**
  * @brief Destructor for the OkScene class.
- * Cleans up all root items and their children.
+ * Cleans up all root objects and their children.
  */
 OkScene::~OkScene() {
-  // Clean up root items - their children will be deleted recursively
-  for (size_t i = 0; i < rootItems.size(); ++i) {
-    delete rootItems[i];
+  // Clean up root objects - their children will be deleted recursively
+  for (size_t i = 0; i < rootObjects.size(); ++i) {
+    delete rootObjects[i];
   }
 
-  rootItems.clear();
+  rootObjects.clear();
 }
 
 /**
- * @brief Add an item to the scene.
- * @param item The item to add.
+ * @brief Add an object to the scene.
+ * @param object The object to add (can be OkItem, OkItemGroup, etc.).
  */
-void OkScene::addItem(OkItem *item) {
-  if (!item)
+void OkScene::addObject(OkObject *object) {
+  if (!object)
     return;
 
-  // Only add items that don't have a parent
-  if (item->getParent() == nullptr) {
-    rootItems.push_back(item);
+  // Only add objects that don't have a parent
+  if (object->getParent() == nullptr) {
+    rootObjects.push_back(object);
   } else {
-    OkLogger::warning("Scene :: Cannot add item with parent directly to scene");
+    OkLogger::warning(
+        "Scene :: Cannot add object with parent directly to scene");
   }
 }
 
 /**
- * @brief Update the scene and all its items.
+ * @brief Update the scene and all its objects.
  * @param dt The delta time since the last update.
  */
 void OkScene::step(float dt) {
   if (!_isActive)
     return;
 
-  // Update root items (they will update their children)
-  for (size_t i = 0; i < rootItems.size(); ++i) {
-    rootItems[i]->step(dt);
+  // Update root objects (they will update their children)
+  for (size_t i = 0; i < rootObjects.size(); ++i) {
+    rootObjects[i]->step(dt);
   }
 }
 
 /**
- * @brief Draw the scene and all its items.
+ * @brief Draw the scene and all its objects.
  */
 void OkScene::draw() {
   if (!_isActive)
     return;
 
-  // Draw root items (they will draw their children)
-  for (size_t i = 0; i < rootItems.size(); ++i) {
-    rootItems[i]->draw();
+  // Draw root objects (they will draw their children)
+  for (size_t i = 0; i < rootObjects.size(); ++i) {
+    rootObjects[i]->draw();
   }
 }
 
