@@ -39,5 +39,5 @@ class OkinawaConan(ConanFile):
         cmake.install()
         
     def package_info(self):
-        self.cpp_info.libs = ["okinawa_lib"]
+        self.cpp_info.libs = ["okinawa"]
         self.cpp_info.includedirs = ["include"]

@@ -6,7 +6,7 @@
 
 This is a work in progress C++ 3D game engine, inspired by [okinawa.js](https://github.com/okinawa-dev/okinawa.js), a previous version coded in JavaScript. The goal is to create a game engine that is easy to use, flexible, and powerful. The engine is designed to be modular, so you can easily add or remove features as needed.
 
-At the moment I'm not using it as a compiled library, but as a git submodule included in the games I develop. I'm currently testing it on a MacOS machine. Feedback is welcome.
+The engine is distributed as a Conan package for easy integration into C++ projects. I'm currently testing it on a MacOS machine. Feedback is welcome.
 
 With just this repository, without a game, you can just run the test suite and see the coverage report. The engine is not yet ready for production use, but it is a good starting point for learning and experimenting with C++ and game development.
 
@@ -73,8 +73,7 @@ cmake --preset debug
 cmake --build --preset debug
 
 # Or build specific targets
-cmake --build --preset debug --target okinawa       # Just the executable
-cmake --build --preset debug --target okinawa_lib   # Just the library
+cmake --build --preset debug --target okinawa       # Just the library
 cmake --build --preset debug --target okinawa_test  # Just the tests
 ```
 
@@ -91,9 +90,67 @@ cmake --preset release
 cmake --build --preset release
 
 # Or build specific targets
-cmake --build --preset release --target okinawa       # Just the executable
-cmake --build --preset release --target okinawa_lib   # Just the library
+cmake --build --preset release --target okinawa       # Just the library
 ```
+
+## Package Distribution
+
+### Creating the Conan Package
+
+To use okinawa.cpp in other projects, you need to create it as a local Conan package:
+
+```bash
+# Create the package in your local Conan cache
+conan create . --build=missing
+
+# This will build and install the package as okinawa/0.1.0
+```
+
+The package includes:
+- **Library**: `libokinawa.a` (static library)
+- **Headers**: All public headers under `okinawa/` namespace
+- **Dependencies**: Automatically manages glm, glfw, stb, and OpenGL dependencies
+
+### Using the Package in Other Projects
+
+In your project's `conanfile.txt`:
+
+```ini
+[requires]
+okinawa/0.1.0
+# ... other dependencies ...
+
+[generators]
+CMakeDeps
+CMakeToolchain
+```
+
+In your project's `CMakeLists.txt`:
+
+```cmake
+find_package(okinawa REQUIRED)
+target_link_libraries(your_target PRIVATE okinawa::okinawa)
+```
+
+Include headers in your C++ code:
+
+```cpp
+#include "okinawa/core/core.hpp"
+#include "okinawa/core/camera.hpp"
+// ... other okinawa headers as needed ...
+```
+
+### Package Development Workflow
+
+When developing the okinawa engine:
+
+1. **Make changes** to the source code
+2. **Test locally** using the build commands above
+3. **Recreate the package** when ready to use in other projects:
+   ```bash
+   conan create . --build=missing
+   ```
+4. **Rebuild dependent projects** to use the updated package
 
 ### Other tools
 

@@ -75,28 +75,28 @@ file(GLOB_RECURSE PROJECT_SOURCES
     src/*/*.hpp)
 
 # Create main library target
-add_library(${PROJECT_NAME}_lib STATIC ${PROJECT_SOURCES})
-target_include_directories(${PROJECT_NAME}_lib
+add_library(${PROJECT_NAME} STATIC ${PROJECT_SOURCES})
+target_include_directories(${PROJECT_NAME}
     PUBLIC
         ${CMAKE_SOURCE_DIR}/src
 )
 
 # Link libraries to the lib target (conditional for packaging)
 if(glm_FOUND AND glfw3_FOUND AND stb_FOUND AND opengl_system_FOUND)
-    target_link_libraries(${PROJECT_NAME}_lib
+    target_link_libraries(${PROJECT_NAME}
         PUBLIC
             glm::glm
             glfw
             stb::stb
             opengl::opengl
     )
-    message(STATUS "Linking dependencies to okinawa_lib")
+    message(STATUS "Linking dependencies to okinawa")
 else()
     message(STATUS "Skipping dependency linking - not all dependencies found")
 endif()
 
 if(APPLE)
-    target_link_libraries(${PROJECT_NAME}_lib
+    target_link_libraries(${PROJECT_NAME}
         PRIVATE
             "-framework Cocoa"
             "-framework IOKit"
@@ -106,7 +106,7 @@ endif()
 
 # Enable warnings for library target
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    target_compile_options(${PROJECT_NAME}_lib PRIVATE
+    target_compile_options(${PROJECT_NAME} PRIVATE
         -Wall 
         # -Wextra 
         # -Wpedantic
@@ -136,7 +136,7 @@ if(OKINAWA_BUILD_TESTS)
     add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})
     target_link_libraries(${PROJECT_NAME}_test
         PRIVATE
-            ${PROJECT_NAME}_lib
+            ${PROJECT_NAME}
             Catch2::Catch2WithMain
     )
 
@@ -159,8 +159,8 @@ if(OKINAWA_BUILD_TESTS)
         set(COVERAGE_LINK_FLAGS -fprofile-instr-generate)
         
         # Enable coverage for the library
-        target_compile_options(${PROJECT_NAME}_lib PRIVATE ${COVERAGE_FLAGS})
-        target_link_options(${PROJECT_NAME}_lib PRIVATE ${COVERAGE_LINK_FLAGS})
+        target_compile_options(${PROJECT_NAME} PRIVATE ${COVERAGE_FLAGS})
+        target_link_options(${PROJECT_NAME} PRIVATE ${COVERAGE_LINK_FLAGS})
         
         # Enable coverage for tests
         target_compile_options(${PROJECT_NAME}_test PRIVATE ${COVERAGE_FLAGS})
@@ -191,7 +191,7 @@ if(OKINAWA_BUILD_TESTS)
         
         # Generate coverage report
         COMMAND llvm-cov show 
-                $<TARGET_FILE:${PROJECT_NAME}_lib>
+                $<TARGET_FILE:${PROJECT_NAME}>
                 -instr-profile=${CMAKE_BINARY_DIR}/${PROJECT_NAME}.profdata
                 -format=html
                 -show-line-counts-or-regions
@@ -220,7 +220,7 @@ if(OKINAWA_BUILD_TESTS)
 endif()
 
 # Install targets for Conan packaging
-install(TARGETS ${PROJECT_NAME}_lib
+install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
