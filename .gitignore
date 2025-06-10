@@ -56,3 +56,5 @@ assets/test/*
 # tmp
 okinawa
 tests/okinawa*
+
+.cache/

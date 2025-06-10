@@ -7,11 +7,17 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 option(OKINAWA_BUILD_TESTS "Build okinawa tests" OFF)
 
-# Conan 2.x + CMake integration requires setting the toolchain before project()
-if(NOT EXISTS "${CMAKE_SOURCE_DIR}/build/conan_toolchain.cmake")
-    message(FATAL_ERROR "The file conan_toolchain.cmake doesn't exist, you must install dependencies first:\nconan install . --output-folder=build --build=missing")
+# Conan 2.x + CMake integration - handle both standalone and Conan builds
+if(EXISTS "${CMAKE_SOURCE_DIR}/build/conan_toolchain.cmake")
+    include("${CMAKE_SOURCE_DIR}/build/conan_toolchain.cmake")
+    message(STATUS "Using Conan toolchain from ${CMAKE_SOURCE_DIR}/build/conan_toolchain.cmake")
+elseif(DEFINED CMAKE_TOOLCHAIN_FILE AND EXISTS "${CMAKE_TOOLCHAIN_FILE}")
+    # Conan build environment - toolchain already set
+    message(STATUS "Using toolchain from CMAKE_TOOLCHAIN_FILE: ${CMAKE_TOOLCHAIN_FILE}")
+else()
+    message(WARNING "No Conan toolchain found - using default configuration")
+    message(STATUS "To use Conan dependencies, run: conan install . --output-folder=build --build=missing")
 endif()
-include("${CMAKE_SOURCE_DIR}/build/conan_toolchain.cmake")
 
 project(okinawa 
     VERSION 0.1.0
@@ -45,11 +51,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # Generate compile_commands.json for tooling
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Find dependencies (Conan 2.x style)
-find_package(glm REQUIRED)
-find_package(glfw3 REQUIRED)
-find_package(stb REQUIRED)
-find_package(opengl_system REQUIRED)
+# Find dependencies (Conan 2.x style) - make optional for packaging
+find_package(glm QUIET)
+find_package(glfw3 QUIET)  
+find_package(stb QUIET)
+find_package(opengl_system QUIET)
+
+if(NOT glm_FOUND OR NOT glfw3_FOUND OR NOT stb_FOUND OR NOT opengl_system_FOUND)
+    message(STATUS "Some dependencies not found - this is okay for packaging")
+    message(STATUS "glm: ${glm_FOUND}, glfw3: ${glfw3_FOUND}, stb: ${stb_FOUND}, opengl_system: ${opengl_system_FOUND}")
+endif()
 
 if(OKINAWA_BUILD_TESTS)
     # Find Catch2 only if we're building tests
@@ -70,14 +81,19 @@ target_include_directories(${PROJECT_NAME}_lib
         ${CMAKE_SOURCE_DIR}/src
 )
 
-# Link libraries to the lib target
-target_link_libraries(${PROJECT_NAME}_lib
-    PUBLIC
-        glm::glm
-        glfw
-        stb::stb
-        opengl::opengl
-)
+# Link libraries to the lib target (conditional for packaging)
+if(glm_FOUND AND glfw3_FOUND AND stb_FOUND AND opengl_system_FOUND)
+    target_link_libraries(${PROJECT_NAME}_lib
+        PUBLIC
+            glm::glm
+            glfw
+            stb::stb
+            opengl::opengl
+    )
+    message(STATUS "Linking dependencies to okinawa_lib")
+else()
+    message(STATUS "Skipping dependency linking - not all dependencies found")
+endif()
 
 if(APPLE)
     target_link_libraries(${PROJECT_NAME}_lib
@@ -202,4 +218,17 @@ if(OKINAWA_BUILD_TESTS)
     include(Catch)
     catch_discover_tests(${PROJECT_NAME}_test)
 endif()
+
+# Install targets for Conan packaging
+install(TARGETS ${PROJECT_NAME}_lib
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+
+# Install headers
+install(DIRECTORY src/
+    DESTINATION include/okinawa
+    FILES_MATCHING PATTERN "*.hpp"
+)
 
