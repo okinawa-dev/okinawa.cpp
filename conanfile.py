@@ -19,9 +19,6 @@ class OkinawaConan(ConanFile):
         
     def build_requirements(self):
         self.test_requires("catch2/3.8.0")
-    
-    def layout(self):
-        cmake_layout(self)
         
     def generate(self):
         deps = CMakeDeps(self)
