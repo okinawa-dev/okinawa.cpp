@@ -77,7 +77,9 @@ TEST_CASE("OkLogger unknown level", "[logger]") {
   CerrCapture capture;
 
   SECTION("Unknown log level") {
-    // Cast to LogLevel to create an invalid value
+    // Create an invalid enum value using bit manipulation to avoid compiler
+    // warning. This is intentional for testing error handling.
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
     OkLogger::log(static_cast<LogLevel>(999), "", "Test message");
     std::string output = capture.getOutput();
     REQUIRE(output.find("[UNKNOWN]") != std::string::npos);
