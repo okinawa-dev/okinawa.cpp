@@ -23,7 +23,7 @@ OkInput::OkInput(GLFWwindow *window, MouseCallback callback) {
   std::memset(_currentKeys, 0, sizeof(_currentKeys));
   std::memset(_prevKeys, 0, sizeof(_prevKeys));
 
-  OkLogger::info("Setting mouse callback...");
+  OkLogger::info("Input", "Setting mouse callback...");
   glfwSetCursorPosCallback(window, _mouseCallback);
   // Hide and capture cursor
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
