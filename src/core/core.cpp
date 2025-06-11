@@ -151,7 +151,6 @@ bool OkCore::initializeShaders() {
       OkFiles::readFile("./okinawa.cpp/src/shaders/vertexshader.vert.glsl");
 
   if (fragmentShaderSource.empty() || vertexShaderSource.empty()) {
-    OkLogger::error("Core :: Failed to load shader files");
     return false;
   }
 
