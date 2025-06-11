@@ -145,14 +145,6 @@ TEST_CASE("OkLogger type filtering", "[logger]") {
     REQUIRE(OkLogger::isLogTypeEnabled("Core"));
   }
 
-  SECTION("setLogTypeEnabled function") {
-    OkLogger::setLogTypeEnabled("TestType", false);
-    REQUIRE_FALSE(OkLogger::isLogTypeEnabled("TestType"));
-
-    OkLogger::setLogTypeEnabled("TestType", true);
-    REQUIRE(OkLogger::isLogTypeEnabled("TestType"));
-  }
-
   SECTION("Enable/disable all log types") {
     // Test disabling all types
     OkLogger::disableAllLogTypes();

@@ -29,7 +29,6 @@ public:
   // Configuration methods
   static void enableLogType(const std::string &type);
   static void disableLogType(const std::string &type);
-  static void setLogTypeEnabled(const std::string &type, bool enabled);
   static bool isLogTypeEnabled(const std::string &type);
   static void enableAllLogTypes();
   static void disableAllLogTypes();
