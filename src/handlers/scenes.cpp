@@ -20,11 +20,11 @@ OkSceneHandler::OkSceneHandler() {
  */
 void OkSceneHandler::addScene(OkScene *scene, const std::string &name) {
   if (collection.size() >= MAX_SCENES) {
-    OkLogger::error("Scenes :: Cannot add more scenes, maximum reached");
+    OkLogger::error("Scenes", "Cannot add more scenes, maximum reached");
     return;
   }
 
-  OkLogger::info("Scenes :: Add Scene: " + name);
+  OkLogger::info("Scenes", "Add Scene: " + name);
 
   collection.push_back({scene, name});
 }
@@ -38,12 +38,12 @@ void OkSceneHandler::addScene(OkScene *scene, const std::string &name) {
 void OkSceneHandler::insertScene(OkScene *scene, const std::string &name,
                                  int index) {
   if (collection.size() >= MAX_SCENES) {
-    OkLogger::error("Scenes :: Cannot add more scenes, maximum reached");
+    OkLogger::error("Scenes", "Cannot add more scenes, maximum reached");
     return;
   }
 
   if (index > collection.size()) {
-    OkLogger::error("Scenes :: Invalid index for scene insertion");
+    OkLogger::error("Scenes", "Invalid index for scene insertion");
     return;
   }
 
@@ -56,7 +56,7 @@ void OkSceneHandler::insertScene(OkScene *scene, const std::string &name,
  */
 void OkSceneHandler::setScene(int index) {
   if (index >= collection.size()) {
-    OkLogger::error("Scenes :: Invalid scene index");
+    OkLogger::error("Scenes", "Invalid scene index");
     return;
   }
 
@@ -73,8 +73,8 @@ void OkSceneHandler::setScene(int index) {
   // Activate new scene
   currentScene->activate();
 
-  OkLogger::info("Scenes :: Set Scene: " + currentSceneName + " (" +
-                 std::to_string(index) + ")");
+  OkLogger::info("Scenes", "Set Scene: " + currentSceneName + " (" +
+                               std::to_string(index) + ")");
 }
 
 /**

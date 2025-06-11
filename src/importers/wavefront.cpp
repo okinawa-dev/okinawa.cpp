@@ -42,7 +42,7 @@ bool OkWavefrontImporter::parseGeometry(const std::string         &filename,
                                         std::vector<unsigned int> &indices) {
   std::ifstream file(filename);
   if (!file.is_open()) {
-    OkLogger::error("Wavefront :: Error opening file: " + filename);
+    OkLogger::error("Wavefront", "Error opening file: " + filename);
     return false;
   }
 
@@ -90,7 +90,7 @@ bool OkWavefrontImporter::parseGeometryWithUV(const std::string &filename,
                                               TempMesh          &mesh) {
   std::ifstream file(filename);
   if (!file.is_open()) {
-    OkLogger::error("Wavefront :: Error opening file: " + filename);
+    OkLogger::error("Wavefront", "Error opening file: " + filename);
     return false;
   }
 
@@ -187,15 +187,16 @@ std::string OkWavefrontImporter::getItemName(const std::string &filename) {
  */
 OkItem *OkWavefrontImporter::importFile(const std::string &filename) {
   bool hasUV = hasTextureCoordinates(filename);
-  OkLogger::info("Wavefront :: File " + filename +
-                 (hasUV ? " has" : " does not have") + " texture coordinates");
+  OkLogger::info("Wavefront", "File " + filename +
+                                  (hasUV ? " has" : " does not have") +
+                                  " texture coordinates");
 
   if (!hasUV) {
     std::vector<float>        vertices;
     std::vector<unsigned int> indices;
 
     if (!parseGeometry(filename, vertices, indices)) {
-      OkLogger::error("Wavefront :: Failed to parse geometry from " + filename);
+      OkLogger::error("Wavefront", "Failed to parse geometry from " + filename);
       return nullptr;
     }
 
@@ -206,8 +207,8 @@ OkItem *OkWavefrontImporter::importFile(const std::string &filename) {
   // else {
   TempMesh mesh;
   if (!parseGeometryWithUV(filename, mesh)) {
-    OkLogger::error("Wavefront :: Failed to parse geometry with UV from " +
-                    filename);
+    OkLogger::error("Wavefront",
+                    "Failed to parse geometry with UV from " + filename);
     return nullptr;
   }
 

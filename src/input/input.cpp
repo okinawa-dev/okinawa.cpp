@@ -9,7 +9,7 @@
  */
 OkInput::OkInput(GLFWwindow *window, MouseCallback callback) {
   if (!window) {
-    OkLogger::error("Input :: Window is null");
+    OkLogger::error("Input", "Window is null");
   }
 
   _window        = window;

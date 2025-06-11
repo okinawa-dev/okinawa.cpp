@@ -76,7 +76,7 @@ int OkConfig::getInt(const std::string &key) {
   try {
     return getConfig().intValues.at(key);
   } catch (const std::exception &e) {
-    OkLogger::error("Config :: Failed to get int value for key: " + key);
+    OkLogger::error("Config", "Failed to get int value for key: " + key);
     return 0;
   }
 }
@@ -90,7 +90,7 @@ float OkConfig::getFloat(const std::string &key) {
   try {
     return getConfig().floatValues.at(key);
   } catch (const std::exception &e) {
-    OkLogger::error("Config :: Failed to get float value for key: " + key);
+    OkLogger::error("Config", "Failed to get float value for key: " + key);
     return 0.0f;
   }
 }
@@ -104,7 +104,7 @@ bool OkConfig::getBool(const std::string &key) {
   try {
     return getConfig().boolValues.at(key);
   } catch (const std::exception &e) {
-    OkLogger::error("Config :: Failed to get bool value for key: " + key);
+    OkLogger::error("Config", "Failed to get bool value for key: " + key);
     return false;
   }
 }

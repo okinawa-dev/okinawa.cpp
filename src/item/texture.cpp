@@ -20,15 +20,15 @@ OkTexture::OkTexture(const std::string &path) {
   height     = 0;
   channels   = 0;
 
-  OkLogger::info("Texture :: Loading texture: " + path);
+  OkLogger::info("Texture", "Loading texture: " + path);
 
   // Load image data
   stbi_set_flip_vertically_on_load(true);
   unsigned char *data = stbi_load(path.c_str(), &width, &height, &channels, 0);
 
   if (!data) {
-    OkLogger::error("Texture :: Failed to load texture: " + path + " (" +
-                    std::string(stbi_failure_reason()) + ")");
+    OkLogger::error("Texture", "Failed to load texture: " + path + " (" +
+                                   std::string(stbi_failure_reason()) + ")");
     return;
   }
 

@@ -86,7 +86,7 @@ OkTexture *OkTextureHandler::createTextureFromFile(const std::string &path) {
   entry.refCount   = 1;
   textureMap[path] = entry;
 
-  OkLogger::info("TextureHandler :: Created texture '" + path + "' from file");
+  OkLogger::info("TextureHandler", "Created texture '" + path + "' from file");
   return texture;
 }
 
@@ -127,9 +127,10 @@ OkTexture *OkTextureHandler::createTextureFromRawData(const std::string   &name,
   entry.refCount   = 1;
   textureMap[name] = entry;
 
-  OkLogger::info("TextureHandler :: Created texture '" + name +
-                 "' from raw data (" + std::to_string(width) + "x" +
-                 std::to_string(height) + ")");
+  OkLogger::info("TextureHandler", "Created texture '" + name +
+                                       "' from raw data (" +
+                                       std::to_string(width) + "x" +
+                                       std::to_string(height) + ")");
 
   return texture;
 }
@@ -160,7 +161,7 @@ void OkTextureHandler::removeReference(const std::string &name) {
     it->second.refCount--;
 
     if (it->second.refCount <= 0) {
-      OkLogger::info("TextureHandler :: Removing texture: " + name);
+      OkLogger::info("TextureHandler", "Removing texture: " + name);
       delete it->second.texture;
       textureMap.erase(it);
     }

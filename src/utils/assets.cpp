@@ -11,15 +11,15 @@
  * @return True if initialization was successful, false otherwise.
  */
 bool OkAssets::initialize() {
-  OkLogger::info("Assets :: Initializing asset management system...");
+  OkLogger::info("Assets", "Initializing asset management system...");
 
   if (!discoverEngineAssetRoot()) {
-    OkLogger::error("Assets :: Failed to discover engine asset root");
+    OkLogger::error("Assets", "Failed to discover engine asset root");
     return false;
   }
 
-  OkLogger::info("Assets :: Engine asset root: " +
-                 getMutableEngineRoot().string());
+  OkLogger::info("Assets",
+                 "Engine asset root: " + getMutableEngineRoot().string());
   return true;
 }
 
@@ -114,13 +114,13 @@ std::string OkAssets::loadShaderSource(const std::string &shaderName) {
   std::filesystem::path shaderPath = getShaderPath(shaderName);
 
   if (!exists(shaderPath)) {
-    OkLogger::error("Assets :: Shader file not found: " + shaderPath.string());
+    OkLogger::error("Assets", "Shader file not found: " + shaderPath.string());
     return "";
   }
 
   std::string source = OkFiles::readFile(shaderPath.string());
   if (source.empty()) {
-    OkLogger::error("Assets :: Failed to load shader: " + shaderName);
+    OkLogger::error("Assets", "Failed to load shader: " + shaderName);
   }
 
   return source;
@@ -133,7 +133,7 @@ std::string OkAssets::loadShaderSource(const std::string &shaderName) {
  */
 void OkAssets::setProjectAssetRoot(const std::filesystem::path &path) {
   getMutableProjectRoot() = path;
-  OkLogger::info("Assets :: Project asset root set to: " + path.string());
+  OkLogger::info("Assets", "Project asset root set to: " + path.string());
 }
 
 /**

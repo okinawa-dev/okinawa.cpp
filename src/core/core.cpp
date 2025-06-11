@@ -31,11 +31,11 @@ OkInput                *OkCore::_input         = nullptr;
  * @return True if initialization was successful, false otherwise.
  */
 bool OkCore::initialize() {
-  OkLogger::info("Core :: Initializing engine...");
+  OkLogger::info("Core", "Initializing engine...");
 
   // Initialize asset management system first
   if (!OkAssets::initialize()) {
-    OkLogger::error("Core :: Failed to initialize asset system");
+    OkLogger::error("Core", "Failed to initialize asset system");
     return false;
   }
 
@@ -50,7 +50,7 @@ bool OkCore::initialize() {
 
   // Initialize shaders BEFORE scene setup
   if (!initializeShaders()) {
-    OkLogger::error("Core :: Failed to initialize shaders");
+    OkLogger::error("Core", "Failed to initialize shaders");
     return false;
   }
 
@@ -63,7 +63,7 @@ bool OkCore::initialize() {
   // Initialize input system
   _input = new OkInput(_window, &OkCore::mouseCallback);
 
-  OkLogger::info("Core :: Engine initialized successfully");
+  OkLogger::info("Core", "Engine initialized successfully");
   return true;
 }
 
@@ -81,7 +81,7 @@ void OkCore::askForExit() {
  *        and all cameras, and terminates GLFW.
  */
 void OkCore::exit() {
-  OkLogger::info("Core :: Exiting engine...");
+  OkLogger::info("Core", "Exiting engine...");
 
   // Delete scene and input handlers first
   delete _sceneHandler;
@@ -113,7 +113,7 @@ void OkCore::exit() {
   // Finally terminate GLFW
   glfwTerminate();
 
-  OkLogger::info("Core :: Engine exited successfully");
+  OkLogger::info("Core", "Engine exited successfully");
 }
 
 /**
@@ -134,7 +134,7 @@ bool OkCore::initializeOpenGL(int width, int height) {
 
   _window = glfwCreateWindow(width, height, "WADViewer", nullptr, nullptr);
   if (!_window) {
-    OkLogger::error("Core :: Failed to create GLFW window");
+    OkLogger::error("Core", "Failed to create GLFW window");
     glfwTerminate();
     return false;
   }
@@ -157,7 +157,7 @@ bool OkCore::initializeShaders() {
       OkAssets::loadShaderSource("vertexshader.vert.glsl");
 
   if (fragmentShaderSource.empty() || vertexShaderSource.empty()) {
-    OkLogger::error("Core :: Failed to load shader source files");
+    OkLogger::error("Core", "Failed to load shader source files");
     return false;
   }
 
@@ -190,7 +190,7 @@ bool OkCore::initializeShaders() {
 void OkCore::loop(const OkCoreCallback &stepCallback,
                   const OkCoreCallback &drawCallback) {
   if (!_window || _cameras.empty()) {
-    OkLogger::error("Core :: Cannot start loop without window or camera");
+    OkLogger::error("Core", "Cannot start loop without window or camera");
     return;
   }
 
@@ -246,7 +246,7 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
                          _cameras[_currentCamera]->getProjectionPtr());
 
       if (viewLoc == -1 || projLoc == -1) {
-        OkLogger::error("Core :: Cannot find view/projection uniforms");
+        OkLogger::error("Core", "Cannot find view/projection uniforms");
       }
 
       // Draw current scene

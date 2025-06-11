@@ -12,7 +12,7 @@
  * @param name The name of the item group.
  */
 OkItemGroup::OkItemGroup(const std::string &name) : OkObject(name) {
-  OkLogger::info("ItemGroup :: Creating item group " + name);
+  OkLogger::info("ItemGroup", "Creating item group " + name);
 }
 
 /**
@@ -32,22 +32,22 @@ OkItemGroup::~OkItemGroup() {
  */
 void OkItemGroup::addItem(OkItem *item, const std::vector<std::string> &tags) {
   if (!item) {
-    OkLogger::error("ItemGroup :: Cannot add null item to group");
+    OkLogger::error("ItemGroup", "Cannot add null item to group");
     return;
   }
 
   // Check if item already exists
   for (size_t i = 0; i < items.size(); i++) {
     if (items[i].item == item) {
-      OkLogger::warning("ItemGroup :: Item already exists in group");
+      OkLogger::warning("ItemGroup", "Item already exists in group");
       return;
     }
   }
 
   items.push_back(OkTaggedItem(item, tags));
 
-  OkLogger::info("ItemGroup :: Added item to group with " +
-                 std::to_string(tags.size()) + " tags");
+  OkLogger::info("ItemGroup", "Added item to group with " +
+                                  std::to_string(tags.size()) + " tags");
 }
 
 /**
@@ -74,7 +74,7 @@ void OkItemGroup::removeItem(OkItem *item) {
       return;
     }
   }
-  OkLogger::warning("ItemGroup :: Item not found in group");
+  OkLogger::warning("ItemGroup", "Item not found in group");
 }
 
 /**
@@ -83,13 +83,13 @@ void OkItemGroup::removeItem(OkItem *item) {
  */
 void OkItemGroup::removeItemByIndex(int index) {
   if (index < 0 || index >= static_cast<int>(items.size())) {
-    OkLogger::error("ItemGroup :: Invalid item index " + std::to_string(index));
+    OkLogger::error("ItemGroup", "Invalid item index " + std::to_string(index));
     return;
   }
 
   items.erase(items.begin() + index);
 
-  OkLogger::info("ItemGroup :: Removed item at index " + std::to_string(index));
+  OkLogger::info("ItemGroup", "Removed item at index " + std::to_string(index));
 }
 
 /**
@@ -106,8 +106,8 @@ void OkItemGroup::clearItems() {
  */
 void OkItemGroup::addTagToItem(int itemIndex, const std::string &tag) {
   if (itemIndex < 0 || itemIndex >= static_cast<int>(items.size())) {
-    OkLogger::error("ItemGroup :: Invalid item index " +
-                    std::to_string(itemIndex));
+    OkLogger::error("ItemGroup",
+                    "Invalid item index " + std::to_string(itemIndex));
     return;
   }
 
@@ -133,8 +133,8 @@ void OkItemGroup::addTagToItem(OkItem *item, const std::string &tag) {
  */
 void OkItemGroup::removeTagFromItem(int itemIndex, const std::string &tag) {
   if (itemIndex < 0 || itemIndex >= static_cast<int>(items.size())) {
-    OkLogger::error("ItemGroup :: Invalid item index " +
-                    std::to_string(itemIndex));
+    OkLogger::error("ItemGroup",
+                    "Invalid item index " + std::to_string(itemIndex));
     return;
   }
 
@@ -162,8 +162,8 @@ void OkItemGroup::removeTagFromItem(OkItem *item, const std::string &tag) {
 void OkItemGroup::setItemTags(int                             itemIndex,
                               const std::vector<std::string> &tags) {
   if (itemIndex < 0 || itemIndex >= static_cast<int>(items.size())) {
-    OkLogger::error("ItemGroup :: Invalid item index " +
-                    std::to_string(itemIndex));
+    OkLogger::error("ItemGroup",
+                    "Invalid item index " + std::to_string(itemIndex));
     return;
   }
 

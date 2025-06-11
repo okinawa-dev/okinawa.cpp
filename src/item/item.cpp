@@ -25,9 +25,9 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
                unsigned int *indexData, long indexCount)
     : OkObject(name) {
 
-  OkLogger::info("Item :: Creating item " + name + " with " +
-                 std::to_string(vertexCount) + " vertices and " +
-                 std::to_string(indexCount) + " indices");
+  OkLogger::info("Item", "Creating item " + name + " with " +
+                             std::to_string(vertexCount) + " vertices and " +
+                             std::to_string(indexCount) + " indices");
 
   visible       = true;
   drawWireframe = false;
@@ -127,7 +127,7 @@ void OkItem::_calculateRadius() {
   // Return early if no vertices
   if (numVertices <= 0 || !vertices) {
     radius = 0.0f;
-    OkLogger::warning("Item :: No vertices to calculate radius");
+    OkLogger::warning("Item", "No vertices to calculate radius");
     return;
   }
 
@@ -164,11 +164,12 @@ void OkItem::_calculateRadius() {
   // Calculate radius as half the diagonal of the bounding box
   radius = sqrt(width * width + height * height + depth * depth) * 0.5f;
 
-  OkLogger::info("Item :: Bounds: (" + std::to_string(minX) + ", " +
-                 std::to_string(minY) + ", " + std::to_string(minZ) + ") to (" +
-                 std::to_string(maxX) + ", " + std::to_string(maxY) + ", " +
-                 std::to_string(maxZ) + ")");
-  OkLogger::info("Item :: Calculated radius: " + std::to_string(radius));
+  OkLogger::info("Item",
+                 "Bounds: (" + std::to_string(minX) + ", " +
+                     std::to_string(minY) + ", " + std::to_string(minZ) +
+                     ") to (" + std::to_string(maxX) + ", " +
+                     std::to_string(maxY) + ", " + std::to_string(maxZ) + ")");
+  OkLogger::info("Item", "Calculated radius: " + std::to_string(radius));
 }
 
 /**
@@ -177,7 +178,7 @@ void OkItem::_calculateRadius() {
  */
 void OkItem::loadTextureFromFile(const std::string &texturePath) {
   if (texturePath.empty()) {
-    OkLogger::error("Item :: Invalid texture path");
+    OkLogger::error("Item", "Invalid texture path");
     return;
   }
 
@@ -210,7 +211,7 @@ void OkItem::stepSelf(float dt) {
  */
 void OkItem::updateTransformSelf() {
   // Log transform update for debugging
-  // OkLogger::info("Item :: Updating transform for " + name + " at position ("
+  // OkLogger::info("Item", "Updating transform for " + name + " at position ("
   // +
   //                std::to_string(position.x()) + ", " +
   //                std::to_string(position.y()) + ", " +
@@ -236,7 +237,7 @@ void OkItem::drawSelf() {
   GLint current_program;
   glGetIntegerv(GL_CURRENT_PROGRAM, &current_program);
   if (current_program == 0) {
-    OkLogger::error("Item :: No shader program in use");
+    OkLogger::error("Item", "No shader program in use");
     return;
   }
 
@@ -250,21 +251,21 @@ void OkItem::drawSelf() {
   // Set the model matrix uniform in shader
   GLint modelLoc = glGetUniformLocation(current_program, "model");
   if (modelLoc == -1) {
-    OkLogger::error("Item :: Cannot find model uniform in shader");
+    OkLogger::error("Item", "Cannot find model uniform in shader");
     return;
   }
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
   // Verify we have valid buffers
   if (VAO == 0) {
-    OkLogger::error("Item :: No VAO for item: " + name);
+    OkLogger::error("Item", "No VAO for item: " + name);
     return;
   }
 
   // Bind VAO and draw
   glBindVertexArray(VAO);
   if (glGetError() != GL_NO_ERROR) {
-    OkLogger::error("Item :: Error binding VAO for item: " + name);
+    OkLogger::error("Item", "Error binding VAO for item: " + name);
     return;
   }
 
@@ -279,7 +280,7 @@ void OkItem::drawSelf() {
     if (texLoc != -1) {
       glUniform1i(texLoc, 0);  // Tell shader to use texture unit 0
     } else {
-      OkLogger::error("Item :: Cannot find texture0 uniform in shader");
+      OkLogger::error("Item", "Cannot find texture0 uniform in shader");
     }
 
     // Set hasTexture flag

@@ -15,7 +15,7 @@ std::string OkFiles::readFile(const std::string &filename) {
   std::ifstream file(filename, std::ios::binary);
 
   if (!file.is_open()) {
-    OkLogger::error("Utils :: Failed to open file: " + filename);
+    OkLogger::error("Utils", "Failed to open file: " + filename);
     return "";
   }
 

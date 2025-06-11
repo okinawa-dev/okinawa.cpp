@@ -19,7 +19,7 @@ GLuint OkShader::compile(const std::string &source, GLenum shaderType,
 
   // if source is empty, return 0
   if (source.empty()) {
-    OkLogger::error("Shader :: Source code is empty for " + shaderName);
+    OkLogger::error("Shader", "Source code is empty for " + shaderName);
     return 0;
   }
 
@@ -34,8 +34,8 @@ GLuint OkShader::compile(const std::string &source, GLenum shaderType,
     GLint             infoLogSize = OkConfig::getInt("opengl.infolog.size");
     std::vector<char> infoLog(infoLogSize);
     glGetShaderInfoLog(shader, infoLogSize, nullptr, infoLog.data());
-    OkLogger::error("Shader :: Compilation error in " + shaderName + ":\n" +
-                    std::string(infoLog.data()));
+    OkLogger::error("Shader", "Compilation error in " + shaderName + ":\n" +
+                                  std::string(infoLog.data()));
     glDeleteShader(shader);
     return 0;
   }
@@ -72,7 +72,7 @@ GLuint OkShader::createProgram(const std::string &vertexSource,
     GLint             infoLogSize = OkConfig::getInt("opengl.infolog.size");
     std::vector<char> infoLog(infoLogSize);
     glGetProgramInfoLog(program, infoLogSize, nullptr, infoLog.data());
-    OkLogger::error("Shader :: Linking error:\n" + std::string(infoLog.data()));
+    OkLogger::error("Shader", "Linking error:\n" + std::string(infoLog.data()));
     glDeleteProgram(program);
     program = 0;
   }

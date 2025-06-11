@@ -14,7 +14,7 @@ OkScene::OkScene(const std::string &name) {
   _isPlayable = false;
   _isCurrent  = false;
 
-  OkLogger::info("Scene :: Created scene: " + name);
+  OkLogger::info("Scene", "Created scene: " + name);
 }
 
 /**
@@ -42,8 +42,8 @@ void OkScene::addObject(OkObject *object) {
   if (object->getParent() == nullptr) {
     rootObjects.push_back(object);
   } else {
-    OkLogger::warning(
-        "Scene :: Cannot add object with parent directly to scene");
+    OkLogger::warning("Scene",
+                      "Cannot add object with parent directly to scene");
   }
 }
 
