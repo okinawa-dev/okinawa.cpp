@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="200" alt="okinawa.cpp logo" src="/assets/okinawa_logo.png">
+  <img width="200" alt="okinawa.cpp logo" src="/assets/project/okinawa_logo.png">
 </p>
 
 # okinawa.cpp

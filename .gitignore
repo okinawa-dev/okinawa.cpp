@@ -48,10 +48,8 @@ coverage/
 
 # assets
 assets/*
-!assets/okinawa*
-!assets/test/
-assets/test/*
-!assets/test/cube*.obj
+!assets/project/
+!assets/shaders/
 
 # tmp
 okinawa
