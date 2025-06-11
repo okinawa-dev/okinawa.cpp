@@ -1,5 +1,6 @@
 from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
+from conan.tools.files import copy
 
 class OkinawaConan(ConanFile):
     name = "okinawa"
@@ -34,6 +35,8 @@ class OkinawaConan(ConanFile):
     def package(self):
         cmake = CMake(self)
         cmake.install()
+        # Copying additional resources (shader files for the engine)
+        copy(self, "*.glsl", src=self.source_folder, dst=self.package_folder, keep_path=True)
         
     def package_info(self):
         self.cpp_info.libs = ["okinawa"]

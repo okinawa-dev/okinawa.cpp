@@ -45,6 +45,7 @@ build/
 
 # tests
 coverage/
+default.profraw
 
 # assets
 assets/*

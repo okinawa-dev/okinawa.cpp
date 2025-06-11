@@ -2,7 +2,7 @@
 #include "../config/config.hpp"
 #include "../input/input.hpp"
 #include "../shaders/shaders.hpp"
-#include "../utils/files.hpp"
+#include "../utils/assets.hpp"
 #include "../utils/logger.hpp"
 #include "core/camera.hpp"
 #include "gl_config.hpp"
@@ -32,6 +32,12 @@ OkInput                *OkCore::_input         = nullptr;
  */
 bool OkCore::initialize() {
   OkLogger::info("Core :: Initializing engine...");
+
+  // Initialize asset management system first
+  if (!OkAssets::initialize()) {
+    OkLogger::error("Core :: Failed to initialize asset system");
+    return false;
+  }
 
   // get width and height from config
   int width  = OkConfig::getInt("window.width");
@@ -146,11 +152,12 @@ bool OkCore::initializeOpenGL(int width, int height) {
  */
 bool OkCore::initializeShaders() {
   std::string fragmentShaderSource =
-      OkFiles::readFile("./okinawa.cpp/src/shaders/fragmentshader.frag.glsl");
+      OkAssets::loadShaderSource("fragmentshader.frag.glsl");
   std::string vertexShaderSource =
-      OkFiles::readFile("./okinawa.cpp/src/shaders/vertexshader.vert.glsl");
+      OkAssets::loadShaderSource("vertexshader.vert.glsl");
 
   if (fragmentShaderSource.empty() || vertexShaderSource.empty()) {
+    OkLogger::error("Core :: Failed to load shader source files");
     return false;
   }
 
