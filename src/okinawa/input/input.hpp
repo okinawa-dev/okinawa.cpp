@@ -18,6 +18,15 @@ public:
   bool backward    = false;
   bool strafeLeft  = false;
   bool strafeRight = false;
+  // Vertical nudge (held): move the controlled object straight up/down
+  // (altitude fix-ups, e.g. after teleporting below the terrain).
+  bool moveUp   = false;
+  bool moveDown = false;
+
+  // Mouse pan delta for this frame, in raw pixels (cursor captured only).
+  // Consumed by pan-style controllers; mouse-look uses its own path.
+  float panX = 0.0f;
+  float panY = 0.0f;
 
   // Rotation state
   bool turnLeft  = false;
@@ -90,6 +99,11 @@ public:
   // Release the cursor when the window loses focus (from the focus callback).
   void onWindowFocus(bool focused);
 
+  // Accumulate a raw mouse delta (pixels) from the cursor-position callback;
+  // process() folds the accumulated delta into the frame's state (panX/panY)
+  // and clears it, so controllers see one per-frame pan delta.
+  void addPanDelta(float dx, float dy);
+
   // Constants
   static constexpr float MOVE_SPEED     = 5.0f;
   static constexpr float ROTATION_SPEED = 2.0f;
@@ -108,6 +122,9 @@ private:
   bool          _physicalEnabled;
   // Pointer lock state: true while the cursor is captured for mouse-look.
   bool          _cursorCaptured;
+  // Mouse pan delta accumulated since the last process() (raw pixels).
+  float         _pendingPanX;
+  float         _pendingPanY;
 };
 
 #endif

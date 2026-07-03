@@ -28,6 +28,7 @@ public:
   float orbitYawDeg() const override;
   float orbitPitchDeg() const override;
   float orbitDistance() const override { return _distance; }
+  float viewDistance() const override { return _distance; }
 
 private:
   float _distance;

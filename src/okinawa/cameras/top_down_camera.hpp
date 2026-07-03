@@ -25,6 +25,8 @@ public:
 
   void setHeight(float height_m) { _height = height_m; }
 
+  float viewDistance() const override { return _height; }
+
 private:
   float _height;
   float _fov;

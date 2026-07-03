@@ -46,6 +46,12 @@ public:
   virtual float orbitPitchDeg() const { return 0.0f; }
   virtual float orbitDistance() const { return 0.0f; }
 
+  // How far this camera sits from what it observes (orbit distance, overhead
+  // height, ...). 0 when the notion does not apply (base/spectator). Lets
+  // consumers scale interactions with the visible area -- e.g. the pan
+  // controller moves the avatar faster the further the camera is.
+  virtual float viewDistance() const { return 0.0f; }
+
   // Getters for matrices
   const glm::mat4 &getView() const { return view; }
   const glm::mat4 &getProjection() const { return projection; }

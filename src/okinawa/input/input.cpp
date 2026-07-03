@@ -25,6 +25,8 @@ OkInput::OkInput(GLFWwindow *window, MouseCallback callback) {
   std::memset(_injectedUntil, 0, sizeof(_injectedUntil));
   _physicalEnabled = true;
   _cursorCaptured  = false;
+  _pendingPanX     = 0.0f;
+  _pendingPanY     = 0.0f;
 
   OkLogger::info("Input", "Setting mouse callback...");
   glfwSetCursorPosCallback(window, _mouseCallback);
@@ -62,6 +64,15 @@ void OkInput::process() {
   _currentState.backward    = isKeyHeld(OK_KEY_S);
   _currentState.strafeLeft  = isKeyHeld(OK_KEY_A);
   _currentState.strafeRight = isKeyHeld(OK_KEY_D);
+  _currentState.moveUp      = isKeyHeld(OK_KEY_E);
+  _currentState.moveDown    = isKeyHeld(OK_KEY_Q);
+
+  // Fold the mouse pan delta accumulated by the cursor callback into this
+  // frame's state, then clear the accumulator.
+  _currentState.panX = _pendingPanX;
+  _currentState.panY = _pendingPanY;
+  _pendingPanX       = 0.0f;
+  _pendingPanY       = 0.0f;
 
   // Update rotation state (continuous press) - using OkKeys directly
   _currentState.turnLeft  = isKeyHeld(OK_KEY_LEFT);
@@ -197,4 +208,9 @@ void OkInput::onWindowFocus(bool focused) {
   if (!focused) {
     setCursorCaptured(false);
   }
+}
+
+void OkInput::addPanDelta(float dx, float dy) {
+  _pendingPanX += dx;
+  _pendingPanY += dy;
 }

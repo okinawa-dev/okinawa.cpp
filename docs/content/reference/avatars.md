@@ -59,6 +59,19 @@ of the rendered camera:
   (room-relative control, fixed-camera games).
 - neither — relative to the controlled object's own facing.
 
+It also applies a **vertical nudge** while the `moveUp` / `moveDown` state keys
+(E / Q) are held: straight up/down at the walk speed, for altitude fix-ups
+(e.g. climbing back above the terrain after a bad teleport).
+
+**`OkPanController`** — mouse-pan controller for overhead views: the mouse alone
+moves the controlled object on the ground plane (no keys), reading the per-frame
+`panX`/`panY` pixel deltas from the input state (fed only while the cursor is
+captured). The pan speed scales with the active camera's `viewDistance()`, so
+the further/higher the camera, the faster the object crosses the map; the wheel
+keeps zooming the camera. Swap it in when a top-down camera is rendered
+(`avatar->setController(new OkPanController())`) and swap the ground controller
+back for gameplay views.
+
 ## Cameras
 
 Camera behaviours are `OkCamera` subclasses. `OkCamera` has three virtuals:
@@ -66,7 +79,10 @@ Camera behaviours are `OkCamera` subclasses. `OkCamera` has three virtuals:
 nothing), `look(yawDeg, pitchDeg)` (base: free-fly rotate, pitch clamped) and
 `zoom(delta)` (mouse-wheel notches; base ignores it). The wheel is routed to the
 current camera via `OkCore::applyZoom`. Agents set the camera absolutely (incl.
-distance) with the single MCP `view` tool instead.
+distance) with the single MCP `view` tool instead. `viewDistance()` reports how
+far the camera sits from what it observes (orbit distance, overhead height; 0
+when it does not apply) so consumers can scale interactions with the visible
+area — the pan controller uses it.
 
 - **`OkThirdPersonCamera`** — orbits behind/above the target and looks at it;
   the mouse/look orbits it (pitch clamped), the wheel changes the orbit distance.

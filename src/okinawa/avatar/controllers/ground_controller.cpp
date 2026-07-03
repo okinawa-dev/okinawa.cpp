@@ -71,4 +71,11 @@ void OkGroundController::update(float dt, const OkInputState &input,
     controlled.move(move.dx, 0.0f, move.dz);
     controlled.setRotation(0.0f, move.facingYaw, 0.0f);
   }
+
+  // Vertical nudge (held keys): straight up/down at the walk speed. Altitude
+  // fix-ups -- e.g. climbing back above the terrain after a bad teleport.
+  if (input.moveUp != input.moveDown) {
+    float dy = _moveSpeed * (dt / 1000.0f);
+    controlled.move(0.0f, input.moveUp ? dy : -dy, 0.0f);
+  }
 }

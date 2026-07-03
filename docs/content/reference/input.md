@@ -33,7 +33,7 @@ Mouse-look uses a **pointer-lock** model rather than holding the cursor captured
 
 ## OkInputState fields
 
-`getState()` returns a struct with ready-to-use flags. Movement: `forward`, `backward`, `strafeLeft`, `strafeRight`. Rotation: `turnLeft`, `turnRight`, `turnUp`, `turnDown`. Edge-triggered actions (true only on the frame first pressed): `action1`, `action2`, `action3`, `action4`. Camera selection: `changeCamera` (-1 if none). And `exit`, set when the user asks to quit (ESC while the cursor is already released; a captured cursor consumes ESC to release first).
+`getState()` returns a struct with ready-to-use flags. Movement: `forward`, `backward`, `strafeLeft`, `strafeRight`, plus the vertical nudge `moveUp` / `moveDown` (E / Q held). Rotation: `turnLeft`, `turnRight`, `turnUp`, `turnDown`. Mouse pan: `panX` / `panY`, the frame's raw mouse pixel delta (accumulated by the cursor callback while captured, consumed by pan-style controllers). Edge-triggered actions (true only on the frame first pressed): `action1`, `action2`, `action3`, `action4`. Camera selection: `changeCamera` (-1 if none). And `exit`, set when the user asks to quit (ESC while the cursor is already released; a captured cursor consumes ESC to release first).
 
 ## Example
 

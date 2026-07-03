@@ -407,6 +407,12 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
   lastX         = static_cast<float>(xpos);
   lastY         = static_cast<float>(ypos);
 
+  // Raw pixel delta for pan-style controllers (folded per frame into the
+  // input state). Cameras that consume look ignore pan and vice versa.
+  if (_input != nullptr) {
+    _input->addPanDelta(xoffset, yoffset);
+  }
+
   const float sensitivity = 0.05f;
   xoffset *= sensitivity;
   yoffset *= sensitivity;
