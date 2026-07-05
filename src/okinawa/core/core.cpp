@@ -527,6 +527,15 @@ void OkCore::addCamera(OkCamera *camera) {
  * @brief Switch to a different camera.
  * @param index The index of the camera to switch to.
  */
+int OkCore::findCamera(const std::string &name) {
+  for (size_t i = 0; i < _cameras.size(); i++) {
+    if (_cameras[i]->getName() == name) {
+      return static_cast<int>(i);
+    }
+  }
+  return -1;
+}
+
 void OkCore::switchCamera(int index) {
   if (index >= 0 && index < static_cast<int>(_cameras.size())) {
     _currentCamera = index;

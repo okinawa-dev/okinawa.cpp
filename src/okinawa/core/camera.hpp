@@ -51,6 +51,9 @@ public:
   // consumers scale interactions with the visible area -- e.g. the pan
   // controller moves the avatar faster the further the camera is.
   virtual float viewDistance() const { return 0.0f; }
+  // Write counterpart of viewDistance(): drive the camera's distance/height
+  // directly (MCP `view`). Base ignores it; subclasses apply and clamp.
+  virtual void setViewDistance(float d) { (void)d; }
 
   // Getters for matrices
   const glm::mat4 &getView() const { return view; }

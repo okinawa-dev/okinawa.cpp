@@ -29,6 +29,9 @@ public:
   float orbitPitchDeg() const override;
   float orbitDistance() const override { return _distance; }
   float viewDistance() const override { return _distance; }
+  void  setViewDistance(float d) override {
+    _distance = d < 1.0f ? 1.0f : (d > 2000.0f ? 2000.0f : d);
+  }
 
 private:
   float _distance;

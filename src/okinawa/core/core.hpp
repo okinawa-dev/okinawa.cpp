@@ -49,6 +49,16 @@ public:
   static void switchCamera(int index);
   static int  getCurrentCameraIndex() { return _currentCamera; }
   static int  getCameraCount() { return static_cast<int>(_cameras.size()); }
+  // Camera at an index (nullptr out of range) and lookup by the name the
+  // camera was created with (-1 when not found). Cameras are identified by
+  // NAME across the engine surface (MCP, tools): indices are an internal
+  // detail and the number-key switching is a temporary debug aid.
+  static OkCamera *getCameraAt(int index) {
+    return (index >= 0 && index < static_cast<int>(_cameras.size()))
+               ? _cameras[index]
+               : nullptr;
+  }
+  static int findCamera(const std::string &name);
 
   // Active avatar: the controlled entity that receives input each frame. Not
   // owned by the core (the game keeps ownership). Set null to fall back to the

@@ -179,11 +179,18 @@ json viewJson() {
     v["y"]    = p.y();
     v["z"]    = p.z();
   }
-  OkCamera *orb = OkCore::getOrbitCamera();
-  if (orb != nullptr) {
-    v["yaw_deg"]   = orb->orbitYawDeg();
-    v["pitch_deg"] = orb->orbitPitchDeg();
-    v["distance"]  = orb->orbitDistance();
+  // Reflect the ACTIVE camera (identified by name): orbit cameras report
+  // yaw/pitch/distance, overhead/fixed ones report their view distance.
+  OkCamera *cam = OkCore::getCamera();
+  if (cam != nullptr) {
+    v["camera"] = cam->getName();
+    if (cam->isOrbit()) {
+      v["yaw_deg"]   = cam->orbitYawDeg();
+      v["pitch_deg"] = cam->orbitPitchDeg();
+      v["distance"]  = cam->orbitDistance();
+    } else {
+      v["distance"] = cam->viewDistance();
+    }
   }
   return v;
 }
@@ -325,8 +332,8 @@ struct OkMcpServer::Impl {
 
     json view;
     view["name"]        = "view";
-    view["description"] = "THE camera tool -- set the whole viewpoint in one call. Places the avatar at x,y,z and the third-person camera around it: yaw_deg = compass facing, pitch_deg = tilt (negative looks DOWN; ~-89 = top-down), distance = metres the camera sits back (= height when top-down). All fields optional; an omitted field keeps its current value. Persistent (survives input, so the user takes over in the same view). get_state returns these same six numbers under `view` -- reproduce any viewpoint by passing them straight back. Returns the resulting view.";
-    view["inputSchema"] = {{"type", "object"}, {"properties", {{"x", {{"type", "number"}}}, {"y", {{"type", "number"}}}, {"z", {{"type", "number"}}}, {"yaw_deg", {{"type", "number"}}}, {"pitch_deg", {{"type", "number"}, {"description", "Tilt; negative looks down, ~-89 is top-down."}}}, {"distance", {{"type", "number"}, {"description", "Camera distance back / height, in metres."}}}}}, {"additionalProperties", false}};
+    view["description"] = "THE camera tool -- set the whole viewpoint in one call. Optionally activates a camera BY NAME (`camera`; get_state lists the registered names), then places the avatar at x,y,z and drives the ACTIVE camera: orbit cameras take yaw_deg/pitch_deg/distance (pitch negative looks DOWN; ~-89 = top-down); overhead/fixed cameras take just distance (their height). It never force-switches cameras on its own. All fields optional; an omitted field keeps its current value. Persistent (survives input, so the user takes over in the same view). get_state returns the same values (with the active camera name) under `view` -- reproduce any viewpoint by passing them straight back. Returns the resulting view.";
+    view["inputSchema"] = {{"type", "object"}, {"properties", {{"camera", {{"type", "string"}, {"description", "Camera to activate and drive, by registered name (see get_state.cameras). Omitted = keep the active camera."}}}, {"x", {{"type", "number"}}}, {"y", {{"type", "number"}}}, {"z", {{"type", "number"}}}, {"yaw_deg", {{"type", "number"}}}, {"pitch_deg", {{"type", "number"}, {"description", "Tilt; negative looks down, ~-89 is top-down."}}}, {"distance", {{"type", "number"}, {"description", "Camera distance back / height, in metres."}}}}}, {"additionalProperties", false}};
     tools.push_back(view);
 
     json setVis;
@@ -417,6 +424,17 @@ struct OkMcpServer::Impl {
 
     if (name == "view") {
       json out = runOnLoop([args]() -> json {
+        // Optional camera selection BY NAME (see get_state.cameras). The
+        // tool then drives the ACTIVE camera -- it no longer force-switches
+        // to the orbit camera, so an overhead workflow keeps its framing.
+        if (args.contains("camera")) {
+          std::string camName = args.value("camera", std::string());
+          int         idx     = OkCore::findCamera(camName);
+          if (idx < 0) {
+            return json{{"error", "unknown camera: " + camName}};
+          }
+          OkCore::switchCamera(idx);
+        }
         OkAvatar *avatar = OkCore::getActiveAvatar();
         OkObject *obj    = avatar ? avatar->getControlledObject() : nullptr;
         if (obj != nullptr &&
@@ -427,23 +445,29 @@ struct OkMcpServer::Impl {
               static_cast<float>(args.value("y", static_cast<double>(p.y()))),
               static_cast<float>(args.value("z", static_cast<double>(p.z()))));
         }
-        OkCamera *orb = OkCore::activateOrbitCamera();
-        if (orb != nullptr && orb->isOrbit() &&
-            (args.contains("yaw_deg") || args.contains("pitch_deg") ||
-             args.contains("distance"))) {
-          float yaw = static_cast<float>(
-              args.value("yaw_deg", static_cast<double>(orb->orbitYawDeg())));
-          float pitch = static_cast<float>(
-              args.value("pitch_deg", static_cast<double>(orb->orbitPitchDeg())));
-          float dist = static_cast<float>(
-              args.value("distance", static_cast<double>(orb->orbitDistance())));
-          orb->setOrbit(yaw, pitch, dist);
-        }
-        if (orb != nullptr) {
-          orb->updateForTarget(obj, 0.0f);  // apply now; returned view is current
+        OkCamera *cam = OkCore::getCamera();
+        if (cam != nullptr) {
+          if (cam->isOrbit() &&
+              (args.contains("yaw_deg") || args.contains("pitch_deg") ||
+               args.contains("distance"))) {
+            float yaw = static_cast<float>(
+                args.value("yaw_deg", static_cast<double>(cam->orbitYawDeg())));
+            float pitch = static_cast<float>(args.value(
+                "pitch_deg", static_cast<double>(cam->orbitPitchDeg())));
+            float dist = static_cast<float>(args.value(
+                "distance", static_cast<double>(cam->orbitDistance())));
+            cam->setOrbit(yaw, pitch, dist);
+          } else if (!cam->isOrbit() && args.contains("distance")) {
+            cam->setViewDistance(
+                static_cast<float>(args.value("distance", 0.0)));
+          }
+          cam->updateForTarget(obj, 0.0f);  // apply now; returned view is current
         }
         return viewJson();
       });
+      if (out.contains("error")) {
+        return errorResult(out["error"].get<std::string>());
+      }
       return textResult(out.dump(2));
     }
 
@@ -488,6 +512,12 @@ struct OkMcpServer::Impl {
         }
         s["window"]       = {{"width", w}, {"height", h}};
         s["camera_count"] = OkCore::getCameraCount();
+        json camNames     = json::array();
+        for (int ci = 0; ci < OkCore::getCameraCount(); ci++) {
+          OkCamera *cc = OkCore::getCameraAt(ci);
+          camNames.push_back(cc != nullptr ? cc->getName() : "");
+        }
+        s["cameras"] = camNames;  // registered camera names (view's `camera`)
         s["fps"]          = measuredFps;
 
         OkSceneHandler *handler = OkCore::getSceneHandler();
