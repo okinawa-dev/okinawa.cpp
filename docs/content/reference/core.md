@@ -23,6 +23,8 @@ nav_order: 1
 | `static OkInput *getInput()` | The input subsystem. |
 | `static void addCamera(OkCamera *camera)` | Register an additional camera. |
 | `static void switchCamera(int index)` | Make the camera at `index` current. |
+| `static OkCamera *getCameraAt(int index)` | Camera at `index` (`nullptr` out of range). |
+| `static int findCamera(const std::string &name)` | Index of the camera registered with that name, `-1` when not found. |
 | `static void enableMcpServer(int port = 8765)` | Start the in-engine MCP server (see [MCP server](/reference/mcp.html)). |
 | `static void setIgnoreUserInput(bool ignore)` | Ignore physical input (MCP-driven instances). |
 
@@ -36,8 +38,12 @@ The loop callbacks share the signature `void(float deltaTime)`.
 | `void setPerspective(fovDegrees, near, far)` | Set the projection. |
 | `const glm::mat4 &getView() const` | The view matrix. |
 | `const glm::mat4 &getProjection() const` | The projection matrix. |
+| `float viewDistance() const` | How far the camera sits from what it observes (orbit distance, overhead height); `0` when the notion does not apply. |
+| `void setViewDistance(float d)` | Write counterpart of `viewDistance()`: drive the distance/height directly. Base ignores it; subclasses apply and clamp. |
 
 `OkCamera` also inherits `setPosition`, `setRotation` and the rest of the `OkObject` transform API.
+
+Cameras are **identified by the name they are constructed with**: `findCamera` resolves names to indices, and the MCP [`view` tool](/reference/mcp.html) selects cameras by that same name. Indices (and the number-key switching in the stock input handler) are an internal/debug detail.
 
 ## Example
 

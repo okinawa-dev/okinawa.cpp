@@ -29,8 +29,8 @@ OkAvatar           *player     = new OkAvatar(prism, controller);
 
 OkThirdPersonCamera *third = new OkThirdPersonCamera("third", w, h);
 OkTopDownCamera     *top   = new OkTopDownCamera("top", w, h, 400.0f);
-OkCore::addCamera(third);   // key 1
-OkCore::addCamera(top);     // key 2
+OkCore::addCamera(third);   // "third" -- names identify cameras
+OkCore::addCamera(top);     // "top"    (number keys switch them, as a debug aid)
 
 controller->setReferenceCamera(third);  // control is relative to this camera
 player->addCamera(third);               // rig: cameras follow the avatar
