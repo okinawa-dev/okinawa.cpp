@@ -37,6 +37,30 @@ Every drawable inherits these:
 | `void updateVertexData(float *data, long count)` | Replace the vertex data in place. |
 | `float getRadius() const` | The mesh's maximum dimension. |
 
+## OkBillboard
+
+`OkBillboard` is an `OkItem` subclass: a rectangular quad that always
+renders facing the active camera (a classic billboard). The quad is
+centred on the item's position, `width` along X and `height` along Y;
+each frame the item re-orients itself so its face points at
+`OkCore::getCamera()` (spherical billboarding: yaw and pitch follow the
+camera, roll stays 0). Texturing, visibility and every other `OkItem`
+method work unchanged. Billboards are expected to live at scene root:
+the facing math uses the item's own position, not a parent-composed
+transform.
+
+| Method | Purpose |
+| --- | --- |
+| `OkBillboard(name, width, height)` | Construct a `width` x `height` camera-facing quad. |
+| `static OkRotation facingRotation(from, to)` | The rotation that points a +Z quad at `from` toward `to`. |
+
+```cpp
+OkBillboard *label = new OkBillboard("label", 8.0f, 4.0f);
+label->setPosition(10.0f, 30.0f, -20.0f);
+label->setTexture("label-tex", texture);   // any OkTexture
+scene->addObject(label);
+```
+
 ## OkItemGroup methods
 
 | Method | Purpose |

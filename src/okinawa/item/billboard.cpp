@@ -1,0 +1,68 @@
+#include "billboard.hpp"
+
+#include "../core/core.hpp"
+#include <cmath>
+
+// Quad geometry shared with the OkItem base constructor. OkItem copies
+// the arrays, so returning pointers to these static scratch buffers is
+// safe (the engine constructs items from the main thread only).
+static float *_quadVertexData(float width, float height) {
+  static float verts[20];
+  float        hw = width * 0.5f;
+  float        hh = height * 0.5f;
+  // x, y, z, u, v (stride 5); the visible face looks toward local +Z
+  float data[20] = {-hw, -hh, 0.0f, 0.0f, 0.0f,   //
+                    hw,  -hh, 0.0f, 1.0f, 0.0f,   //
+                    hw,  hh,  0.0f, 1.0f, 1.0f,   //
+                    -hw, hh,  0.0f, 0.0f, 1.0f};  //
+  for (int i = 0; i < 20; i++) {
+    verts[i] = data[i];
+  }
+  return verts;
+}
+
+static unsigned int *_quadIndexData() {
+  static unsigned int idx[6] = {0, 1, 2, 0, 2, 3};
+  return idx;
+}
+
+OkBillboard::OkBillboard(const std::string &name, float width, float height)
+    : OkItem(name, _quadVertexData(width, height), 20, _quadIndexData(), 6) {
+}
+
+/**
+ * @brief Re-orient the quad toward the active camera.
+ *
+ * Runs every frame; the camera has already been stepped for this frame
+ * when the scene steps its objects, so the read pose is current.
+ */
+void OkBillboard::stepSelf(float dt) {
+  (void)dt;
+  OkCamera *cam = OkCore::getCamera();
+  if (cam == NULL) {
+    return;
+  }
+  setRotation(facingRotation(getPosition(), cam->getPosition()));
+}
+
+/**
+ * @brief Rotation that points a +Z-facing quad at `from` toward `to`.
+ *
+ * The local +Z axis of a rotated object is
+ * (sin(yaw)cos(pitch), -sin(pitch), cos(yaw)cos(pitch))
+ * (third column of OkRotation::_updateMatrix), so solving
+ * +Z = normalize(to - from) gives pitch and yaw directly. Roll is 0.
+ */
+OkRotation OkBillboard::facingRotation(const OkPoint &from,
+                                       const OkPoint &to) {
+  float dx = to.x() - from.x();
+  float dy = to.y() - from.y();
+  float dz = to.z() - from.z();
+  float dl = std::sqrt(dx * dx + dy * dy + dz * dz);
+  if (dl < 1e-6f) {
+    return OkRotation();
+  }
+  float pitch = std::asin(-dy / dl);
+  float yaw   = std::atan2(dx, dz);
+  return OkRotation(pitch, yaw, 0.0f);
+}
