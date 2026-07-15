@@ -42,12 +42,13 @@ Every drawable inherits these:
 `OkBillboard` is an `OkItem` subclass: a rectangular quad that always
 renders facing the active camera (a classic billboard). The quad is
 centred on the item's position, `width` along X and `height` along Y;
-each frame the item re-orients itself so its face points at
-`OkCore::getCamera()` (spherical billboarding: yaw and pitch follow the
-camera, roll stays 0). Texturing, visibility and every other `OkItem`
-method work unchanged. Billboards are expected to live at scene root:
-the facing math uses the item's own position, not a parent-composed
-transform.
+each frame the item aligns itself with the view plane of
+`OkCore::getCamera()` (it adopts the camera's pitch and yaw, roll stays
+0), so its content stays screen-aligned at every angle -- including
+straight under a top-down camera, where position-based facing
+degenerates into an arbitrary roll. Texturing, visibility and every
+other `OkItem` method work unchanged. Billboards are expected to live
+at scene root (not attached under a transformed parent).
 
 | Method | Purpose |
 | --- | --- |

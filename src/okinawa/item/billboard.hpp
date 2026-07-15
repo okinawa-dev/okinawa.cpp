@@ -12,14 +12,16 @@
  *
  * The quad is built centred on the item's position, lying on the local
  * XY plane (width along X, height along Y, visible face toward local
- * +Z). Every frame stepSelf() re-orients the item so that its +Z axis
- * points at the active camera (spherical billboard: both yaw and pitch
- * follow; roll stays 0). Assign a texture with setTexture() or
- * loadTextureFromFile() as with any OkItem; without one the quad
- * renders with the flat fill colour.
+ * +Z). Every frame stepSelf() re-orients the item to the view plane of
+ * the active camera (it adopts the camera's pitch and yaw, roll stays
+ * 0), so the quad faces the camera and its content stays aligned with
+ * the screen at every angle -- including straight under a top-down
+ * camera, where position-based facing degenerates. Assign a texture
+ * with setTexture() or loadTextureFromFile() as with any OkItem;
+ * without one the quad renders with the flat fill colour.
  *
- * The facing uses the item's own position, so a billboard is expected
- * to live at scene root (not attached under a transformed parent).
+ * A billboard is expected to live at scene root (not attached under a
+ * transformed parent).
  */
 class OkBillboard : public OkItem {
 protected:

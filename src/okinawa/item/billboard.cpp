@@ -33,8 +33,14 @@ OkBillboard::OkBillboard(const std::string &name, float width, float height)
 /**
  * @brief Re-orient the quad toward the active camera.
  *
- * Runs every frame; the camera has already been stepped for this frame
- * when the scene steps its objects, so the read pose is current.
+ * View-plane alignment: copying the camera's pitch and yaw points the
+ * quad's +Z straight back at the camera plane (the +Z axis of a
+ * rotation equals the negated forward vector of the same angles) and
+ * keeps the content aligned with the screen at every angle.
+ * Position-based facing turns degenerate right under a top-down
+ * camera: the horizontal component vanishes and the roll of the label
+ * becomes arbitrary. Runs every frame; the camera has already been
+ * stepped for this frame when the scene steps its objects.
  */
 void OkBillboard::stepSelf(float dt) {
   (void)dt;
@@ -42,7 +48,8 @@ void OkBillboard::stepSelf(float dt) {
   if (cam == NULL) {
     return;
   }
-  setRotation(facingRotation(getPosition(), cam->getPosition()));
+  const OkRotation &cr = cam->getRotation();
+  setRotation(OkRotation(cr.getPitch(), cr.getYaw(), 0.0f));
 }
 
 /**
