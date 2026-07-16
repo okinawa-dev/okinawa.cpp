@@ -8,7 +8,7 @@ nav_order: 3
 
 `OkItem` is a renderable mesh: vertex data, indices, an optional texture and the shared transform (position, rotation, scale, hierarchy). It derives from `OkObject`, which provides the transform API used across the engine. `OkItemGroup` bundles several items so they move and render as one unit and can be tagged for selective visibility. `OkTexture` wraps a loaded GPU texture.
 
-## OkObject (shared transform)
+## OkObject
 
 Every drawable inherits these:
 
@@ -24,7 +24,7 @@ Every drawable inherits these:
 | `void detachFromParent()` | Detach from the parent. |
 | `void setDrawOriginAxis(bool)` | Toggle the debug origin axis gizmo. |
 
-## OkItem methods
+## OkItem
 
 | Method | Purpose |
 | --- | --- |
@@ -37,32 +37,7 @@ Every drawable inherits these:
 | `void updateVertexData(float *data, long count)` | Replace the vertex data in place. |
 | `float getRadius() const` | The mesh's maximum dimension. |
 
-## OkBillboard
-
-`OkBillboard` is an `OkItem` subclass: a rectangular quad that always
-renders facing the active camera (a classic billboard). The quad is
-centred on the item's position, `width` along X and `height` along Y;
-each frame the item aligns itself with the view plane of
-`OkCore::getCamera()` (it adopts the camera's pitch and yaw, roll stays
-0), so its content stays screen-aligned at every angle -- including
-straight under a top-down camera, where position-based facing
-degenerates into an arbitrary roll. Texturing, visibility and every
-other `OkItem` method work unchanged. Billboards are expected to live
-at scene root (not attached under a transformed parent).
-
-| Method | Purpose |
-| --- | --- |
-| `OkBillboard(name, width, height)` | Construct a `width` x `height` camera-facing quad. |
-| `static OkRotation facingRotation(from, to)` | The rotation that points a +Z quad at `from` toward `to`. |
-
-```cpp
-OkBillboard *label = new OkBillboard("label", 8.0f, 4.0f);
-label->setPosition(10.0f, 30.0f, -20.0f);
-label->setTexture("label-tex", texture);   // any OkTexture
-scene->addObject(label);
-```
-
-## OkItemGroup methods
+## OkItemGroup
 
 | Method | Purpose |
 | --- | --- |
@@ -89,4 +64,29 @@ OkItem *quad = new OkItem("quad", vertices, 20, indices, 6);
 quad->setPosition(0.0f, 0.0f, -5.0f);
 quad->setWireframe(true);
 scene->addObject(quad);
+```
+
+## OkBillboard
+
+`OkBillboard` is an `OkItem` subclass: a rectangular quad that always
+renders facing the active camera (a classic billboard). The quad is
+centred on the item's position, `width` along X and `height` along Y;
+each frame the item aligns itself with the view plane of
+`OkCore::getCamera()` (it adopts the camera's pitch and yaw, roll stays
+0), so its content stays screen-aligned at every angle -- including
+straight under a top-down camera, where position-based facing
+degenerates into an arbitrary roll. Texturing, visibility and every
+other `OkItem` method work unchanged. Billboards are expected to live
+at scene root (not attached under a transformed parent).
+
+| Method | Purpose |
+| --- | --- |
+| `OkBillboard(name, width, height)` | Construct a `width` x `height` camera-facing quad. |
+| `static OkRotation facingRotation(from, to)` | The rotation that points a +Z quad at `from` toward `to`. |
+
+```cpp
+OkBillboard *label = new OkBillboard("label", 8.0f, 4.0f);
+label->setPosition(10.0f, 30.0f, -20.0f);
+label->setTexture("label-tex", texture);   // any OkTexture
+scene->addObject(label);
 ```
