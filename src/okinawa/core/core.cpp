@@ -1,4 +1,5 @@
 #include "core.hpp"
+#include "../gui/console.hpp"
 #include "../gui/gui.hpp"
 #include "../avatar/avatar.hpp"
 #include "../config/config.hpp"
@@ -87,8 +88,16 @@ bool OkCore::initialize() {
   // Initialize scene handler
   _sceneHandler = new OkSceneHandler();
 
-  // Initialize the GUI pass (grid config, debug overlay).
+  // Initialize the GUI pass (grid config, debug overlay) and the console.
   OkGui::initialize();
+  OkConsole::initialize();
+
+  // Typed characters feed the console while it is open.
+  glfwSetCharCallback(_window, [](GLFWwindow * /*w*/, unsigned int cp) {
+    if (_input != nullptr) {
+      _input->onChar(cp);
+    }
+  });
 
   // Initialize default camera
   _cameras.push_back(new OkCamera("Default Camera", width, height));
@@ -125,6 +134,7 @@ void OkCore::exit() {
   OkLogger::info("Core", "Exiting engine...");
 
   // Destroy the GUI internal items while the GL context is still alive
+  OkConsole::shutdown();
   OkGui::shutdown();
 
   // Delete scene and input handlers first
@@ -279,6 +289,10 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
 
       // Process input
       _input->process();
+
+      // Console first: while open it captures the keyboard, so nothing
+      // below (avatar, cameras, game callbacks) sees any key.
+      OkConsole::update(dt);
 
       // Handle camera switching based on input state
       OkInputState state = _input->getState();

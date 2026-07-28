@@ -35,6 +35,11 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   fillColor[0]      = 1.0f;
   fillColor[1]      = 1.0f;
   fillColor[2]      = 1.0f;
+  fillColor[3]      = 1.0f;
+  tintColor[0]      = 1.0f;
+  tintColor[1]      = 1.0f;
+  tintColor[2]      = 1.0f;
+  tintColor[3]      = 1.0f;
   wireframeColor[0] = 1.0f;
   wireframeColor[1] = 1.0f;
   wireframeColor[2] = 1.0f;
@@ -294,6 +299,11 @@ void OkItem::drawSelf() {
   {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     GLint hasTexLoc = glGetUniformLocation(current_program, "hasTexture");
+    GLint tintLoc   = glGetUniformLocation(current_program, "tintColor");
+    if (tintLoc != -1) {
+      glUniform4f(tintLoc, tintColor[0], tintColor[1], tintColor[2],
+                  tintColor[3]);
+    }
     if (drawTexture) {
       glActiveTexture(GL_TEXTURE0);
       texture->bind();
@@ -310,7 +320,8 @@ void OkItem::drawSelf() {
       }
       GLint colorLoc = glGetUniformLocation(current_program, "wireframeColor");
       if (colorLoc != -1) {
-        glUniform4f(colorLoc, fillColor[0], fillColor[1], fillColor[2], 1.0f);
+        glUniform4f(colorLoc, fillColor[0], fillColor[1], fillColor[2],
+                    fillColor[3]);
       }
     }
     glDrawElements(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT, nullptr);

@@ -95,3 +95,74 @@ TEST_CASE("OkGui layers", "[gui]") {
 }
 
 // NOLINTEND(readability-magic-numbers)
+
+// Font glyph data and console command plumbing (no GL needed).
+
+#include "okinawa/gui/console.hpp"
+#include "okinawa/gui/font.hpp"
+
+TEST_CASE("OkFont glyphs", "[gui]") {
+  SECTION("Lowercase maps to uppercase") {
+    REQUIRE(OkFont::glyphRows('a') == OkFont::glyphRows('A'));
+    REQUIRE(OkFont::glyphRows('z') == OkFont::glyphRows('Z'));
+  }
+  SECTION("Distinct printable glyphs") {
+    REQUIRE(OkFont::glyphRows('A') != OkFont::glyphRows('B'));
+    REQUIRE(OkFont::glyphRows('0') != OkFont::glyphRows('O'));
+    REQUIRE(OkFont::glyphRows('-') != OkFont::glyphRows('_'));
+  }
+  SECTION("Space and unknown render blank") {
+    const unsigned char *sp = OkFont::glyphRows(' ');
+    for (int i = 0; i < 7; i++) {
+      REQUIRE(sp[i] == 0);
+    }
+  }
+  SECTION("Atlas UVs stay in range and differ per glyph") {
+    float au0, av0, au1, av1, bu0, bv0, bu1, bv1;
+    OkFont::glyphUV('A', au0, av0, au1, av1);
+    OkFont::glyphUV('B', bu0, bv0, bu1, bv1);
+    REQUIRE(au0 >= 0.0f);
+    REQUIRE(av0 >= 0.0f);
+    REQUIRE(au1 <= 1.0f);
+    REQUIRE(av1 <= 1.0f);
+    REQUIRE(au0 < au1);
+    REQUIRE(av0 < av1);
+    REQUIRE((au0 != bu0 || av0 != bv0));
+  }
+}
+
+TEST_CASE("OkConsole commands", "[gui]") {
+  static int         calls = 0;
+  static std::string lastArg;
+  calls = 0;
+  lastArg.clear();
+
+  OkConsole::registerCommand("testcmd", "test helper",
+                             [](const std::vector<std::string> &args) {
+                               calls++;
+                               lastArg = args.empty() ? "" : args[0];
+                             });
+
+  SECTION("Execute with arguments") {
+    OkConsole::execute("testcmd hello world");
+    REQUIRE(calls == 1);
+    REQUIRE(lastArg == "hello");
+  }
+  SECTION("Unknown command does not crash or call") {
+    OkConsole::execute("no-such-command");
+    REQUIRE(calls == 0);
+  }
+  SECTION("Blank line is a no-op") {
+    OkConsole::execute("   ");
+    REQUIRE(calls == 0);
+  }
+  SECTION("Re-registering replaces the callback") {
+    OkConsole::registerCommand("testcmd", "replaced",
+                               [](const std::vector<std::string> &args) {
+                                 (void)args;
+                                 calls += 10;
+                               });
+    OkConsole::execute("testcmd");
+    REQUIRE(calls == 10);
+  }
+}

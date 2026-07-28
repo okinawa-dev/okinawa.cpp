@@ -17,8 +17,9 @@ private:
   GLenum drawMode;       // GL_TRIANGLES, GL_LINES, etc.
 
   // Flat fill colour when untextured, and wireframe line colour (RGB, white).
-  float fillColor[3];
+  float fillColor[4];       // RGBA: alpha honoured by blended passes (GUI)
   float wireframeColor[3];
+  float tintColor[4];       // multiplies the texture in the fill pass
 
   // Geometry
   float        *vertices;
@@ -74,9 +75,20 @@ public:
     wireframeColor[2] = b;
   }
   void   setFillColor(float r, float g, float b) {
+    setFillColor(r, g, b, 1.0f);
+  }
+  void   setFillColor(float r, float g, float b, float a) {
     fillColor[0] = r;
     fillColor[1] = g;
     fillColor[2] = b;
+    fillColor[3] = a;
+  }
+  // Tint multiplied over the texture in the fill pass (white = untouched).
+  void   setTintColor(float r, float g, float b, float a) {
+    tintColor[0] = r;
+    tintColor[1] = g;
+    tintColor[2] = b;
+    tintColor[3] = a;
   }
   void   setDrawMode(GLenum mode) { drawMode = mode; }
   GLenum getDrawMode() const { return drawMode; }

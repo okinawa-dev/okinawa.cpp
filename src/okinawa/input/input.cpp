@@ -24,6 +24,8 @@ OkInput::OkInput(GLFWwindow *window, MouseCallback callback) {
   std::memset(_prevKeys, 0, sizeof(_prevKeys));
   std::memset(_injectedUntil, 0, sizeof(_injectedUntil));
   _physicalEnabled = true;
+  _textCapture     = false;
+  _pendingChars    = "";
   _cursorCaptured  = false;
   _pendingPanX     = 0.0f;
   _pendingPanY     = 0.0f;
@@ -113,6 +115,16 @@ void OkInput::process() {
  * @return True if the key was just pressed, false otherwise.
  */
 bool OkInput::isKeyJustPressed(OkKey key) const {
+  if (_textCapture) {
+    return false;  // the console owns the keyboard
+  }
+  return isKeyJustPressedRaw(key);
+}
+
+/**
+ * @brief Raw variant ignoring the text-capture flag (console internals).
+ */
+bool OkInput::isKeyJustPressedRaw(OkKey key) const {
   if (key == OK_KEY_UNKNOWN || key < 0 || key >= OK_KEY_COUNT) {
     return false;
   }
@@ -125,6 +137,16 @@ bool OkInput::isKeyJustPressed(OkKey key) const {
  * @return True if the key is being held down, false otherwise.
  */
 bool OkInput::isKeyHeld(OkKey key) const {
+  if (_textCapture) {
+    return false;  // the console owns the keyboard
+  }
+  return isKeyHeldRaw(key);
+}
+
+/**
+ * @brief Raw variant ignoring the text-capture flag (console internals).
+ */
+bool OkInput::isKeyHeldRaw(OkKey key) const {
   if (key == OK_KEY_UNKNOWN || key < 0 || key >= OK_KEY_COUNT) {
     return false;
   }
@@ -148,7 +170,28 @@ bool OkInput::isKeyJustReleased(OkKey key) const {
  * @return OkInputState object containing the current input state.
  */
 OkInputState OkInput::getState() const {
+  if (_textCapture) {
+    return OkInputState();  // neutral state: the console owns the keyboard
+  }
   return _currentState;
+}
+
+/**
+ * @brief Queue a typed character from the GLFW char callback (ASCII only).
+ */
+void OkInput::onChar(unsigned int codepoint) {
+  if (codepoint >= 32 && codepoint < 127) {
+    _pendingChars.push_back((char)codepoint);
+  }
+}
+
+/**
+ * @brief Return and clear the characters typed since the last call.
+ */
+std::string OkInput::drainChars() {
+  std::string out = _pendingChars;
+  _pendingChars.clear();
+  return out;
 }
 
 /**
@@ -164,6 +207,22 @@ void OkInput::injectKey(OkKey key, double durationSeconds) {
   // Extend, never shorten, an existing injection window for this key.
   if (until > _injectedUntil[key]) {
     _injectedUntil[key] = until;
+  }
+  // While the console owns the keyboard, printable injected keys also feed
+  // the typed-character buffer (the GLFW char callback only fires for the
+  // physical keyboard, so MCP-injected typing would otherwise be silent).
+  if (_textCapture) {
+    if (key >= OK_KEY_A && key <= OK_KEY_Z) {
+      onChar((unsigned int)('a' + (key - OK_KEY_A)));
+    } else if (key >= OK_KEY_0 && key <= OK_KEY_9) {
+      onChar((unsigned int)('0' + (key - OK_KEY_0)));
+    } else if (key == OK_KEY_SPACE) {
+      onChar((unsigned int)' ');
+    } else if (key == OK_KEY_PERIOD) {
+      onChar((unsigned int)'.');
+    } else if (key == OK_KEY_MINUS) {
+      onChar((unsigned int)'-');
+    }
   }
 }
 

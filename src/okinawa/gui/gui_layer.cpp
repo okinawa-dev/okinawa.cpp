@@ -1,5 +1,5 @@
 #include "gui_layer.hpp"
-#include "../item/item.hpp"
+#include "../core/object.hpp"
 
 OkGuiLayer::OkGuiLayer(const std::string &name, int order) {
   _name    = name;
@@ -15,9 +15,9 @@ OkGuiLayer::~OkGuiLayer() {
 }
 
 /**
- * @brief Add an item to the layer (the layer takes ownership).
+ * @brief Add an element to the layer (the layer takes ownership).
  */
-OkItem *OkGuiLayer::addItem(OkItem *item) {
+OkObject *OkGuiLayer::addItem(OkObject *item) {
   if (item != nullptr) {
     _items.push_back(item);
   }
@@ -25,9 +25,9 @@ OkItem *OkGuiLayer::addItem(OkItem *item) {
 }
 
 /**
- * @brief Remove and delete an item. Returns true if it belonged to the layer.
+ * @brief Remove and delete an element. True if it belonged to the layer.
  */
-bool OkGuiLayer::removeItem(OkItem *item) {
+bool OkGuiLayer::removeItem(OkObject *item) {
   for (std::size_t i = 0; i < _items.size(); i++) {
     if (_items[i] == item) {
       delete _items[i];
@@ -39,8 +39,20 @@ bool OkGuiLayer::removeItem(OkItem *item) {
 }
 
 /**
- * @brief Draw every item in insertion order (painter's order within the
- *        layer). Visibility of individual items is honoured by OkItem.
+ * @brief Find an owned element by its object name.
+ */
+OkObject *OkGuiLayer::getItemByName(const std::string &name) {
+  for (std::size_t i = 0; i < _items.size(); i++) {
+    if (_items[i]->getName() == name) {
+      return _items[i];
+    }
+  }
+  return nullptr;
+}
+
+/**
+ * @brief Draw every element in insertion order (painter's order within
+ *        the layer). Per-element visibility is honoured by the elements.
  */
 void OkGuiLayer::draw() {
   if (!_visible) {

@@ -130,6 +130,17 @@ OkTexture::~OkTexture() {
 /**
  * @brief Binds the texture for rendering.
  */
+/**
+ * @brief Switch this texture to nearest min/mag filtering (mipmaps off):
+ *        the right sampling for pixel-art content like the glyph atlas.
+ */
+void OkTexture::setNearestFiltering() const {
+  glBindTexture(GL_TEXTURE_2D, id);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void OkTexture::bind() const {
   if (loaded) {
     glBindTexture(GL_TEXTURE_2D, id);

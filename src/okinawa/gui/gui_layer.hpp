@@ -4,10 +4,10 @@
 #include <string>
 #include <vector>
 
-class OkItem;
+class OkObject;
 
 /**
- * @brief One GUI depth layer: a named, ordered list of OkItems drawn by the
+ * @brief One GUI depth layer: a named, ordered list of elements drawn by the
  *        GUI pass. Layers are rendered from the LOWEST order to the highest
  *        (far to near): a higher order paints on top. Within a layer, items
  *        draw in insertion order. Everything sits at the same real Z; depth
@@ -33,13 +33,17 @@ public:
   bool getVisible() const { return _visible; }
   void setVisible(bool visible) { _visible = visible; }
 
-  // Add an item (takes ownership). Returns the same pointer for chaining.
-  OkItem *addItem(OkItem *item);
+  // Add an element (takes ownership; any OkObject: items, graphs,
+  // composite elements). Returns the same pointer for chaining.
+  OkObject *addItem(OkObject *item);
 
-  // Remove and DELETE the item. True if it was found.
-  bool removeItem(OkItem *item);
+  // Remove and DELETE the element. True if it was found.
+  bool removeItem(OkObject *item);
 
   int getItemCount() const { return (int)_items.size(); }
+
+  // Find an owned element by its object name (null when missing).
+  OkObject *getItemByName(const std::string &name);
 
   // Draw every visible item in insertion order. Called by the GUI pass.
   void draw();
@@ -48,7 +52,7 @@ private:
   std::string           _name;
   int                   _order;
   bool                  _visible;
-  std::vector<OkItem *> _items;  // owned
+  std::vector<OkObject *> _items;  // owned
 };
 
 #endif

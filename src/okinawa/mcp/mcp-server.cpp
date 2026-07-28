@@ -132,6 +132,10 @@ OkKey okKeyFromName(const std::string &name) {
     return OK_KEY_ENTER;
   if (s == "TAB")
     return OK_KEY_TAB;
+  if (s == "GRAVE" || s == "BACKTICK")
+    return OK_KEY_GRAVE_ACCENT;
+  if (s == "BACKSPACE")
+    return OK_KEY_BACKSPACE;
   return OK_KEY_UNKNOWN;
 }
 

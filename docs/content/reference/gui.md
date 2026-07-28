@@ -96,6 +96,46 @@ coordinates would drift with the window width. Axes stay the same
 everywhere (X+ right, Y+ up), so insets from the right or top edges use
 negative offsets.
 
+## Text: OkFont and OkGuiText
+
+The engine ships a built-in 5x7 bitmap font (`OkFont`) covering printable
+ASCII (lowercase maps to uppercase, console style). Two ways to use it:
+
+- **`OkFont::bake(name, text, scale, fg, bg)`** rasterizes a string on the
+  CPU into an RGBA `OkTexture`. The right tool for **static text**: bake
+  once, hand the texture to an `OkGuiImage` or a billboard and drop the
+  font from the picture. A transparent `bg` gives blended GUI text; an
+  opaque one suits unblended contexts (billboards).
+- **`OkGuiText`** is the dynamic element: `setText` rebuilds a mesh with
+  one quad per character against a shared glyph **atlas** (nearest
+  filtering, built once), so changing text every frame never allocates
+  textures. Grid placement mirrors OkGuiImage (`setGridPosition`,
+  `setGridAnchor`, `setGridHeight` in cells; width follows the length).
+  `setTextColor` tints the white atlas; `bakeTexture()` converts the
+  current string into a standalone texture (the static-text path above).
+
+## The console
+
+A Quake-style drop-down console (`OkConsole`), toggled with the grave key
+(`` ` ``). While open it **captures the whole keyboard** — the game sees no
+keys, so typing cannot trigger gameplay bindings. It covers the top half
+of the screen (its own GUI layer), with scrollback, command history
+(up/down) and a blinking cursor.
+
+The command set is extensible per game:
+
+```cpp
+OkConsole::registerCommand("ground", "toggle the terrain",
+    [](const std::vector<std::string> &args) {
+      // ...
+      OkConsole::print("ground toggled");
+    });
+```
+
+Engine built-ins: `help`, `clear`, `quit`, and `set` / `get` over the
+whole `OkConfig` key space — `set gui.debug.grid true` works out of the
+box for every config value, present or future.
+
 ## Debug grid overlay
 
 `OkGui::setDebugGrid(true)` (or the `gui.debug.grid` config key) overlays

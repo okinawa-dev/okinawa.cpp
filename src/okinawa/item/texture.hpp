@@ -36,6 +36,10 @@ public:
   // Texture operations
   void        bind() const;
   static void unbind();
+
+  // Switch to nearest filtering (no mipmaps): crisp pixel textures such
+  // as glyph atlases, where linear sampling would bleed between cells.
+  void setNearestFiltering() const;
   bool        isLoaded() const { return loaded; }
 
   // Getters

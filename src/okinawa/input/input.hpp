@@ -3,6 +3,7 @@
 
 #include "../core/gl_config.hpp"  // IWYU pragma: keep
 #include "keys.hpp"
+#include <string>
 
 /**
  * @brief Input state structure to hold the current state of input.
@@ -89,6 +90,21 @@ public:
   void setPhysicalInputEnabled(bool enabled);
   bool isPhysicalInputEnabled() const { return _physicalEnabled; }
 
+  // Text capture (the console). While captured, isKeyJustPressed/Held/
+  // JustReleased and getState() report NOTHING to the game -- typing in
+  // the console cannot trigger gameplay keys. The console itself reads
+  // through the Raw variants, which ignore the capture flag.
+  void setTextCapture(bool captured) { _textCapture = captured; }
+  bool isTextCaptured() const { return _textCapture; }
+  bool isKeyJustPressedRaw(OkKey key) const;
+  bool isKeyHeldRaw(OkKey key) const;
+
+  // Printable characters typed since the last drainChars() call (fed by
+  // the GLFW char callback; ASCII only). The console drains this buffer
+  // every frame while open.
+  void        onChar(unsigned int codepoint);
+  std::string drainChars();
+
   // Pointer lock. The cursor starts NORMAL (free OS pointer); a click inside the
   // render area captures it (hidden + locked) for mouse-look; ESC or focus loss
   // release it. While released, the title bar / OS chrome work normally.
@@ -125,6 +141,9 @@ private:
   // Mouse pan delta accumulated since the last process() (raw pixels).
   float         _pendingPanX;
   float         _pendingPanY;
+  // Text capture flag (console open) and pending typed characters.
+  bool          _textCapture;
+  std::string   _pendingChars;
 };
 
 #endif
