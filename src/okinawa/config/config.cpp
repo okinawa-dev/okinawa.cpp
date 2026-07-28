@@ -38,6 +38,15 @@ void OkConfig::setDefaults() {
 
   // Size (half-extent, metres) of the camera gizmo drawn for non-active cameras.
   floatValues["camera.gizmo-size"] = 0.25f;
+
+  // GUI settings: grid cell size in logical pixels, global UI scale
+  // (0 = resolve automatically from the monitor content scale), field of
+  // view of the calibrated GUI camera (degrees; the oblique-element knob)
+  // and the debug grid overlay.
+  intValues["gui.grid.size"]    = 20;
+  floatValues["gui.scale"]      = 0.0f;
+  floatValues["gui.fov"]        = 35.0f;
+  boolValues["gui.debug.grid"]  = false;
   // NOLINTEND(readability-magic-numbers)
 }
 

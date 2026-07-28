@@ -1,4 +1,5 @@
 #include "core.hpp"
+#include "../gui/gui.hpp"
 #include "../avatar/avatar.hpp"
 #include "../config/config.hpp"
 #include "../input/input.hpp"
@@ -86,6 +87,9 @@ bool OkCore::initialize() {
   // Initialize scene handler
   _sceneHandler = new OkSceneHandler();
 
+  // Initialize the GUI pass (grid config, debug overlay).
+  OkGui::initialize();
+
   // Initialize default camera
   _cameras.push_back(new OkCamera("Default Camera", width, height));
 
@@ -119,6 +123,9 @@ void OkCore::askForExit() {
  */
 void OkCore::exit() {
   OkLogger::info("Core", "Exiting engine...");
+
+  // Destroy the GUI internal items while the GL context is still alive
+  OkGui::shutdown();
 
   // Delete scene and input handlers first
   delete _sceneHandler;
@@ -342,6 +349,10 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       for (int i = 0; i < _cameras.size(); ++i) {
         _cameras[i]->draw();
       }
+
+      // GUI pass: grid-placed OkItems over the frame, painter's order,
+      // rendered with the calibrated GUI camera (see OkGui).
+      OkGui::draw();
 
 #ifdef OKINAWA_WITH_MCP
       // Run any queued MCP tool commands on this (GL) thread, after the frame
