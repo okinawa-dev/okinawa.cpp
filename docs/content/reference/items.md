@@ -34,6 +34,8 @@ Every drawable inherits these:
 | `void setDrawMode(GLenum mode)` | Set the GL primitive (`GL_TRIANGLES`, `GL_LINES`, ...). |
 | `void loadTextureFromFile(const std::string &path)` | Load and apply a texture from disk. |
 | `void setTexture(const std::string &name, OkTexture *tex)` | Apply an already-loaded texture. |
+| `void setFillColor(float r, float g, float b, float a = 1)` | Untextured fill colour; the alpha is honoured by blended passes (the GUI). |
+| `void setTintColor(float r, float g, float b, float a)` | Multiplied over the texture in the fill pass (white = untouched); how GUI text is coloured. |
 | `void updateVertexData(float *data, long count)` | Replace the vertex data in place. |
 | `float getRadius() const` | The mesh's maximum dimension. |
 

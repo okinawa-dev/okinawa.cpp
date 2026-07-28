@@ -20,6 +20,10 @@ nav_order: 7
 | `void setPhysicalInputEnabled(bool enabled)` | Enable/disable physical keyboard/mouse input. |
 | `void setCursorCaptured(bool captured)` | Capture (hide + lock for mouse-look) or release the OS cursor. |
 | `bool isCursorCaptured() const` | Whether the cursor is currently captured. |
+| `void setTextCapture(bool captured)` | Text capture (the console): the normal accessors and `getState()` report nothing while set, so typing cannot trigger gameplay keys. |
+| `bool isKeyJustPressedRaw/isKeyHeldRaw(OkKey)` | Variants that ignore the text-capture flag (console internals). |
+| `void onChar(unsigned int codepoint)` | Queue a typed character (fed by the GLFW char callback; printable injected keys also land here while captured). |
+| `std::string drainChars()` | Return and clear the characters typed since the last call. |
 
 ## Mouse cursor (pointer lock)
 
