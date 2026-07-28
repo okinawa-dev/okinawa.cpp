@@ -132,9 +132,12 @@ OkConsole::registerCommand("ground", "toggle the terrain",
     });
 ```
 
-Engine built-ins: `help`, `commands` (list every registered command),
-`clear`, `quit`, and `set` / `get` over the whole `OkConfig` key space — `set gui.debug.grid true` works out of the
-box for every config value, present or future.
+Engine built-ins: `help` (list every registered command), `clear`,
+`quit`, and `set` / `get` over the whole `OkConfig` key space — `set
+gui.debug.grid true` works out of the box for every config value,
+present or future. `get` also takes a PREFIX: `get gui` lists every
+`gui.*` key name; `get gui.sc` narrows to a single key and prints its
+value directly.
 
 ## Debug grid overlay
 

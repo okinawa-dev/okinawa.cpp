@@ -3,6 +3,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 class OkConfig {
 public:
@@ -22,6 +23,14 @@ public:
   static float       getFloat(const std::string &key);
   static bool        getBool(const std::string &key);
   static std::string getString(const std::string &key);
+
+  // Every key starting with `prefix` (all four typed maps), sorted.
+  static std::vector<std::string> getKeysWithPrefix(const std::string &prefix);
+
+  // Whether the key exists in any typed map, and its value formatted as a
+  // string ("<unset>" when missing). The console's `get` uses both.
+  static bool        hasKey(const std::string &key);
+  static std::string getValueAsString(const std::string &key);
 
   // Reset every value back to the defaults, discarding anything set at
   // runtime. Mainly useful to isolate global state between unit tests.

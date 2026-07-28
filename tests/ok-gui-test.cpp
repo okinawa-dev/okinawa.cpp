@@ -166,3 +166,23 @@ TEST_CASE("OkConsole commands", "[gui]") {
     REQUIRE(calls == 10);
   }
 }
+
+TEST_CASE("OkConfig prefix lookup", "[gui]") {
+  OkConfig::reset();
+  SECTION("Prefix lists every gui key") {
+    std::vector<std::string> keys = OkConfig::getKeysWithPrefix("gui.");
+    REQUIRE(keys.size() >= 4);
+  }
+  SECTION("Narrow prefix resolves to one key") {
+    std::vector<std::string> keys = OkConfig::getKeysWithPrefix("gui.sc");
+    REQUIRE(keys.size() == 1);
+    REQUIRE(keys[0] == "gui.scale");
+  }
+  SECTION("Exact key and formatted value") {
+    REQUIRE(OkConfig::hasKey("gui.grid.size"));
+    REQUIRE(OkConfig::getValueAsString("gui.grid.size") == "20");
+    REQUIRE(OkConfig::getValueAsString("gui.debug.grid") == "false");
+    REQUIRE(OkConfig::getValueAsString("no.such.key") == "<unset>");
+  }
+  OkConfig::reset();
+}

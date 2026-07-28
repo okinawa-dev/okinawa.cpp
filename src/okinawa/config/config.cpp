@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include <algorithm>
 #include "../utils/logger.hpp"
 #include <exception>
 #include <string>
@@ -48,6 +49,69 @@ void OkConfig::setDefaults() {
   floatValues["gui.fov"]        = 35.0f;
   boolValues["gui.debug.grid"]  = false;
   // NOLINTEND(readability-magic-numbers)
+}
+
+/**
+ * @brief Every key starting with `prefix`, across the four typed maps,
+ *        sorted alphabetically.
+ */
+std::vector<std::string> OkConfig::getKeysWithPrefix(
+    const std::string &prefix) {
+  OkConfig                &config = getConfig();
+  std::vector<std::string> keys;
+  for (const auto &kv : config.intValues) {
+    if (kv.first.rfind(prefix, 0) == 0) {
+      keys.push_back(kv.first);
+    }
+  }
+  for (const auto &kv : config.floatValues) {
+    if (kv.first.rfind(prefix, 0) == 0) {
+      keys.push_back(kv.first);
+    }
+  }
+  for (const auto &kv : config.boolValues) {
+    if (kv.first.rfind(prefix, 0) == 0) {
+      keys.push_back(kv.first);
+    }
+  }
+  for (const auto &kv : config.stringValues) {
+    if (kv.first.rfind(prefix, 0) == 0) {
+      keys.push_back(kv.first);
+    }
+  }
+  std::sort(keys.begin(), keys.end());
+  return keys;
+}
+
+/**
+ * @brief True when the key exists in any of the typed maps.
+ */
+bool OkConfig::hasKey(const std::string &key) {
+  OkConfig &config = getConfig();
+  return config.intValues.count(key) > 0 ||
+         config.floatValues.count(key) > 0 ||
+         config.boolValues.count(key) > 0 ||
+         config.stringValues.count(key) > 0;
+}
+
+/**
+ * @brief The key's value formatted as a string, whatever its type.
+ */
+std::string OkConfig::getValueAsString(const std::string &key) {
+  OkConfig &config = getConfig();
+  if (config.boolValues.count(key) > 0) {
+    return config.boolValues[key] ? "true" : "false";
+  }
+  if (config.intValues.count(key) > 0) {
+    return std::to_string(config.intValues[key]);
+  }
+  if (config.floatValues.count(key) > 0) {
+    return std::to_string(config.floatValues[key]);
+  }
+  if (config.stringValues.count(key) > 0) {
+    return config.stringValues[key];
+  }
+  return "<unset>";
 }
 
 /**

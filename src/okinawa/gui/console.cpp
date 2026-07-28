@@ -46,15 +46,6 @@ void OkConsole::initialize() {
                       OkConsole::print("  " + names[i]);
                     }
                   });
-  registerCommand("commands", "list every registered command",
-                  [](const std::vector<std::string> &args) {
-                    (void)args;
-                    std::vector<std::string> names =
-                        OkConsole::getCommandNames();
-                    for (std::size_t i = 0; i < names.size(); i++) {
-                      OkConsole::print("  " + names[i]);
-                    }
-                  });
   registerCommand("clear", "clear the console output",
                   [](const std::vector<std::string> &args) {
                     (void)args;
@@ -87,23 +78,32 @@ void OkConsole::initialize() {
         OkConsole::print(key + " = " + val);
       });
   registerCommand(
-      "get", "get <config-key>: read an engine config value",
+      "get", "get <key-or-prefix>: read config values (prefix lists names)",
       [](const std::vector<std::string> &args) {
         if (args.size() != 1) {
-          OkConsole::print("usage: get <config-key>");
+          OkConsole::print("usage: get <key-or-prefix>");
           return;
         }
-        const std::string &key = args[0];
-        // The config stores each type in its own map; probe them all.
-        std::ostringstream out;
-        out << args[0] << ": int=" << OkConfig::getInt(key)
-            << " float=" << OkConfig::getFloat(key)
-            << " bool=" << (OkConfig::getBool(key) ? "true" : "false");
-        std::string str = OkConfig::getString(key);
-        if (!str.empty()) {
-          out << " string=" << str;
+        const std::string &prefix = args[0];
+        // An exact key always wins, even when it is also a prefix of
+        // other keys.
+        if (OkConfig::hasKey(prefix)) {
+          OkConsole::print(prefix + " = " +
+                           OkConfig::getValueAsString(prefix));
+          return;
         }
-        OkConsole::print(out.str());
+        std::vector<std::string> keys =
+            OkConfig::getKeysWithPrefix(prefix);
+        if (keys.empty()) {
+          OkConsole::print("no config keys match: " + prefix);
+        } else if (keys.size() == 1) {
+          OkConsole::print(keys[0] + " = " +
+                           OkConfig::getValueAsString(keys[0]));
+        } else {
+          for (std::size_t i = 0; i < keys.size(); i++) {
+            OkConsole::print("  " + keys[i]);
+          }
+        }
       });
 
   print("okinawa console. type 'help' for commands.");
