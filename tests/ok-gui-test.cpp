@@ -2,6 +2,7 @@
 
 #include "okinawa/config/config.hpp"
 #include "okinawa/gui/gui.hpp"
+#include "okinawa/gui/gui_layer.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
@@ -46,6 +47,33 @@ TEST_CASE("OkGui grid conversions", "[gui]") {
   }
 
   OkConfig::reset();
+}
+
+// Layer management is pure bookkeeping (no GL): ordering, lookup, removal.
+
+TEST_CASE("OkGui layers", "[gui]") {
+  SECTION("Kept sorted by order, far to near") {
+    OkGuiLayer *near = OkGui::addLayer("near", 10);
+    OkGuiLayer *far  = OkGui::addLayer("far", -5);
+    OkGuiLayer *mid  = OkGui::addLayer("mid", 3);
+    REQUIRE(near != nullptr);
+    REQUIRE(far != nullptr);
+    REQUIRE(mid != nullptr);
+    REQUIRE(OkGui::getLayerCount() == 3);
+    REQUIRE(OkGui::getLayer("far") == far);
+    REQUIRE(OkGui::getLayer("mid") == mid);
+    REQUIRE(OkGui::getLayer("missing") == nullptr);
+  }
+
+  SECTION("Removal") {
+    REQUIRE(OkGui::removeLayer("mid") == true);
+    REQUIRE(OkGui::getLayer("mid") == nullptr);
+    REQUIRE(OkGui::removeLayer("mid") == false);
+    REQUIRE(OkGui::getLayerCount() == 2);
+    REQUIRE(OkGui::removeLayer("near") == true);
+    REQUIRE(OkGui::removeLayer("far") == true);
+    REQUIRE(OkGui::getLayerCount() == 0);
+  }
 }
 
 // NOLINTEND(readability-magic-numbers)

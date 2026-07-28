@@ -53,6 +53,38 @@ converge harder; a tiny fov approaches an orthographic look.
 The pass draws with blending enabled and depth testing disabled: depth is
 the paint order (far to near), everything sits at the same real Z.
 
+## Layers
+
+GUI depth is a list of named layers (`OkGui::addLayer(name, order)`),
+rendered from the **lowest order to the highest** — far to near, a higher
+order paints on top. Within a layer, items draw in insertion order. A layer
+owns the items added to it (`addItem` transfers ownership) and destroys
+them with `removeLayer`. When solid 3D models join the GUI, the pass can
+clear the depth buffer *between* layers — list order across layers, true Z
+within one — without changing this design.
+
+## OkGuiImage
+
+The first grid-placed element: a textured quad that IS a plain `OkItem`
+(same texture loading, rotation, visibility, wireframe debug). The only
+new surface is grid placement:
+
+```cpp
+OkGuiLayer *hud = OkGui::addLayer("hud", 0);
+
+OkGuiImage *img = new OkGuiImage("speedo");
+img->loadTextureFromFile("assets/speedo.png");
+img->setGridPosition(9.0f, 5.0f);   // element centre, in cells
+img->setGridSize(6.0f, 6.0f);       // width/height, in cells
+img->setRotation(0.0f, 0.7f, 0.0f); // optional: oblique HUD (radians)
+hud->addItem(img);
+```
+
+The quad is a unit square centred on its origin, so rotations pivot on the
+element centre and the grid size maps to the item scaling. An unrotated
+image lands pixel-exact on the grid; a rotated one converges with real
+perspective thanks to the calibrated camera.
+
 ## Debug grid overlay
 
 `OkGui::setDebugGrid(true)` (or the `gui.debug.grid` config key) overlays

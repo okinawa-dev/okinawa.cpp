@@ -1,4 +1,5 @@
 #include "gui.hpp"
+#include "gui_layer.hpp"
 #include "../config/config.hpp"
 #include "../core/core.hpp"
 #include "../item/item.hpp"
@@ -11,6 +12,7 @@
 #include <vector>
 
 bool    OkGui::_initialized = false;
+std::vector<OkGuiLayer *> OkGui::_layers;
 OkItem *OkGui::_gridMinor   = nullptr;
 OkItem *OkGui::_gridMajor   = nullptr;
 OkItem *OkGui::_gridAxes    = nullptr;
@@ -44,6 +46,10 @@ void OkGui::initialize() {
  * @brief Destroy the internal debug grid items.
  */
 void OkGui::shutdown() {
+  for (std::size_t i = 0; i < _layers.size(); i++) {
+    delete _layers[i];
+  }
+  _layers.clear();
   delete _gridMinor;
   delete _gridMajor;
   delete _gridAxes;
@@ -139,6 +145,48 @@ float OkGui::getCameraDistance() {
   }
   return (logicalH * 0.5f) / tanH;
 }
+
+/**
+ * @brief Create a named layer (owned by OkGui) and keep the list sorted by
+ *        order so the draw pass walks it far-to-near without re-sorting.
+ */
+OkGuiLayer *OkGui::addLayer(const std::string &name, int order) {
+  OkGuiLayer *layer = new OkGuiLayer(name, order);
+  std::size_t at    = _layers.size();
+  for (std::size_t i = 0; i < _layers.size(); i++) {
+    if (_layers[i]->getOrder() > order) {
+      at = i;
+      break;
+    }
+  }
+  _layers.insert(_layers.begin() + (long)at, layer);
+  return layer;
+}
+
+OkGuiLayer *OkGui::getLayer(const std::string &name) {
+  for (std::size_t i = 0; i < _layers.size(); i++) {
+    if (_layers[i]->getName() == name) {
+      return _layers[i];
+    }
+  }
+  return nullptr;
+}
+
+/**
+ * @brief Destroy a layer and every item it owns. True if it existed.
+ */
+bool OkGui::removeLayer(const std::string &name) {
+  for (std::size_t i = 0; i < _layers.size(); i++) {
+    if (_layers[i]->getName() == name) {
+      delete _layers[i];
+      _layers.erase(_layers.begin() + (long)i);
+      return true;
+    }
+  }
+  return false;
+}
+
+int OkGui::getLayerCount() { return (int)_layers.size(); }
 
 void OkGui::setDebugGrid(bool show) {
   OkConfig::setBool("gui.debug.grid", show);
@@ -272,12 +320,13 @@ void OkGui::draw() {
   }
 
   bool showGrid = getDebugGrid();
-  if (!showGrid) {
-    // Nothing to draw yet (elements arrive with the layer/image stages).
+  if (!showGrid && _layers.empty()) {
     return;
   }
 
-  updateDebugGrid(logicalW, logicalH);
+  if (showGrid) {
+    updateDebugGrid(logicalW, logicalH);
+  }
 
   GLuint program = OkCore::getShaderProgram();
   glUseProgram(program);
@@ -306,14 +355,22 @@ void OkGui::draw() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  if (_gridMinor != nullptr) {
-    _gridMinor->draw();
+  // Layers, far to near (the list is kept sorted by order).
+  for (std::size_t i = 0; i < _layers.size(); i++) {
+    _layers[i]->draw();
   }
-  if (_gridMajor != nullptr) {
-    _gridMajor->draw();
-  }
-  if (_gridAxes != nullptr) {
-    _gridAxes->draw();
+
+  // The authoring grid draws on top of everything.
+  if (showGrid) {
+    if (_gridMinor != nullptr) {
+      _gridMinor->draw();
+    }
+    if (_gridMajor != nullptr) {
+      _gridMajor->draw();
+    }
+    if (_gridAxes != nullptr) {
+      _gridAxes->draw();
+    }
   }
 
   glEnable(GL_DEPTH_TEST);

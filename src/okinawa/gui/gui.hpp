@@ -1,9 +1,11 @@
 #ifndef OK_GUI_HPP
 #define OK_GUI_HPP
 
+#include <string>
 #include <vector>
 
 class OkItem;
+class OkGuiLayer;
 
 /**
  * @brief Static handler for the engine GUI.
@@ -56,6 +58,15 @@ public:
   // Grid cell size in logical pixels, before scaling (gui.grid.size).
   static float getCellSize();
 
+  // Layers: named depth layers rendered from the lowest order to the
+  // highest (far to near); a higher order paints on top. addLayer returns
+  // the new layer (owned by OkGui); getLayer finds it by name (null when
+  // missing); removeLayer destroys it and every item it owns.
+  static OkGuiLayer *addLayer(const std::string &name, int order);
+  static OkGuiLayer *getLayer(const std::string &name);
+  static bool        removeLayer(const std::string &name);
+  static int         getLayerCount();
+
   // Show / hide the debug grid overlay (also gui.debug.grid config key).
   static void setDebugGrid(bool show);
   static bool getDebugGrid();
@@ -73,6 +84,7 @@ private:
   static void getLogicalSize(float &outW, float &outH);
 
   static bool    _initialized;
+  static std::vector<OkGuiLayer *> _layers;  // owned, kept sorted by order
   static OkItem *_gridMinor;  // one line per cell (owned)
   static OkItem *_gridMajor;  // stronger line every 5 cells (owned)
   static OkItem *_gridAxes;   // the two 0,0 axes (owned)
