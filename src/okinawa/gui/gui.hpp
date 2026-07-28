@@ -8,6 +8,27 @@ class OkItem;
 class OkGuiLayer;
 
 /**
+ * @brief Anchor for grid-placed GUI elements: the point of the screen the
+ *        grid coordinates are relative to. CENTER is the 0,0 of the grid;
+ *        edge and corner anchors keep HUD elements stable across aspect
+ *        ratios (a corner element stays a fixed number of cells from ITS
+ *        corner on every monitor). Coordinates keep the engine axes
+ *        (X+ right, Y+ up), so an element inset from the right edge uses a
+ *        negative X offset.
+ */
+enum OkGuiAnchor {
+  OK_GUI_ANCHOR_CENTER = 0,
+  OK_GUI_ANCHOR_TOP,
+  OK_GUI_ANCHOR_BOTTOM,
+  OK_GUI_ANCHOR_LEFT,
+  OK_GUI_ANCHOR_RIGHT,
+  OK_GUI_ANCHOR_TOP_LEFT,
+  OK_GUI_ANCHOR_TOP_RIGHT,
+  OK_GUI_ANCHOR_BOTTOM_LEFT,
+  OK_GUI_ANCHOR_BOTTOM_RIGHT,
+};
+
+/**
  * @brief Static handler for the engine GUI.
  *
  *        The GUI is drawn in a dedicated pass after the 3D scene, using the
@@ -57,6 +78,13 @@ public:
 
   // Grid cell size in logical pixels, before scaling (gui.grid.size).
   static float getCellSize();
+
+  // Anchor origin in logical pixels for the CURRENT window size, and the
+  // pure helpers behind it (testable without a window).
+  static float anchorOriginX(OkGuiAnchor anchor);
+  static float anchorOriginY(OkGuiAnchor anchor);
+  static float anchorOriginXFor(OkGuiAnchor anchor, float logicalW);
+  static float anchorOriginYFor(OkGuiAnchor anchor, float logicalH);
 
   // Layers: named depth layers rendered from the lowest order to the
   // highest (far to near); a higher order paints on top. addLayer returns

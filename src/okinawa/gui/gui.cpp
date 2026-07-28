@@ -147,6 +147,58 @@ float OkGui::getCameraDistance() {
 }
 
 /**
+ * @brief Anchor origin helpers: X of the anchor point for a window of the
+ *        given logical width (centre-origin coordinates, X+ right).
+ */
+float OkGui::anchorOriginXFor(OkGuiAnchor anchor, float logicalW) {
+  switch (anchor) {
+  case OK_GUI_ANCHOR_LEFT:
+  case OK_GUI_ANCHOR_TOP_LEFT:
+  case OK_GUI_ANCHOR_BOTTOM_LEFT:
+    return -logicalW * 0.5f;
+  case OK_GUI_ANCHOR_RIGHT:
+  case OK_GUI_ANCHOR_TOP_RIGHT:
+  case OK_GUI_ANCHOR_BOTTOM_RIGHT:
+    return logicalW * 0.5f;
+  default:
+    return 0.0f;
+  }
+}
+
+/**
+ * @brief Anchor origin helpers: Y of the anchor point for a window of the
+ *        given logical height (centre-origin coordinates, Y+ up).
+ */
+float OkGui::anchorOriginYFor(OkGuiAnchor anchor, float logicalH) {
+  switch (anchor) {
+  case OK_GUI_ANCHOR_TOP:
+  case OK_GUI_ANCHOR_TOP_LEFT:
+  case OK_GUI_ANCHOR_TOP_RIGHT:
+    return logicalH * 0.5f;
+  case OK_GUI_ANCHOR_BOTTOM:
+  case OK_GUI_ANCHOR_BOTTOM_LEFT:
+  case OK_GUI_ANCHOR_BOTTOM_RIGHT:
+    return -logicalH * 0.5f;
+  default:
+    return 0.0f;
+  }
+}
+
+float OkGui::anchorOriginX(OkGuiAnchor anchor) {
+  float logicalW = 0.0f;
+  float logicalH = 0.0f;
+  getLogicalSize(logicalW, logicalH);
+  return anchorOriginXFor(anchor, logicalW);
+}
+
+float OkGui::anchorOriginY(OkGuiAnchor anchor) {
+  float logicalW = 0.0f;
+  float logicalH = 0.0f;
+  getLogicalSize(logicalW, logicalH);
+  return anchorOriginYFor(anchor, logicalH);
+}
+
+/**
  * @brief Create a named layer (owned by OkGui) and keep the list sorted by
  *        order so the draw pass walks it far-to-near without re-sorting.
  */

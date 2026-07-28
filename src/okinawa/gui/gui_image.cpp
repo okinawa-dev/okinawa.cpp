@@ -16,10 +16,11 @@ static unsigned int GUI_QUAD_INDICES[6] = {0, 1, 2, 0, 2, 3};
 
 OkGuiImage::OkGuiImage(const std::string &name)
     : OkItem(name, GUI_QUAD_VERTS, 20, GUI_QUAD_INDICES, 6) {
-  _gridX = 0.0f;
-  _gridY = 0.0f;
-  _gridW = 1.0f;
-  _gridH = 1.0f;
+  _gridX  = 0.0f;
+  _gridY  = 0.0f;
+  _gridW  = 1.0f;
+  _gridH  = 1.0f;
+  _anchor = OK_GUI_ANCHOR_CENTER;
 }
 
 /**
@@ -45,7 +46,8 @@ void OkGuiImage::setGridSize(float wCells, float hCells) {
  *        left untouched (it belongs to the caller).
  */
 void OkGuiImage::drawSelf() {
-  setPosition(OkGui::gridToScreenX(_gridX), OkGui::gridToScreenY(_gridY),
+  setPosition(OkGui::anchorOriginX(_anchor) + OkGui::gridToScreenX(_gridX),
+              OkGui::anchorOriginY(_anchor) + OkGui::gridToScreenY(_gridY),
               0.0f);
   setScaling(OkGui::gridToScreenX(_gridW), OkGui::gridToScreenY(_gridH), 1.0f);
   OkItem::drawSelf();

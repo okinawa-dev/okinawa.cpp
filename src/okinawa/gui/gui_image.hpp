@@ -2,6 +2,7 @@
 #define OK_GUI_IMAGE_HPP
 
 #include "../item/item.hpp"
+#include "gui.hpp"
 #include <string>
 
 /**
@@ -19,11 +20,15 @@ class OkGuiImage : public OkItem {
 public:
   explicit OkGuiImage(const std::string &name);
 
-  // Position of the element CENTRE on the grid (cells from the screen
-  // centre, X+ right, Y+ up).
+  // Position of the element CENTRE on the grid (cells from the anchor
+  // point, X+ right, Y+ up). The anchor defaults to the screen centre;
+  // edge/corner anchors keep the element stable across aspect ratios.
   void  setGridPosition(float gx, float gy);
   float getGridX() const { return _gridX; }
   float getGridY() const { return _gridY; }
+
+  void        setGridAnchor(OkGuiAnchor anchor) { _anchor = anchor; }
+  OkGuiAnchor getGridAnchor() const { return _anchor; }
 
   // Size of the quad in grid cells.
   void  setGridSize(float wCells, float hCells);
@@ -35,10 +40,11 @@ public:
   void drawSelf() override;
 
 private:
-  float _gridX;
-  float _gridY;
-  float _gridW;
-  float _gridH;
+  float       _gridX;
+  float       _gridY;
+  float       _gridW;
+  float       _gridH;
+  OkGuiAnchor _anchor;
 };
 
 #endif

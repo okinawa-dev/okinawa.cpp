@@ -85,6 +85,17 @@ element centre and the grid size maps to the item scaling. An unrotated
 image lands pixel-exact on the grid; a rotated one converges with real
 perspective thanks to the calibrated camera.
 
+## Anchors
+
+Grid coordinates are relative to an **anchor point** (`setGridAnchor`,
+default `OK_GUI_ANCHOR_CENTER`): the screen centre, an edge midpoint or a
+corner. Edge and corner anchors keep HUD elements stable across aspect
+ratios — a minimap anchored `OK_GUI_ANCHOR_BOTTOM_RIGHT` at `(-3, 3)`
+stays three cells inside its corner on every monitor, where centre-only
+coordinates would drift with the window width. Axes stay the same
+everywhere (X+ right, Y+ up), so insets from the right or top edges use
+negative offsets.
+
 ## Debug grid overlay
 
 `OkGui::setDebugGrid(true)` (or the `gui.debug.grid` config key) overlays

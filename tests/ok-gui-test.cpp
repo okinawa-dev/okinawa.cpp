@@ -49,6 +49,24 @@ TEST_CASE("OkGui grid conversions", "[gui]") {
   OkConfig::reset();
 }
 
+// Anchor origins: the point grid coordinates are relative to, for a given
+// logical window size (pure math, no window needed).
+
+TEST_CASE("OkGui anchor origins", "[gui]") {
+  REQUIRE_THAT(OkGui::anchorOriginXFor(OK_GUI_ANCHOR_CENTER, 800.0f),
+               WithinAbs(0.0f, 0.0001f));
+  REQUIRE_THAT(OkGui::anchorOriginXFor(OK_GUI_ANCHOR_LEFT, 800.0f),
+               WithinAbs(-400.0f, 0.0001f));
+  REQUIRE_THAT(OkGui::anchorOriginXFor(OK_GUI_ANCHOR_TOP_RIGHT, 800.0f),
+               WithinAbs(400.0f, 0.0001f));
+  REQUIRE_THAT(OkGui::anchorOriginYFor(OK_GUI_ANCHOR_TOP, 600.0f),
+               WithinAbs(300.0f, 0.0001f));
+  REQUIRE_THAT(OkGui::anchorOriginYFor(OK_GUI_ANCHOR_BOTTOM_LEFT, 600.0f),
+               WithinAbs(-300.0f, 0.0001f));
+  REQUIRE_THAT(OkGui::anchorOriginYFor(OK_GUI_ANCHOR_RIGHT, 600.0f),
+               WithinAbs(0.0f, 0.0001f));
+}
+
 // Layer management is pure bookkeeping (no GL): ordering, lookup, removal.
 
 TEST_CASE("OkGui layers", "[gui]") {
