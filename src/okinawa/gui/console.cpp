@@ -46,6 +46,15 @@ void OkConsole::initialize() {
                       OkConsole::print("  " + names[i]);
                     }
                   });
+  registerCommand("commands", "list every registered command",
+                  [](const std::vector<std::string> &args) {
+                    (void)args;
+                    std::vector<std::string> names =
+                        OkConsole::getCommandNames();
+                    for (std::size_t i = 0; i < names.size(); i++) {
+                      OkConsole::print("  " + names[i]);
+                    }
+                  });
   registerCommand("clear", "clear the console output",
                   [](const std::vector<std::string> &args) {
                     (void)args;
