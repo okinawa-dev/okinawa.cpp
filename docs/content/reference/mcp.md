@@ -18,11 +18,11 @@ The server exposes these tools to a connected agent:
 | `screenshot` | Writes the current frame to a PNG file on disk (for a human) and returns the path. Optional `path` (default `okinawa-screenshot.png`). |
 | `press_key` | Holds a key for a duration to drive the app for GAMEPLAY: W/A/S/D move, SPACE/T/R/F are actions, 1-9 switch camera, arrows turn. Args: `key`, `duration_ms` (default 120). (For positioning the view, use `view` instead.) |
 | `press_keys` | Holds several keys at once (e.g. W and D for diagonal movement). Args: `keys`, `duration_ms`. |
-
-Key names accepted by `press_key`/`press_keys`: single letters and digits, `space`, `up`/`down`/`left`/`right`, `escape`, `enter`, `tab`, `backspace`, `grave` (or `backtick`), `period`, `minus`. `grave` toggles the engine console; while the console is open, injected printable keys feed its input line, so an agent can type commands (`grave`, then the letters with `space`/`period`, then `enter`).
 | `view` | **The camera tool.** Sets the whole viewpoint in one call. `camera` (optional) activates a camera **by its registered name** (`get_state` lists them under `cameras`); the tool then drives the ACTIVE camera and never force-switches on its own. `x`, `y`, `z` place the avatar. Orbit cameras take `yaw_deg` (compass facing), `pitch_deg` (tilt; negative looks down, `~-89` = top-down) and `distance` (metres back); overhead/fixed cameras take just `distance` (their height). All fields optional; an omitted field keeps its current value. Persistent (survives input). `get_state` returns the same values, with the active camera's name, under `view` — reproduce any viewpoint by passing them straight back. Returns the resulting view. |
 | `set_item_visible` | Show/hide scene items by name to isolate geometry. With `prefix: true` it applies to every item whose name starts with `name` (e.g. `building_` / `sidewalk_` to hide all at once, or `building_blk52_` to show one block); otherwise it toggles the single item with that exact `name`. Returns how many items changed. |
 | `get_state` | Returns numeric runtime state, including `view` (the active camera's name and values, ready to pass back to `view`), `cameras` (the registered camera names), the raw camera pose, fps, scene object count, window size and resident memory. |
+
+Key names accepted by `press_key`/`press_keys`: single letters and digits, `space`, `up`/`down`/`left`/`right`, `escape`, `enter`, `tab`, `backspace`, `grave` (or `backtick`), `period`, `minus`. `grave` toggles the engine console; while the console is open, injected printable keys feed its input line, so an agent can type commands (`grave`, then the letters with `space`/`period`, then `enter`).
 
 ## Enabling it
 
