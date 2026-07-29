@@ -12,6 +12,7 @@ float OkLighting::_fogColor[3] = {0.75f, 0.80f, 0.85f};
 float OkLighting::_fogDensity  = 0.0f;
 float OkLighting::_sunColor[3] = {1.0f, 1.0f, 1.0f};
 float OkLighting::_sunDir[3]   = {0.0f, -1.0f, 0.0f};
+float OkLighting::_zenith[3]   = {0.25f, 0.48f, 0.80f};
 
 // The atmosphere curve: one keyframe per anchor hour, linearly interpolated
 // around the clock (the last segment wraps 23 -> 5). The palette follows the
@@ -20,33 +21,34 @@ float OkLighting::_sunDir[3]   = {0.0f, -1.0f, 0.0f};
 struct OkAtmoKey {
   float hour;
   float tint[3];      // scene tint (multiplies albedo)
-  float fog[3];       // fog colour
+  float fog[3];       // fog colour (also the sky at the horizon)
   float density;      // exponential fog density (per metre)
   float sun[3];       // sun colour (consumed by the directional stage later)
+  float zenith[3];    // sky colour straight up (skybox gradient top)
 };
 
 static const OkAtmoKey ATMO_KEYS[] = {
     // deep night: cold teal soak, dense milky haze
     {0.0f, {0.30f, 0.40f, 0.48f}, {0.10f, 0.16f, 0.20f}, 0.0060f,
-     {0.0f, 0.0f, 0.0f}},
+     {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}},
     {5.0f, {0.30f, 0.40f, 0.48f}, {0.10f, 0.16f, 0.20f}, 0.0060f,
-     {0.0f, 0.0f, 0.0f}},
+     {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}},
     // dawn: haze warms and thins
     {7.0f, {0.85f, 0.75f, 0.70f}, {0.70f, 0.60f, 0.55f}, 0.0035f,
-     {1.0f, 0.75f, 0.55f}},
+     {1.0f, 0.75f, 0.55f}, {0.30f, 0.35f, 0.50f}},
     // day: neutral light, light blue distance haze
     {9.0f, {1.00f, 1.00f, 1.00f}, {0.72f, 0.78f, 0.85f}, 0.0018f,
-     {1.0f, 0.98f, 0.92f}},
+     {1.0f, 0.98f, 0.92f}, {0.25f, 0.48f, 0.80f}},
     {17.0f, {1.00f, 1.00f, 1.00f}, {0.72f, 0.78f, 0.85f}, 0.0018f,
-     {1.0f, 0.98f, 0.92f}},
+     {1.0f, 0.98f, 0.92f}, {0.25f, 0.48f, 0.80f}},
     // sunset: everything warms, haze turns amber-pink
     {20.0f, {1.00f, 0.72f, 0.52f}, {0.75f, 0.50f, 0.42f}, 0.0032f,
-     {1.0f, 0.55f, 0.30f}},
+     {1.0f, 0.55f, 0.30f}, {0.25f, 0.22f, 0.38f}},
     // dusk into night: the teal takes over
     {22.0f, {0.42f, 0.48f, 0.55f}, {0.16f, 0.22f, 0.27f}, 0.0050f,
-     {0.2f, 0.15f, 0.15f}},
+     {0.2f, 0.15f, 0.15f}, {0.04f, 0.08f, 0.14f}},
     {23.0f, {0.30f, 0.40f, 0.48f}, {0.10f, 0.16f, 0.20f}, 0.0060f,
-     {0.0f, 0.0f, 0.0f}},
+     {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}},
 };
 static const int ATMO_KEY_COUNT = (int)(sizeof(ATMO_KEYS) / sizeof(ATMO_KEYS[0]));
 // NOLINTEND(readability-magic-numbers)
@@ -113,7 +115,8 @@ void OkLighting::update(float dt) {
     float hoursAdvance = (dt / 1000.0f) * timescale / 3600.0f;
     setTimeOfDay(getTimeOfDay() + hoursAdvance);
   }
-  evaluate(getTimeOfDay(), _tint, _fogColor, _fogDensity, _sunColor, _sunDir);
+  evaluate(getTimeOfDay(), _tint, _fogColor, _fogDensity, _sunColor, _sunDir,
+           _zenith);
 }
 
 /**
@@ -123,7 +126,7 @@ void OkLighting::update(float dt) {
  */
 void OkLighting::evaluate(float hours, float outTint[3], float outFogColor[3],
                           float &outFogDensity, float outSunColor[3],
-                          float outSunDir[3]) {
+                          float outSunDir[3], float outZenith[3]) {
   float h = std::fmod(hours, 24.0f);
   if (h < 0.0f) {
     h += 24.0f;
@@ -156,6 +159,10 @@ void OkLighting::evaluate(float hours, float outTint[3], float outFogColor[3],
     outTint[c]     = prev->tint[c] + (next->tint[c] - prev->tint[c]) * frac;
     outFogColor[c] = prev->fog[c] + (next->fog[c] - prev->fog[c]) * frac;
     outSunColor[c] = prev->sun[c] + (next->sun[c] - prev->sun[c]) * frac;
+    if (outZenith != nullptr) {
+      outZenith[c] =
+          prev->zenith[c] + (next->zenith[c] - prev->zenith[c]) * frac;
+    }
   }
   outFogDensity = prev->density + (next->density - prev->density) * frac;
 

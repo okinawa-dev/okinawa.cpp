@@ -141,6 +141,23 @@ void OkTexture::setNearestFiltering() const {
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+/**
+ * @brief Replace the texture's pixel data in place (dimensions must match
+ *        the ones it was created with). Used by dynamic textures like the
+ *        skybox gradient.
+ */
+void OkTexture::updateRawData(const unsigned char *data, int newWidth,
+                              int newHeight) {
+  if (!loaded || newWidth != width || newHeight != height) {
+    return;
+  }
+  GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
+  glBindTexture(GL_TEXTURE_2D, id);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format,
+                  GL_UNSIGNED_BYTE, data);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void OkTexture::bind() const {
   if (loaded) {
     glBindTexture(GL_TEXTURE_2D, id);

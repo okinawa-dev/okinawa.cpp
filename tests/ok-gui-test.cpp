@@ -218,6 +218,14 @@ TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
     REQUIRE_THAT(tint[0], WithinAbs(t2[0], 0.0001f));
     REQUIRE_THAT(density, WithinAbs(d2, 0.0001f));
   }
+  SECTION("Sky zenith follows the cycle") {
+    float z[3];
+    OkLighting::evaluate(12.0f, tint, fog, density, sun, dir, z);
+    REQUIRE(z[2] > z[0]);       // day zenith: blue over red
+    REQUIRE(z[2] > 0.5f);
+    OkLighting::evaluate(2.0f, tint, fog, density, sun, dir, z);
+    REQUIRE(z[2] < 0.15f);      // night zenith: near-black petrol
+  }
   SECTION("Continuity across midnight") {
     float a[3], b[3], fa[3], fb[3], da, db, sa[3], sb[3], za[3], zb[3];
     OkLighting::evaluate(23.99f, a, fa, da, sa, za);

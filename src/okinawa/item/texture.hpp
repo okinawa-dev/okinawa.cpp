@@ -40,6 +40,10 @@ public:
   // Switch to nearest filtering (no mipmaps): crisp pixel textures such
   // as glyph atlases, where linear sampling would bleed between cells.
   void setNearestFiltering() const;
+
+  // Replace the pixel data in place (same size and channel count the
+  // texture was created with). RGBA/RGB raw data, no mipmap rebuild.
+  void updateRawData(const unsigned char *data, int newWidth, int newHeight);
   bool        isLoaded() const { return loaded; }
 
   // Getters

@@ -1,6 +1,7 @@
 #include "core.hpp"
 #include "../gui/console.hpp"
 #include "../lighting/lighting.hpp"
+#include "../lighting/skybox.hpp"
 #include "../gui/gui.hpp"
 #include "../avatar/avatar.hpp"
 #include "../config/config.hpp"
@@ -138,6 +139,7 @@ void OkCore::exit() {
   // Destroy the GUI internal items while the GL context is still alive
   OkConsole::shutdown();
   OkGui::shutdown();
+  OkSkybox::shutdown();
 
   // Delete scene and input handlers first
   delete _sceneHandler;
@@ -340,6 +342,28 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glEnable(GL_DEPTH_TEST);
       glUseProgram(_shaderProgram);
+
+      // Set view and projection matrices first, then paint the sky dome
+      // behind everything with NEUTRAL atmosphere uniforms (the gradient
+      // already carries the cycle's colours).
+      {
+        GLint viewLocS = glGetUniformLocation(_shaderProgram, "view");
+        GLint projLocS = glGetUniformLocation(_shaderProgram, "projection");
+        glUniformMatrix4fv(viewLocS, 1, GL_FALSE,
+                           _cameras[_currentCamera]->getViewPtr());
+        glUniformMatrix4fv(projLocS, 1, GL_FALSE,
+                           _cameras[_currentCamera]->getProjectionPtr());
+        GLint tintLocS = glGetUniformLocation(_shaderProgram, "sceneTint");
+        GLint fogLocS  = glGetUniformLocation(_shaderProgram, "fogDensity");
+        if (tintLocS != -1) {
+          glUniform3f(tintLocS, 1.0f, 1.0f, 1.0f);
+        }
+        if (fogLocS != -1) {
+          glUniform1f(fogLocS, 0.0f);
+        }
+        OkPoint camPos = _cameras[_currentCamera]->getPosition();
+        OkSkybox::draw(camPos.x(), camPos.y(), camPos.z());
+      }
 
       // Atmosphere uniforms for the world pass (the GUI pass resets them).
       {

@@ -42,6 +42,19 @@ per frame:
   stage): elevation follows a sine over the 6h-21h daylight arc, azimuth
   sweeps east to west, parked below the horizon at night.
 
+- **Sky zenith colour**: the top of the procedural skybox.
+
+## The skybox
+
+`OkSkybox` draws a low-poly gradient dome first in the frame (camera-
+centred, depth writes off, so the whole scene paints over it): the
+HORIZON colour is the fog colour — the fogged city always fades into the
+sky seamlessly — and the top is the curve's zenith colour, from petrol
+blue at night to clear blue at noon. The 1-D gradient texture refreshes
+itself when the cycle's colours drift. The dome reaches slightly below
+the horizon so no gap ever shows; the emissive skyline belt (distant lit
+windows) is a later follow-up on the same dome.
+
 `OkLighting::evaluate(hour, ...)` exposes the pure curve for tests and
 tools; the interpolated values are read every frame by the render pass
 (`getSceneTint`, `getFogColor`, `getFogDensity`, `getSunColor`,
