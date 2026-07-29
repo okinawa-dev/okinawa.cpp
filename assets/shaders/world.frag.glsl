@@ -1,6 +1,12 @@
 #version 410
 #pragma shader_stage(fragment)
 
+// The engine's single WORLD-pass fragment shader (the "ubershader" of the
+// classic one-program pipeline). Per fragment it: samples the texture (or
+// the flat fill colour), applies the per-item tint, the day-cycle scene
+// tint, and the exponential distance fog. The GUI pass and the skybox use
+// the SAME program with neutral atmosphere uniforms.
+
 out vec4 FragColor;
 in vec2  TexCoord;
 in float FogDist;

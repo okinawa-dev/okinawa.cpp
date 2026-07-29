@@ -1,6 +1,11 @@
 #version 410
 #pragma shader_stage(vertex)
 
+// The engine's single WORLD-pass vertex shader, used by every draw in the
+// frame (scene, skybox dome, GUI pass -- only the uniforms change):
+// applies the model/view/projection transform, forwards the UVs and
+// computes the view-space distance the fragment shader's fog needs.
+
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec2 aTexCoord;
 
