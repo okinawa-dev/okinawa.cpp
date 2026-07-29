@@ -238,9 +238,9 @@ void OkCore::framebufferSizeCallback(GLFWwindow * /*window*/, int width,
  */
 bool OkCore::initializeShaders() {
   std::string fragmentShaderSource =
-      OkAssets::loadShaderSource("fragmentshader.frag.glsl");
+      OkAssets::loadShaderSource("world.frag.glsl");
   std::string vertexShaderSource =
-      OkAssets::loadShaderSource("vertexshader.vert.glsl");
+      OkAssets::loadShaderSource("world.vert.glsl");
 
   if (fragmentShaderSource.empty() || vertexShaderSource.empty()) {
     OkLogger::error("Core", "Failed to load shader source files");

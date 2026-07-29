@@ -89,7 +89,7 @@ OkAssets::getEngineAssetPath(const std::string &relativePath) {
 
 /**
  * @brief Get the path to a shader file.
- * @param shaderName Name of the shader file (e.g., "vertexshader.vert.glsl").
+ * @param shaderName Name of the shader file (e.g., "world.vert.glsl").
  * @return Absolute path to the shader file.
  */
 std::filesystem::path OkAssets::getShaderPath(const std::string &shaderName) {
