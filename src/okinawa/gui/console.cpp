@@ -274,7 +274,28 @@ void OkConsole::refreshUi() {
   }
 
   // Output lines, oldest at the top, newest just above the input line.
-  int total = (int)_output.size();
+  // Long lines WRAP to the console width (glyph advance is 6/7 of the
+  // text cell height); the visible window is the last CONSOLE_LINES
+  // visual rows after wrapping.
+  float charCells = CONSOLE_TEXT_CELLS * 6.0f / 7.0f;
+  int   maxChars  = (int)((logicalW - CONSOLE_MARGIN * 2.0f) / charCells);
+  if (maxChars < 8) {
+    maxChars = 8;
+  }
+  std::vector<std::string> rows;
+  for (std::size_t oi = 0; oi < _output.size(); oi++) {
+    const std::string &full = _output[oi];
+    if (full.empty()) {
+      rows.push_back("");
+      continue;
+    }
+    for (std::size_t at = 0; at < full.size();
+         at += (std::size_t)maxChars) {
+      rows.push_back(full.substr(at, (std::size_t)maxChars));
+    }
+  }
+
+  int total = (int)rows.size();
   for (int i = 0; i < CONSOLE_LINES; i++) {
     OkGuiText *line = (OkGuiText *)layer->getItemByName(
         "ok_console_line" + std::to_string(i));
@@ -282,7 +303,7 @@ void OkConsole::refreshUi() {
       continue;
     }
     int src = total - CONSOLE_LINES + i;
-    std::string text = (src >= 0) ? _output[(std::size_t)src] : "";
+    std::string text = (src >= 0) ? rows[(std::size_t)src] : "";
     line->setText(text);
     float y = -CONSOLE_MARGIN - (float)i * lineStep -
               CONSOLE_TEXT_CELLS * 0.5f;
