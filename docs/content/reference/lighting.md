@@ -69,3 +69,4 @@ tinted or fogged.
 | --- | --- | --- |
 | `lighting.time` | `12` | Hour of day, 0-24 (wraps). |
 | `lighting.timescale` | `30` | Clock speed vs real time; `0` freezes it. |
+| `lighting.fog` | `true` | Distance fog on/off (the colour keeps driving the sky and clear). |

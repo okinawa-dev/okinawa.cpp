@@ -41,7 +41,8 @@ public:
   // Current interpolated atmosphere values.
   static const float *getSceneTint() { return _tint; }      // rgb
   static const float *getFogColor() { return _fogColor; }   // rgb
-  static float        getFogDensity() { return _fogDensity; }
+  // 0 while lighting.fog is disabled (the console/game fog toggle).
+  static float        getFogDensity();
   static const float *getSunColor() { return _sunColor; }   // rgb
   static const float *getSunDirection() { return _sunDir; } // xyz, normalized
   static const float *getSkyZenith() { return _zenith; }    // rgb, sky top

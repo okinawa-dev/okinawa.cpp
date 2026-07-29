@@ -49,6 +49,7 @@ void OkConfig::setDefaults() {
   // the clock runs (30 = a full day in 48 real minutes; 0 freezes it).
   floatValues["lighting.time"]      = 12.0f;
   floatValues["lighting.timescale"] = 30.0f;
+  boolValues["lighting.fog"]        = true;
   floatValues["gui.scale"]      = 0.0f;
   floatValues["gui.fov"]        = 35.0f;
   boolValues["gui.debug.grid"]  = false;

@@ -93,6 +93,15 @@ void OkLighting::initialize() {
                  "Day cycle at " + std::to_string(getTimeOfDay()) + "h");
 }
 
+/**
+ * @brief Current fog density; zero while the lighting.fog toggle is off
+ *        (the fog colour is still evaluated -- the skybox horizon and the
+ *        clear colour keep following the cycle).
+ */
+float OkLighting::getFogDensity() {
+  return OkConfig::getBool("lighting.fog") ? _fogDensity : 0.0f;
+}
+
 float OkLighting::getTimeOfDay() {
   return OkConfig::getFloat("lighting.time");
 }
