@@ -45,6 +45,10 @@ void OkConfig::setDefaults() {
   // view of the calibrated GUI camera (degrees; the oblique-element knob)
   // and the debug grid overlay.
   intValues["gui.grid.size"]    = 20;
+  // Lighting: day-clock hour (0-24) and how much faster than real time
+  // the clock runs (30 = a full day in 48 real minutes; 0 freezes it).
+  floatValues["lighting.time"]      = 12.0f;
+  floatValues["lighting.timescale"] = 30.0f;
   floatValues["gui.scale"]      = 0.0f;
   floatValues["gui.fov"]        = 35.0f;
   boolValues["gui.debug.grid"]  = false;

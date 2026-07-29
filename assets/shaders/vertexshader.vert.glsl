@@ -8,9 +8,12 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-out vec2 TexCoord;
+out vec2  TexCoord;
+out float FogDist;  // view-space distance for the exponential fog
 
 void main() {
-  gl_Position = projection * view * model * vec4(aPos, 1.0);
-  TexCoord    = aTexCoord;
+  vec4 viewPos = view * model * vec4(aPos, 1.0);
+  gl_Position  = projection * viewPos;
+  TexCoord     = aTexCoord;
+  FogDist      = length(viewPos.xyz);
 }

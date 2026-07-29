@@ -1,5 +1,6 @@
 #include "core.hpp"
 #include "../gui/console.hpp"
+#include "../lighting/lighting.hpp"
 #include "../gui/gui.hpp"
 #include "../avatar/avatar.hpp"
 #include "../config/config.hpp"
@@ -91,6 +92,7 @@ bool OkCore::initialize() {
   // Initialize the GUI pass (grid config, debug overlay) and the console.
   OkGui::initialize();
   OkConsole::initialize();
+  OkLighting::initialize();
 
   // Typed characters feed the console while it is open.
   glfwSetCharCallback(_window, [](GLFWwindow * /*w*/, unsigned int cp) {
@@ -294,6 +296,9 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       // below (avatar, cameras, game callbacks) sees any key.
       OkConsole::update(dt);
 
+      // Advance the day cycle and refresh the atmosphere values.
+      OkLighting::update(dt);
+
       // Handle camera switching based on input state
       OkInputState state = _input->getState();
       if (state.changeCamera != -1) {
@@ -328,11 +333,30 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
         currentScene->step(dt);
       }
 
-      // Render
-      glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+      // Render. Until the skybox exists, the clear colour IS the fog
+      // colour, so distance fades into the "sky" seamlessly.
+      const float *fogClear = OkLighting::getFogColor();
+      glClearColor(fogClear[0], fogClear[1], fogClear[2], 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glEnable(GL_DEPTH_TEST);
       glUseProgram(_shaderProgram);
+
+      // Atmosphere uniforms for the world pass (the GUI pass resets them).
+      {
+        const float *tint = OkLighting::getSceneTint();
+        GLint tintLoc     = glGetUniformLocation(_shaderProgram, "sceneTint");
+        GLint fogColLoc   = glGetUniformLocation(_shaderProgram, "fogColor");
+        GLint fogDenLoc   = glGetUniformLocation(_shaderProgram, "fogDensity");
+        if (tintLoc != -1) {
+          glUniform3f(tintLoc, tint[0], tint[1], tint[2]);
+        }
+        if (fogColLoc != -1) {
+          glUniform3f(fogColLoc, fogClear[0], fogClear[1], fogClear[2]);
+        }
+        if (fogDenLoc != -1) {
+          glUniform1f(fogDenLoc, OkLighting::getFogDensity());
+        }
+      }
 
       // Set view and projection matrices
       GLint viewLoc = glGetUniformLocation(_shaderProgram, "view");

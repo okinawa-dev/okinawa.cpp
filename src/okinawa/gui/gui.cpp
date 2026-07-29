@@ -402,6 +402,18 @@ void OkGui::draw() {
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
   }
 
+  // The interface lives outside the world's atmosphere: no tint, no fog.
+  {
+    GLint tintLoc   = glGetUniformLocation(program, "sceneTint");
+    GLint fogDenLoc = glGetUniformLocation(program, "fogDensity");
+    if (tintLoc != -1) {
+      glUniform3f(tintLoc, 1.0f, 1.0f, 1.0f);
+    }
+    if (fogDenLoc != -1) {
+      glUniform1f(fogDenLoc, 0.0f);
+    }
+  }
+
   // Painter's order: depth is the layer list, not the Z buffer.
   glDisable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);

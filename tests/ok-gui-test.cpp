@@ -186,3 +186,43 @@ TEST_CASE("OkConfig prefix lookup", "[gui]") {
   }
   OkConfig::reset();
 }
+
+// Day-cycle atmosphere curve (pure evaluation, no GL).
+
+#include "okinawa/lighting/lighting.hpp"
+
+TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
+  float tint[3], fog[3], density, sun[3], dir[3];
+
+  SECTION("Midday is neutral and thin") {
+    OkLighting::evaluate(12.0f, tint, fog, density, sun, dir);
+    REQUIRE_THAT(tint[0], WithinAbs(1.0f, 0.01f));
+    REQUIRE_THAT(tint[1], WithinAbs(1.0f, 0.01f));
+    REQUIRE(density < 0.003f);
+    REQUIRE(dir[1] < -0.5f);  // sun high above, light points down
+  }
+  SECTION("Deep night is cold teal and dense") {
+    OkLighting::evaluate(2.0f, tint, fog, density, sun, dir);
+    REQUIRE(tint[2] > tint[0]);  // blue over red: cold
+    REQUIRE(density > 0.005f);
+    REQUIRE(dir[1] > 0.0f);  // sun parked below the horizon
+  }
+  SECTION("Sunset is warm") {
+    OkLighting::evaluate(20.0f, tint, fog, density, sun, dir);
+    REQUIRE(tint[0] > tint[2]);  // red over blue: warm
+  }
+  SECTION("Hours wrap") {
+    float t2[3], f2[3], d2, s2[3], dd2[3];
+    OkLighting::evaluate(26.0f, tint, fog, density, sun, dir);
+    OkLighting::evaluate(2.0f, t2, f2, d2, s2, dd2);
+    REQUIRE_THAT(tint[0], WithinAbs(t2[0], 0.0001f));
+    REQUIRE_THAT(density, WithinAbs(d2, 0.0001f));
+  }
+  SECTION("Continuity across midnight") {
+    float a[3], b[3], fa[3], fb[3], da, db, sa[3], sb[3], za[3], zb[3];
+    OkLighting::evaluate(23.99f, a, fa, da, sa, za);
+    OkLighting::evaluate(0.01f, b, fb, db, sb, zb);
+    REQUIRE_THAT(a[0], WithinAbs(b[0], 0.01f));
+    REQUIRE_THAT(da, WithinAbs(db, 0.0005f));
+  }
+}
