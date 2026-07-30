@@ -419,8 +419,10 @@ void OkGui::draw() {
     }
   }
 
-  // Painter's order: depth is the layer list, not the Z buffer.
+  // Painter's order: depth is the layer list, not the Z buffer. Culling
+  // off: oblique/rotated GUI elements may show their back face.
   glDisable(GL_DEPTH_TEST);
+  glDisable(GL_CULL_FACE);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
