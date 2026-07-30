@@ -1,4 +1,6 @@
 #include "config.hpp"
+#include <cctype>
+#include <cstdlib>
 #include <algorithm>
 #include "../utils/logger.hpp"
 #include <exception>
@@ -159,6 +161,37 @@ void OkConfig::setInt(const std::string &key, int value) {
  */
 void OkConfig::setFloat(const std::string &key, float value) {
   getConfig().floatValues[key] = value;
+}
+
+void OkConfig::setFromString(const std::string &key, const std::string &val) {
+  OkConfig &cfg = getConfig();
+  if (cfg.floatValues.find(key) != cfg.floatValues.end()) {
+    setFloat(key, (float)atof(val.c_str()));
+    return;
+  }
+  if (cfg.boolValues.find(key) != cfg.boolValues.end()) {
+    setBool(key, val == "true" || val == "1");
+    return;
+  }
+  if (cfg.intValues.find(key) != cfg.intValues.end()) {
+    setInt(key, atoi(val.c_str()));
+    return;
+  }
+  if (cfg.stringValues.find(key) != cfg.stringValues.end()) {
+    setString(key, val);
+    return;
+  }
+  // Unknown key: guess the type from the text shape.
+  if (val == "true" || val == "false") {
+    setBool(key, val == "true");
+  } else if (val.find('.') != std::string::npos) {
+    setFloat(key, (float)atof(val.c_str()));
+  } else if (!val.empty() &&
+             (isdigit((unsigned char)val[0]) || val[0] == '-')) {
+    setInt(key, atoi(val.c_str()));
+  } else {
+    setString(key, val);
+  }
 }
 
 /**

@@ -20,8 +20,8 @@ void OkPostProcess::initialize() {
   // NOLINTBEGIN(readability-magic-numbers)
   OkConfig::setBool("render.post", true);
   OkConfig::setBool("post.dof", true);
-  OkConfig::setFloat("post.dof.focus", 18.0f);    // metres, sharp centre
-  OkConfig::setFloat("post.dof.range", 10.0f);    // +/- fully sharp band
+  OkConfig::setFloat("post.dof.focus", 30.0f);    // metres, sharp centre
+  OkConfig::setFloat("post.dof.range", 50.0f);    // +/- fully sharp band
   OkConfig::setFloat("post.dof.maxblur", 3.0f);   // max blur radius (px)
   OkConfig::setBool("post.grain", true);
   OkConfig::setFloat("post.grain.strength", 0.035f);

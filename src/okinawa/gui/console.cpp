@@ -65,16 +65,9 @@ void OkConsole::initialize() {
         }
         const std::string &key = args[0];
         const std::string &val = args[1];
-        if (val == "true" || val == "false") {
-          OkConfig::setBool(key, val == "true");
-        } else if (val.find('.') != std::string::npos) {
-          OkConfig::setFloat(key, (float)atof(val.c_str()));
-        } else if (!val.empty() &&
-                   (isdigit((unsigned char)val[0]) || val[0] == '-')) {
-          OkConfig::setInt(key, atoi(val.c_str()));
-        } else {
-          OkConfig::setString(key, val);
-        }
+        // Typed write: an existing key keeps its type ("set x 0" on a
+        // float key stores 0.0f, not an int in a different map).
+        OkConfig::setFromString(key, val);
         OkConsole::print(key + " = " + val);
       });
   registerCommand(

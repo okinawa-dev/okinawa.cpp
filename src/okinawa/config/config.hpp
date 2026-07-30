@@ -32,6 +32,12 @@ public:
   static bool        hasKey(const std::string &key);
   static std::string getValueAsString(const std::string &key);
 
+  // Parse `val` and store it under `key` RESPECTING the key's existing
+  // type (a float key stays float even when the text has no decimal
+  // point). Unknown keys fall back to text-shape guessing. The console's
+  // `set` uses this.
+  static void setFromString(const std::string &key, const std::string &val);
+
   // Reset every value back to the defaults, discarding anything set at
   // runtime. Mainly useful to isolate global state between unit tests.
   static void reset();
