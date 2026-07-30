@@ -132,6 +132,7 @@ void OkSkybox::draw(float camX, float camY, float camZ) {
   glDepthMask(GL_FALSE);
   glDisable(GL_CULL_FACE);
   _dome->draw();
+  glEnable(GL_CULL_FACE);
   glDepthMask(GL_TRUE);
   glEnable(GL_DEPTH_TEST);
 }

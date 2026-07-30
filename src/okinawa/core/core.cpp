@@ -342,6 +342,10 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       glClearColor(fogClear[0], fogClear[1], fogClear[2], 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glEnable(GL_DEPTH_TEST);
+      // Back-face culling for the world pass: every mesh is single-sided
+      // with a consistent outward winding (city bake, terrain, avatar).
+      // The skybox and the GUI pass disable it locally.
+      glEnable(GL_CULL_FACE);
       glUseProgram(_shaderProgram);
 
       // Set view and projection matrices first, then paint the sky dome
