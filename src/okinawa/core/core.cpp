@@ -2,6 +2,7 @@
 #include "../gui/console.hpp"
 #include "../lighting/lighting.hpp"
 #include "../math/frustum.hpp"
+#include "../render/postprocess.hpp"
 #include "../lighting/skybox.hpp"
 #include "../gui/gui.hpp"
 #include "../avatar/avatar.hpp"
@@ -95,6 +96,7 @@ bool OkCore::initialize() {
   OkGui::initialize();
   OkConsole::initialize();
   OkLighting::initialize();
+  OkPostProcess::initialize();
 
   // Typed characters feed the console while it is open.
   glfwSetCharCallback(_window, [](GLFWwindow * /*w*/, unsigned int cp) {
@@ -141,6 +143,7 @@ void OkCore::exit() {
   OkConsole::shutdown();
   OkGui::shutdown();
   OkSkybox::shutdown();
+  OkPostProcess::shutdown();
 
   // Delete scene and input handlers first
   delete _sceneHandler;
@@ -336,6 +339,15 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
         currentScene->step(dt);
       }
 
+      // Post-process: with render.post on, the whole world pass renders
+      // into the offscreen target and end() composites it to the window
+      // before the camera-attached and GUI passes (which stay sharp).
+      {
+        int fbw = 0, fbh = 0;
+        glfwGetFramebufferSize(_window, &fbw, &fbh);
+        OkPostProcess::begin(fbw, fbh);
+      }
+
       // Render. Until the skybox exists, the clear colour IS the fog
       // colour, so distance fades into the "sky" seamlessly.
       const float *fogClear = OkLighting::getFogColor();
@@ -451,6 +463,11 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       }
 
       OkFrustum::setActive(nullptr);
+
+      // Composite the offscreen frame to the window (no-op when
+      // render.post is off).
+      OkPostProcess::end(_cameras[_currentCamera]->getNearPlane(),
+                         _cameras[_currentCamera]->getFarPlane(), dt);
 
       // Draw cameras (both for debugging and to render elements attached to
       // cameras, like interfaces)

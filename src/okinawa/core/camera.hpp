@@ -55,6 +55,10 @@ public:
   // directly (MCP `view`). Base ignores it; subclasses apply and clamp.
   virtual void setViewDistance(float d) { (void)d; }
 
+  // Projection planes (the post-process depth linearization needs them)
+  float getNearPlane() const { return near; }
+  float getFarPlane() const { return far; }
+
   // Getters for matrices
   const glm::mat4 &getView() const { return view; }
   const glm::mat4 &getProjection() const { return projection; }
