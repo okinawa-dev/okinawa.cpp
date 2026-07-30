@@ -10,6 +10,7 @@
 out vec4 FragColor;
 in vec2  TexCoord;
 in float FogDist;
+in vec3  Light;  // Gouraud light from the vertex stage (1 when lighting off)
 
 uniform sampler2D texture0;
 uniform bool      hasTexture;
@@ -22,7 +23,10 @@ uniform float     fogDensity;  // 0 disables (the GUI pass resets it)
 void main() {
   vec4 color;
   if (hasTexture) {
+    // Only textured surfaces are sunlit: debug lines/fills (the
+    // wireframeColor branch) stay at their exact requested colour.
     color = texture(texture0, TexCoord) * tintColor;
+    color.rgb *= Light;
   } else {
     color = wireframeColor;
   }

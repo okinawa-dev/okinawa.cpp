@@ -402,15 +402,20 @@ void OkGui::draw() {
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
   }
 
-  // The interface lives outside the world's atmosphere: no tint, no fog.
+  // The interface lives outside the world's atmosphere: no tint, no fog,
+  // no sun (lightingOn 0 makes the Gouraud stage a neutral 1).
   {
     GLint tintLoc   = glGetUniformLocation(program, "sceneTint");
     GLint fogDenLoc = glGetUniformLocation(program, "fogDensity");
+    GLint litLoc    = glGetUniformLocation(program, "lightingOn");
     if (tintLoc != -1) {
       glUniform3f(tintLoc, 1.0f, 1.0f, 1.0f);
     }
     if (fogDenLoc != -1) {
       glUniform1f(fogDenLoc, 0.0f);
+    }
+    if (litLoc != -1) {
+      glUniform1f(litLoc, 0.0f);
     }
   }
 

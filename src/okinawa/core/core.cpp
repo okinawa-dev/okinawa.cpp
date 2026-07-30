@@ -355,11 +355,15 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
                            _cameras[_currentCamera]->getProjectionPtr());
         GLint tintLocS = glGetUniformLocation(_shaderProgram, "sceneTint");
         GLint fogLocS  = glGetUniformLocation(_shaderProgram, "fogDensity");
+        GLint litLocS  = glGetUniformLocation(_shaderProgram, "lightingOn");
         if (tintLocS != -1) {
           glUniform3f(tintLocS, 1.0f, 1.0f, 1.0f);
         }
         if (fogLocS != -1) {
           glUniform1f(fogLocS, 0.0f);
+        }
+        if (litLocS != -1) {
+          glUniform1f(litLocS, 0.0f);
         }
         OkPoint camPos = _cameras[_currentCamera]->getPosition();
         OkSkybox::draw(camPos.x(), camPos.y(), camPos.z());
@@ -379,6 +383,26 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
         }
         if (fogDenLoc != -1) {
           glUniform1f(fogDenLoc, OkLighting::getFogDensity());
+        }
+        // Gouraud sun (L3): direction/colour from the day cycle, over a
+        // flat ambient floor. The GUI pass resets lightingOn to 0.
+        GLint litLoc    = glGetUniformLocation(_shaderProgram, "lightingOn");
+        GLint sunDirLoc = glGetUniformLocation(_shaderProgram, "sunDirection");
+        GLint sunColLoc = glGetUniformLocation(_shaderProgram, "sunColor");
+        GLint ambLoc    = glGetUniformLocation(_shaderProgram, "ambientLight");
+        const float *sunDir = OkLighting::getSunDirection();
+        const float *sunCol = OkLighting::getSunColor();
+        if (litLoc != -1) {
+          glUniform1f(litLoc, 1.0f);
+        }
+        if (sunDirLoc != -1) {
+          glUniform3f(sunDirLoc, sunDir[0], sunDir[1], sunDir[2]);
+        }
+        if (sunColLoc != -1) {
+          glUniform3f(sunColLoc, sunCol[0], sunCol[1], sunCol[2]);
+        }
+        if (ambLoc != -1) {
+          glUniform1f(ambLoc, OkLighting::getAmbientLight());
         }
       }
 

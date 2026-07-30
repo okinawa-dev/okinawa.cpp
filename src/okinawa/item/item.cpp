@@ -22,7 +22,7 @@
  * @param indexCount  The number of indices.
  */
 OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
-               unsigned int *indexData, long indexCount)
+               unsigned int *indexData, long indexCount, int vertexStride)
     : OkObject(name) {
 
   OkLogger::info("Item", "Creating item " + name + " with " +
@@ -44,15 +44,12 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   wireframeColor[1] = 1.0f;
   wireframeColor[2] = 1.0f;
 
-  numVertices = vertexCount;
   numIndices  = indexCount;
   texture     = nullptr;
   textureName = "";
 
-  // Allocate and copy vertex data
-  vertices = new float[vertexCount];
-  std::memcpy(vertices, vertexData, vertexCount * sizeof(float));
-  numVertices = vertexCount;
+  _adoptVertexData(vertexData, vertexCount, indexData, indexCount,
+                   vertexStride);
 
   // Allocate and copy index data
   indices = new unsigned int[indexCount];
@@ -62,6 +59,85 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   _calculateRadius();
 
   _initBuffers();
+}
+
+/**
+ * @brief Store vertex data with the internal stride-8 layout
+ *        (x,y,z,u,v,nx,ny,nz). Stride-5 input (the historical layout
+ *        every caller uses) is expanded here: normals are computed by
+ *        accumulating the face normal of every triangle onto its three
+ *        vertices. De-indexed meshes (each face owns its vertices, the
+ *        city loaders' convention) end up with EXACT flat face normals;
+ *        indexed meshes with shared vertices (terrain grids) end up with
+ *        area-weighted smooth normals. Non-triangle index lists (lines,
+ *        points) produce garbage normals, which is fine: the shader only
+ *        lights the textured branch, and debug lines are never textured.
+ */
+void OkItem::_adoptVertexData(float *vertexData, long vertexCount,
+                              unsigned int *indexData, long indexCount,
+                              int vertexStride) {
+  if (vertexStride == 8) {
+    vertices = new float[vertexCount];
+    std::memcpy(vertices, vertexData, vertexCount * sizeof(float));
+    numVertices = vertexCount;
+  } else {
+    long vcount = vertexCount / 5;
+    vertices    = new float[vcount * 8];
+    for (long i = 0; i < vcount; i++) {
+      long src = i * 5;
+      long dst = i * 8;
+      vertices[dst]     = vertexData[src];
+      vertices[dst + 1] = vertexData[src + 1];
+      vertices[dst + 2] = vertexData[src + 2];
+      vertices[dst + 3] = vertexData[src + 3];
+      vertices[dst + 4] = vertexData[src + 4];
+      vertices[dst + 5] = 0.0f;
+      vertices[dst + 6] = 0.0f;
+      vertices[dst + 7] = 0.0f;
+    }
+    for (long f = 0; f + 2 < indexCount; f += 3) {
+      long ia = (long)indexData[f];
+      long ib = (long)indexData[f + 1];
+      long ic = (long)indexData[f + 2];
+      if (ia >= vcount || ib >= vcount || ic >= vcount) {
+        continue;
+      }
+      float ax = vertexData[ia * 5], ay = vertexData[ia * 5 + 1],
+            az = vertexData[ia * 5 + 2];
+      float ux = vertexData[ib * 5] - ax, uy = vertexData[ib * 5 + 1] - ay,
+            uz = vertexData[ib * 5 + 2] - az;
+      float wx = vertexData[ic * 5] - ax, wy = vertexData[ic * 5 + 1] - ay,
+            wz = vertexData[ic * 5 + 2] - az;
+      // Area-weighted face normal (unnormalized cross product).
+      float nx = uy * wz - uz * wy;
+      float ny = uz * wx - ux * wz;
+      float nz = ux * wy - uy * wx;
+      long  tri[3];
+      tri[0] = ia;
+      tri[1] = ib;
+      tri[2] = ic;
+      for (int k = 0; k < 3; k++) {
+        vertices[tri[k] * 8 + 5] += nx;
+        vertices[tri[k] * 8 + 6] += ny;
+        vertices[tri[k] * 8 + 7] += nz;
+      }
+    }
+    for (long i = 0; i < vcount; i++) {
+      float *n  = &vertices[i * 8 + 5];
+      float  nl = std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+      if (nl > 1e-12f) {
+        n[0] /= nl;
+        n[1] /= nl;
+        n[2] /= nl;
+      } else {
+        // Cancelled out (double-sided quads) or never touched: face up.
+        n[0] = 0.0f;
+        n[1] = 1.0f;
+        n[2] = 0.0f;
+      }
+    }
+    numVertices = vcount * 8;
+  }
 }
 
 /**
@@ -113,13 +189,18 @@ void OkItem::_initBuffers() {
                vertices, GL_STATIC_DRAW);
 
   // Position attribute (3 floats)
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
   glEnableVertexAttribArray(0);
 
   // Texture coords attribute (2 floats)
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
                         (GLvoid *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
+
+  // Normal attribute (3 floats)
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+                        (GLvoid *)(5 * sizeof(float)));
+  glEnableVertexAttribArray(2);
 
   // Generate and set up EBO
   glGenBuffers(1, &EBO);
@@ -163,8 +244,8 @@ void OkItem::_calculateRadius() {
   float minZ = vertices[2];
   float maxZ = vertices[2];
 
-  // Each vertex has 5 components: 3 for position (xyz) and 2 for UV
-  const int  stride            = 5;
+  // Each vertex has 8 components: position (xyz), UV, normal (xyz)
+  const int  stride            = 8;
   const long actualVertexCount = numVertices / stride;
 
   // Iterate through actual vertices
@@ -378,10 +459,9 @@ void OkItem::updateVertexData(float *newVertexData, long newVertexCount) {
   // Free old vertex data
   delete[] vertices;
 
-  // Allocate and copy new vertex data
-  vertices = new float[newVertexCount];
-  std::memcpy(vertices, newVertexData, newVertexCount * sizeof(float));
-  numVertices = newVertexCount;
+  // Same stride-5 contract as the constructor: normals recomputed
+  // against the item's existing indices.
+  _adoptVertexData(newVertexData, newVertexCount, indices, numIndices, 5);
 
   // Recalculate radius with new geometry
   _calculateRadius();

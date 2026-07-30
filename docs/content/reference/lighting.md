@@ -38,9 +38,12 @@ per frame:
   (`exp(-density * viewDistance)`). Distance dissolves into a milky
   haze that thickens at night. Until a skybox exists, the frame clear
   colour IS the fog colour, so the city fades into the sky seamlessly.
-- **Sun colour and direction** (stored for the upcoming directional
-  stage): elevation follows a sine over the 6h-21h daylight arc, azimuth
-  sweeps east to west, parked below the horizon at night.
+- **Sun colour and direction**: elevation follows a sine over the 6h-21h
+  daylight arc, azimuth sweeps east to west, parked below the horizon at
+  night. Consumed every frame by the Gouraud sun (below).
+- **Ambient light**: the flat floor under the directional sun — higher at
+  night (no sun: the ambient carries the whole city and the tint does the
+  darkening), lower by day so the sun's modelling reads.
 
 - **Sky zenith colour**: the top of the procedural skybox.
 
@@ -55,13 +58,26 @@ itself when the cycle's colours drift. The dome reaches slightly below
 the horizon so no gap ever shows; the emissive skyline belt (distant lit
 windows) is a later follow-up on the same dome.
 
+## The Gouraud sun
+
+Every `OkItem` carries per-vertex normals (computed at construction when
+the caller provides none — see the Items reference), and the world vertex
+shader evaluates a classic Gouraud directional light per vertex:
+`ambient + sunColor * max(dot(normal, -sunDirection), 0) * 0.6`, with the
+lit value interpolated across the triangle. Facades facing the sun warm
+up, opposite faces fall to the ambient floor, and the whole city reads as
+volume instead of flat panels. Only TEXTURED surfaces are sunlit: the
+untextured fill/wireframe branch (debug layers, graph lines) keeps its
+exact requested colour. The skybox and the GUI pass run with
+`lightingOn = 0`, which makes the Gouraud stage a neutral 1.
+
 `OkLighting::evaluate(hour, ...)` exposes the pure curve for tests and
 tools; the interpolated values are read every frame by the render pass
 (`getSceneTint`, `getFogColor`, `getFogDensity`, `getSunColor`,
-`getSunDirection`).
+`getSunDirection`, `getAmbientLight`).
 
-The GUI pass resets the tint and fog uniforms: the interface is never
-tinted or fogged.
+The GUI pass resets the tint, fog and lighting uniforms: the interface is
+never tinted, fogged or sunlit.
 
 ## Configuration keys
 

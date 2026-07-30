@@ -46,11 +46,14 @@ public:
   static const float *getSunColor() { return _sunColor; }   // rgb
   static const float *getSunDirection() { return _sunDir; } // xyz, normalized
   static const float *getSkyZenith() { return _zenith; }    // rgb, sky top
+  // Flat ambient floor under the Gouraud sun (L3).
+  static float        getAmbientLight() { return _ambient; }
 
   // Evaluate the curve for an arbitrary hour (pure; unit-testable).
   static void evaluate(float hours, float outTint[3], float outFogColor[3],
                        float &outFogDensity, float outSunColor[3],
-                       float outSunDir[3], float outZenith[3] = nullptr);
+                       float outSunDir[3], float outZenith[3] = nullptr,
+                       float *outAmbient = nullptr);
 
 private:
   static float _tint[3];
@@ -59,6 +62,7 @@ private:
   static float _sunColor[3];
   static float _sunDir[3];
   static float _zenith[3];
+  static float _ambient;
 };
 
 #endif

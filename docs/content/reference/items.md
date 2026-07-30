@@ -28,7 +28,7 @@ Every drawable inherits these:
 
 | Method | Purpose |
 | --- | --- |
-| `OkItem(name, vertexData, vertexCount, indexData, indexCount)` | Construct from interleaved vertex data and indices. |
+| `OkItem(name, vertexData, vertexCount, indexData, indexCount, stride = 5)` | Construct from interleaved vertex data and indices. Stride 5 (`x,y,z,u,v`) computes vertex normals from the triangle list — de-indexed meshes get exact flat face normals, indexed meshes get smoothed ones; stride 8 (`x,y,z,u,v,nx,ny,nz`) takes caller normals verbatim. Internally vertices are always stored with stride 8. |
 | `void setWireframe(bool)` | Draw as wireframe. |
 | `void setVisible(bool)` | Show or hide the item. |
 | `void setDrawMode(GLenum mode)` | Set the GL primitive (`GL_TRIANGLES`, `GL_LINES`, ...). |
@@ -36,7 +36,7 @@ Every drawable inherits these:
 | `void setTexture(const std::string &name, OkTexture *tex)` | Apply an already-loaded texture. |
 | `void setFillColor(float r, float g, float b, float a = 1)` | Untextured fill colour; the alpha is honoured by blended passes (the GUI). |
 | `void setTintColor(float r, float g, float b, float a)` | Multiplied over the texture in the fill pass (white = untouched); how GUI text is coloured. |
-| `void updateVertexData(float *data, long count)` | Replace the vertex data in place. |
+| `void updateVertexData(float *data, long count)` | Replace the vertex data in place (stride-5 contract; normals recomputed against the item's indices). |
 | `float getRadius() const` | The mesh's maximum dimension. |
 
 ## OkItemGroup

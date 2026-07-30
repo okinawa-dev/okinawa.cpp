@@ -39,13 +39,24 @@ protected:
   // Geometry
   void _calculateRadius();
 
+  // Store vertex data with the internal stride-8 layout; stride-5 input
+  // gets normals computed from the triangle list (see item.cpp).
+  void _adoptVertexData(float *vertexData, long vertexCount,
+                        unsigned int *indexData, long indexCount,
+                        int vertexStride);
+
   // Override OkObject's transform update
   void updateTransformSelf() override;
 
 public:
-  // Constructors
+  // Constructors.
+  // vertexStride selects the INPUT layout: 5 = x,y,z,u,v (normals are
+  // computed here by accumulating face normals per vertex -- de-indexed
+  // meshes get exact flat face normals, indexed meshes get smoothed
+  // ones); 8 = x,y,z,u,v,nx,ny,nz (caller-provided normals, verbatim).
+  // Internally vertices are ALWAYS stored with stride 8.
   OkItem(const std::string &name, float *vertexData, long vertexCount,
-         unsigned int *indexData, long indexCount);
+         unsigned int *indexData, long indexCount, int vertexStride = 5);
   ~OkItem();
 
   // Delete copy constructor and assignment
