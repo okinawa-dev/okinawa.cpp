@@ -22,7 +22,8 @@ void OkPostProcess::initialize() {
   OkConfig::setBool("post.dof", true);
   OkConfig::setFloat("post.dof.focus", 30.0f);    // metres, sharp centre
   OkConfig::setFloat("post.dof.range", 50.0f);    // +/- fully sharp band
-  OkConfig::setFloat("post.dof.maxblur", 3.0f);   // max blur radius (px)
+  OkConfig::setFloat("post.dof.maxblur", 2.0f);   // max blur radius (px)
+  OkConfig::setFloat("post.dof.falloff", 100.0f); // metres to reach max
   OkConfig::setBool("post.grain", true);
   OkConfig::setFloat("post.grain.strength", 0.035f);
   OkConfig::setBool("post.motionblur", true);     // needs a motion vector
@@ -133,7 +134,9 @@ void OkPostProcess::end(float nearPlane, float farPlane, float dt) {
   glUniform4f(glGetUniformLocation(_program, "dofParams"),
               OkConfig::getFloat("post.dof.focus"),
               OkConfig::getFloat("post.dof.range"),
-              OkConfig::getFloat("post.dof.maxblur"), dof ? 1.0f : 0.0f);
+              OkConfig::getFloat("post.dof.maxblur"),
+              OkConfig::getFloat("post.dof.falloff"));
+  glUniform1f(glGetUniformLocation(_program, "dofOn"), dof ? 1.0f : 0.0f);
 
   bool grain = OkConfig::getBool("post.grain");
   glUniform1f(glGetUniformLocation(_program, "grainStrength"),

@@ -61,6 +61,12 @@ void OkConsole::initialize() {
       [](const std::vector<std::string> &args) {
         if (args.size() != 2) {
           OkConsole::print("usage: set <config-key> <value>");
+          // "set key" with no value: also show the current value, like
+          // a get -- handy when checking before changing.
+          if (args.size() == 1 && OkConfig::hasKey(args[0])) {
+            OkConsole::print(args[0] + " = " +
+                             OkConfig::getValueAsString(args[0]));
+          }
           return;
         }
         const std::string &key = args[0];

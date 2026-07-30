@@ -18,7 +18,9 @@ uniform sampler2D depthTex;
 uniform vec2      texelSize;      // 1 / framebuffer size
 uniform vec2      planes;         // near, far (depth linearization)
 uniform float     timeSec;        // grain animation
-uniform vec4      dofParams;      // focus (m), range (m), maxblur (px), on
+uniform vec4      dofParams;      // focus (m), range (m), maxblur (px),
+                                  // falloff (m: metres to reach maxblur)
+uniform float     dofOn;
 uniform float     grainStrength;  // 0 = off
 uniform vec3      motionVec;      // dx, dy (screen units), strength 0 = off
 
@@ -54,10 +56,10 @@ void main() {
   }
 
   // 2. Depth of field: blur radius from the distance to the focus band.
-  if (dofParams.w > 0.5) {
+  if (dofOn > 0.5) {
     float dist = linearDepth(texture(depthTex, uv).r);
     float coc  = abs(dist - dofParams.x) - dofParams.y;
-    coc        = clamp(coc / max(dofParams.x, 1.0), 0.0, 1.0);
+    coc        = clamp(coc / max(dofParams.w, 1.0), 0.0, 1.0);
     float rad  = coc * dofParams.z;
     if (rad > 0.3) {
       // 8-tap ring blur, radius in pixels.

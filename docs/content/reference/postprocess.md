@@ -41,9 +41,10 @@ All in one composite shader, each gated by its config toggle:
 | --- | --- | --- |
 | `render.post` | `true` | Master switch: offscreen chain vs direct rendering. |
 | `post.dof` | `true` | Depth of field on/off. |
-| `post.dof.focus` | `18` | Focus distance, metres. |
-| `post.dof.range` | `10` | Fully sharp half-band around the focus, metres. |
-| `post.dof.maxblur` | `3` | Maximum blur radius, pixels. |
+| `post.dof.focus` | `30` | Focus distance, metres. |
+| `post.dof.range` | `50` | Fully sharp half-band around the focus, metres. |
+| `post.dof.maxblur` | `2` | Maximum blur radius, pixels. |
+| `post.dof.falloff` | `100` | Metres past the sharp band to reach the maximum blur. |
 | `post.grain` | `true` | Film grain on/off. |
 | `post.grain.strength` | `0.035` | Grain amplitude. |
 | `post.motionblur` | `true` | Directional blur (needs a motion vector). |
