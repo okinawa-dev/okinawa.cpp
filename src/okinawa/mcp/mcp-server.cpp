@@ -3,6 +3,7 @@
 // compiled in, this is an empty translation unit, so no MCP/HTTP code (or its
 // header-only dependencies) ends up in the binary.
 #include "mcp-config.hpp"
+#include "../math/frustum.hpp"
 #ifdef OKINAWA_WITH_MCP
 
 #include "mcp-server.hpp"
@@ -530,7 +531,8 @@ struct OkMcpServer::Impl {
 
         OkSceneHandler *handler = OkCore::getSceneHandler();
         OkScene        *scene   = handler ? handler->getCurrentScene() : nullptr;
-        s["scene"]              = {{"object_count", scene ? scene->getObjectCount() : 0}};
+        s["scene"]              = {{"object_count", scene ? scene->getObjectCount() : 0},
+                                   {"frustum_culled", OkFrustum::getCulledCount()}};
         return s;
       });
       state["memory"] = {{"resident_mb", residentMb()}};

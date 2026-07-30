@@ -1,6 +1,7 @@
 #include "core.hpp"
 #include "../gui/console.hpp"
 #include "../lighting/lighting.hpp"
+#include "../math/frustum.hpp"
 #include "../lighting/skybox.hpp"
 #include "../gui/gui.hpp"
 #include "../avatar/avatar.hpp"
@@ -420,6 +421,21 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
         OkLogger::error("Core", "Cannot find view/projection uniforms");
       }
 
+      // Frustum culling for the world pass: six planes from
+      // projection * view; OkItem::drawSelf skips items whose bounding
+      // sphere is fully outside. Cleared before the camera-attached and
+      // GUI passes (their elements live outside the world frustum).
+      static OkFrustum frameFrustum;
+      {
+        glm::mat4 viewM =
+            glm::make_mat4(_cameras[_currentCamera]->getViewPtr());
+        glm::mat4 projM =
+            glm::make_mat4(_cameras[_currentCamera]->getProjectionPtr());
+        frameFrustum.setFromMatrix(projM * viewM);
+        OkFrustum::resetStats();
+        OkFrustum::setActive(&frameFrustum);
+      }
+
       // Draw current scene
       if (currentScene) {
         currentScene->draw();
@@ -429,6 +445,8 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       if (drawCallback) {
         drawCallback(dt);
       }
+
+      OkFrustum::setActive(nullptr);
 
       // Draw cameras (both for debugging and to render elements attached to
       // cameras, like interfaces)

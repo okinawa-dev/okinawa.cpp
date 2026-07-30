@@ -26,7 +26,8 @@ private:
   unsigned int *indices;
   long          numVertices;
   long          numIndices;
-  float         radius;  // Maximum dimension
+  float         radius;        // bounding-sphere radius (half bbox diagonal)
+  float         sphereCenter[3];  // bounding-sphere centre, LOCAL coords
 
   // OpenGL objects
   GLuint VAO, VBO, EBO;

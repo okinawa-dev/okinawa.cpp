@@ -46,6 +46,27 @@ Okinawa uses a right-handed coordinate system: X points right, Y points up, Z po
 | `static void directionVectorToAngles(const OkPoint &dir, float &outPitch, float &outYaw)` | Decompose a direction into pitch/yaw. |
 | `static OkRotation lookAt(const OkPoint &eye, const OkPoint &target, const OkPoint &up = OkPoint(0,1,0))` | Build a rotation that looks from eye to target. |
 
+## OkFrustum
+
+The view frustum as six planes, extracted from a combined
+`projection * view` matrix (Gribb-Hartmann), used for bounding-sphere
+culling. `OkCore` builds one per frame from the current camera and
+activates it for the world pass: `OkItem::drawSelf` skips any item whose
+bounding sphere (bbox centre + half-diagonal radius, transformed by the
+item's matrix) falls fully outside — in the dense city over half the
+scene's items are skipped every frame. The GUI and camera-attached passes
+run with no active frustum (their calibrated cameras are not the world
+camera), and the skybox dome is camera-centred so it always intersects.
+`get_state` (MCP) reports the per-frame skipped count as
+`scene.frustum_culled`.
+
+| Method | Purpose |
+| --- | --- |
+| `void setFromMatrix(const glm::mat4 &projView)` | Extract and normalize the six planes. |
+| `bool containsSphere(float x, float y, float z, float r) const` | Sphere-vs-frustum test (true = at least partially inside). |
+| `static void setActive(const OkFrustum *)` / `static const OkFrustum *getActive()` | The frame's culling frustum (null = no culling). |
+| `static long getCulledCount()` / `static void resetStats()` | Draws skipped since the last reset. |
+
 ## Example
 
 ```cpp

@@ -1,5 +1,6 @@
 #include "item.hpp"
 #include "../config/config.hpp"
+#include "../math/frustum.hpp"
 #include "../core/gl_config.hpp"
 #include "../handlers/textures.hpp"
 #include "../utils/logger.hpp"
@@ -47,6 +48,9 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   numIndices  = indexCount;
   texture     = nullptr;
   textureName = "";
+  sphereCenter[0] = 0.0f;
+  sphereCenter[1] = 0.0f;
+  sphereCenter[2] = 0.0f;
 
   _adoptVertexData(vertexData, vertexCount, indexData, indexCount,
                    vertexStride);
@@ -269,6 +273,12 @@ void OkItem::_calculateRadius() {
   float depth  = maxZ - minZ;
   // Calculate radius as half the diagonal of the bounding box
   radius = sqrt(width * width + height * height + depth * depth) * 0.5f;
+  // Bounding-sphere centre in LOCAL coords: city meshes keep their
+  // vertices in chunk-local space with the item origin at the chunk
+  // corner, so the sphere must be centred on the bbox, not the origin.
+  sphereCenter[0] = (minX + maxX) * 0.5f;
+  sphereCenter[1] = (minY + maxY) * 0.5f;
+  sphereCenter[2] = (minZ + maxZ) * 0.5f;
 
   OkLogger::info("Item",
                  "Bounds: (" + std::to_string(minX) + ", " +
@@ -332,6 +342,28 @@ void OkItem::drawSelf() {
   if (!this->visible) {
     // If the item is not visible, skip rendering
     return;
+  }
+
+  // Frustum culling: skip the draw when the item's bounding sphere is
+  // fully outside the frame's view frustum (world pass only; the GUI and
+  // camera-attached passes run with no active frustum). The radius is
+  // scaled by the largest axis scale of the transform.
+  const OkFrustum *frustum = OkFrustum::getActive();
+  if (frustum != nullptr) {
+    glm::mat4 m  = getTransformMatrix();
+    glm::vec4 c  = m * glm::vec4(sphereCenter[0], sphereCenter[1],
+                                 sphereCenter[2], 1.0f);
+    float     sx = std::sqrt(m[0][0] * m[0][0] + m[0][1] * m[0][1] +
+                             m[0][2] * m[0][2]);
+    float     sy = std::sqrt(m[1][0] * m[1][0] + m[1][1] * m[1][1] +
+                             m[1][2] * m[1][2]);
+    float     sz = std::sqrt(m[2][0] * m[2][0] + m[2][1] * m[2][1] +
+                             m[2][2] * m[2][2]);
+    float     s  = std::max(sx, std::max(sy, sz));
+    if (!frustum->containsSphere(c.x, c.y, c.z, radius * s)) {
+      OkFrustum::addCulled();
+      return;
+    }
   }
 
   bool drawWireframe =
