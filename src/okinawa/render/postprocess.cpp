@@ -25,7 +25,7 @@ void OkPostProcess::initialize() {
   OkConfig::setFloat("post.dof.maxblur", 2.0f);   // max blur radius (px)
   OkConfig::setFloat("post.dof.falloff", 100.0f); // metres to reach max
   OkConfig::setBool("post.grain", true);
-  OkConfig::setFloat("post.grain.strength", 0.035f);
+  OkConfig::setFloat("post.grain.strength", 0.015f);
   OkConfig::setBool("post.motionblur", true);     // needs a motion vector
   // NOLINTEND(readability-magic-numbers)
   OkLogger::info("PostProcess", "Config defaults registered");

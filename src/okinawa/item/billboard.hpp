@@ -26,9 +26,17 @@
 class OkBillboard : public OkItem {
 protected:
   void stepSelf(float dt) override;
+  float proximityFade;
+  float baseAlpha;  // tint alpha before the fade modulation
 
 public:
   OkBillboard(const std::string &name, float width, float height);
+
+  // Proximity fade: the quad's tint alpha falls to zero as the camera
+  // approaches (fully faded at `nearDist`, full alpha beyond
+  // `nearDist * 2`). 0 disables. Essential for light halos: a quad
+  // crossing the camera plane would otherwise fill the screen.
+  void setProximityFade(float nearDist) { proximityFade = nearDist; }
 
   // The rotation that turns a +Z-facing quad placed at `from` toward
   // `to` (pitch and yaw; roll always 0). Static so the math is testable

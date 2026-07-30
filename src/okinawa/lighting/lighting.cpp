@@ -1,4 +1,6 @@
 #include "lighting.hpp"
+#include "../handlers/textures.hpp"
+#include "../item/texture.hpp"
 #include "../config/config.hpp"
 #include "../gui/console.hpp"
 #include "../utils/logger.hpp"
@@ -14,6 +16,12 @@ float OkLighting::_sunColor[3] = {1.0f, 1.0f, 1.0f};
 float OkLighting::_sunDir[3]   = {0.0f, -1.0f, 0.0f};
 float OkLighting::_zenith[3]   = {0.25f, 0.48f, 0.80f};
 float OkLighting::_ambient     = 0.55f;
+
+float OkLighting::_lightPos[OkLighting::MAX_LIGHTS][3];
+float OkLighting::_lightColor[OkLighting::MAX_LIGHTS][3];
+float OkLighting::_lightRadius[OkLighting::MAX_LIGHTS];
+int   OkLighting::_lightCount      = 0;
+long  OkLighting::_lightGeneration = 0;
 
 // The atmosphere curve: one keyframe per anchor hour, linearly interpolated
 // around the clock (the last segment wraps 23 -> 5). The palette follows the
@@ -197,4 +205,117 @@ void OkLighting::evaluate(float hours, float outTint[3], float outFogColor[3],
   outSunDir[0] = -std::sin(azim) * cosE;
   outSunDir[1] = -std::sin(elev);
   outSunDir[2] = -std::cos(azim) * cosE;
+}
+
+
+// --- Point lights (L4) -----------------------------------------------
+
+int OkLighting::registerLight(float x, float y, float z, float r, float g,
+                              float b, float radius) {
+  if (_lightCount >= MAX_LIGHTS) {
+    OkLogger::warning("Lighting", "Point light registry full");
+    return -1;
+  }
+  int id             = _lightCount;
+  _lightPos[id][0]   = x;
+  _lightPos[id][1]   = y;
+  _lightPos[id][2]   = z;
+  _lightColor[id][0] = r;
+  _lightColor[id][1] = g;
+  _lightColor[id][2] = b;
+  _lightRadius[id]   = radius;
+  _lightCount++;
+  _lightGeneration++;
+  return id;
+}
+
+void OkLighting::clearLights() {
+  _lightCount = 0;
+  _lightGeneration++;
+}
+
+long OkLighting::getLightGeneration() { return _lightGeneration; }
+
+int OkLighting::getLightCount() { return _lightCount; }
+
+/**
+ * @brief The most relevant lights for a point: sorted by distance
+ *        normalized by radius, so a big far light can beat a small
+ *        nearer one. Linear scan -- the registry is small and items
+ *        cache the result until the registry changes.
+ */
+int OkLighting::getNearestLights(float x, float y, float z, int *outIdx,
+                                 int maxN) {
+  float bestScore[8];
+  int   n = 0;
+  if (maxN > 8) {
+    maxN = 8;
+  }
+  for (int i = 0; i < _lightCount; i++) {
+    float dx = _lightPos[i][0] - x;
+    float dy = _lightPos[i][1] - y;
+    float dz = _lightPos[i][2] - z;
+    float d  = std::sqrt(dx * dx + dy * dy + dz * dz);
+    float s  = d / (_lightRadius[i] > 1.0f ? _lightRadius[i] : 1.0f);
+    // insertion into the small sorted best list
+    int   at = n;
+    for (int j = 0; j < n; j++) {
+      if (s < bestScore[j]) {
+        at = j;
+        break;
+      }
+    }
+    if (at < maxN) {
+      int last = (n < maxN) ? n : maxN - 1;
+      for (int j = last; j > at; j--) {
+        bestScore[j] = bestScore[j - 1];
+        outIdx[j]    = outIdx[j - 1];
+      }
+      bestScore[at] = s;
+      outIdx[at]    = i;
+      if (n < maxN) {
+        n++;
+      }
+    }
+  }
+  return n;
+}
+
+const float *OkLighting::getLightPosition(int idx) { return _lightPos[idx]; }
+
+const float *OkLighting::getLightColor(int idx) { return _lightColor[idx]; }
+
+float OkLighting::getLightRadius(int idx) { return _lightRadius[idx]; }
+
+/**
+ * @brief Shared radial halo texture: a soft white disc whose alpha
+ *        falls off quadratically to the edge. Tinted per light and
+ *        drawn additively by halo billboards.
+ */
+OkTexture *OkLighting::getHaloTexture() {
+  OkTexture *existing = OkTextureHandler::getInstance()->getTexture("ok_halo");
+  if (existing != nullptr) {
+    return existing;
+  }
+  const int     SIZE = 64;
+  unsigned char rgba[SIZE * SIZE * 4];
+  for (int y = 0; y < SIZE; y++) {
+    for (int x = 0; x < SIZE; x++) {
+      float dx = (x + 0.5f) / SIZE - 0.5f;
+      float dy = (y + 0.5f) / SIZE - 0.5f;
+      float d  = std::sqrt(dx * dx + dy * dy) * 2.0f;  // 0 centre, 1 edge
+      float a  = 1.0f - d;
+      if (a < 0.0f) {
+        a = 0.0f;
+      }
+      a               = a * a;  // quadratic falloff, soft rim
+      int off         = (y * SIZE + x) * 4;
+      rgba[off]       = 255;
+      rgba[off + 1]   = 255;
+      rgba[off + 2]   = 255;
+      rgba[off + 3]   = (unsigned char)(a * 255.0f);
+    }
+  }
+  return OkTextureHandler::getInstance()->createTextureFromRawData(
+      "ok_halo", rgba, SIZE, SIZE, 4);
 }

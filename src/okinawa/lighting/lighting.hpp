@@ -49,6 +49,35 @@ public:
   // Flat ambient floor under the Gouraud sun (L3).
   static float        getAmbientLight() { return _ambient; }
 
+  // --- Point lights (L4) ---------------------------------------------
+  // Small registry of point lights (streetlamps, shop windows). Each
+  // item is lit by its nearest lights up to the per-item budget -- the
+  // classic era-friendly model, no shadows. Lights are expected to be
+  // mostly static: items cache their nearest set and refresh it only
+  // when the registry generation changes.
+  static const int MAX_LIGHTS          = 256;
+  static const int MAX_LIGHTS_PER_ITEM = 4;
+
+  // Register a light; returns its id, or -1 when the registry is full.
+  static int  registerLight(float x, float y, float z, float r, float g,
+                            float b, float radius);
+  static void clearLights();
+  static long getLightGeneration();
+  static int  getLightCount();
+
+  // Fill `outIdx` with up to `maxN` indices of the most relevant lights
+  // for a point (nearest by distance/radius); returns how many.
+  static int getNearestLights(float x, float y, float z, int *outIdx,
+                              int maxN);
+  // Accessors for the shader uniforms (index from getNearestLights).
+  static const float *getLightPosition(int idx);   // xyz
+  static const float *getLightColor(int idx);      // rgb
+  static float        getLightRadius(int idx);
+
+  // Lazily-built shared radial halo texture ("ok_halo", additive white
+  // falloff disc) for light glows; tint it per light.
+  static class OkTexture *getHaloTexture();
+
   // Evaluate the curve for an arbitrary hour (pure; unit-testable).
   static void evaluate(float hours, float outTint[3], float outFogColor[3],
                        float &outFogDensity, float outSunColor[3],
@@ -63,6 +92,12 @@ private:
   static float _sunDir[3];
   static float _zenith[3];
   static float _ambient;
+
+  static float _lightPos[MAX_LIGHTS][3];
+  static float _lightColor[MAX_LIGHTS][3];
+  static float _lightRadius[MAX_LIGHTS];
+  static int   _lightCount;
+  static long  _lightGeneration;
 };
 
 #endif

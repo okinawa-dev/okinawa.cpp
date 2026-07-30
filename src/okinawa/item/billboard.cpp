@@ -28,6 +28,8 @@ static unsigned int *_quadIndexData() {
 
 OkBillboard::OkBillboard(const std::string &name, float width, float height)
     : OkItem(name, _quadVertexData(width, height), 20, _quadIndexData(), 6) {
+  proximityFade = 0.0f;
+  baseAlpha     = 1.0f;
 }
 
 /**
@@ -50,6 +52,26 @@ void OkBillboard::stepSelf(float dt) {
   }
   const OkRotation &cr = cam->getRotation();
   setRotation(OkRotation(cr.getPitch(), cr.getYaw(), 0.0f));
+
+  // Proximity fade (see setProximityFade): modulate the tint alpha by
+  // the camera distance so a quad near the lens vanishes instead of
+  // filling the screen.
+  if (proximityFade > 0.0f) {
+    OkPoint p  = getPosition();
+    OkPoint c  = cam->getPosition();
+    float   dx = p.x() - c.x();
+    float   dy = p.y() - c.y();
+    float   dz = p.z() - c.z();
+    float   d  = std::sqrt(dx * dx + dy * dy + dz * dz);
+    float   f  = (d - proximityFade) / proximityFade;  // 0 at near, 1 at 2x
+    if (f < 0.0f) {
+      f = 0.0f;
+    }
+    if (f > 1.0f) {
+      f = 1.0f;
+    }
+    tintColor[3] = baseAlpha * f;
+  }
 }
 
 /**

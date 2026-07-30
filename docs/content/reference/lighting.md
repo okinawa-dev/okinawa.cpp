@@ -71,6 +71,27 @@ untextured fill/wireframe branch (debug layers, graph lines) keeps its
 exact requested colour. The skybox and the GUI pass run with
 `lightingOn = 0`, which makes the Gouraud stage a neutral 1.
 
+## Point lights and halos
+
+`OkLighting` keeps a small registry of point lights (up to 256):
+`registerLight(x, y, z, r, g, b, radius)` / `clearLights()`. Every item
+is lit by its nearest few lights (budget of 4, the era-friendly model,
+no shadows): the selection is cached per item and refreshed only when
+the registry generation changes, and the lighting itself is evaluated
+PER FRAGMENT with a quadratic falloff inside each light's radius — with
+the city's huge ground triangles, per-vertex point light would smear one
+lit vertex across a 100 m face.
+
+The glow itself is a separate, composable piece: `getHaloTexture()`
+returns a shared radial falloff disc ("ok_halo"), and a light's halo is
+an `OkBillboard` with that texture plus three `OkItem` flags:
+`setAdditive(true)` (additive blending, no depth writes),
+`setUnlit(true)` (light sources are not tinted by the atmosphere or lit
+by the sun) and `setProximityFade(metres)` (the quad fades out as the
+camera approaches — without it a billboard crossing the camera plane
+fills the screen). Halos live in the scene like any item: frustum
+culled, fogged with distance, blurred by the depth of field.
+
 `OkLighting::evaluate(hour, ...)` exposes the pure curve for tests and
 tools; the interpolated values are read every frame by the render pass
 (`getSceneTint`, `getFogColor`, `getFogDensity`, `getSunColor`,

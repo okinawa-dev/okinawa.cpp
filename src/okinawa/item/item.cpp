@@ -1,5 +1,6 @@
 #include "item.hpp"
 #include "../config/config.hpp"
+#include "../lighting/lighting.hpp"
 #include "../math/frustum.hpp"
 #include "../core/gl_config.hpp"
 #include "../handlers/textures.hpp"
@@ -51,6 +52,10 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   sphereCenter[0] = 0.0f;
   sphereCenter[1] = 0.0f;
   sphereCenter[2] = 0.0f;
+  additive        = false;
+  unlit           = false;
+  nearLightCount  = 0;
+  nearLightGen    = -1;
 
   _adoptVertexData(vertexData, vertexCount, indexData, indexCount,
                    vertexStride);
@@ -344,23 +349,26 @@ void OkItem::drawSelf() {
     return;
   }
 
+  // World-space bounding-sphere centre: used by the frustum test and by
+  // the point-light selection below.
+  glm::mat4 tm = getTransformMatrix();
+  glm::vec4 wc = tm * glm::vec4(sphereCenter[0], sphereCenter[1],
+                                sphereCenter[2], 1.0f);
+
   // Frustum culling: skip the draw when the item's bounding sphere is
   // fully outside the frame's view frustum (world pass only; the GUI and
   // camera-attached passes run with no active frustum). The radius is
   // scaled by the largest axis scale of the transform.
   const OkFrustum *frustum = OkFrustum::getActive();
   if (frustum != nullptr) {
-    glm::mat4 m  = getTransformMatrix();
-    glm::vec4 c  = m * glm::vec4(sphereCenter[0], sphereCenter[1],
-                                 sphereCenter[2], 1.0f);
-    float     sx = std::sqrt(m[0][0] * m[0][0] + m[0][1] * m[0][1] +
-                             m[0][2] * m[0][2]);
-    float     sy = std::sqrt(m[1][0] * m[1][0] + m[1][1] * m[1][1] +
-                             m[1][2] * m[1][2]);
-    float     sz = std::sqrt(m[2][0] * m[2][0] + m[2][1] * m[2][1] +
-                             m[2][2] * m[2][2]);
-    float     s  = std::max(sx, std::max(sy, sz));
-    if (!frustum->containsSphere(c.x, c.y, c.z, radius * s)) {
+    float sx = std::sqrt(tm[0][0] * tm[0][0] + tm[0][1] * tm[0][1] +
+                         tm[0][2] * tm[0][2]);
+    float sy = std::sqrt(tm[1][0] * tm[1][0] + tm[1][1] * tm[1][1] +
+                         tm[1][2] * tm[1][2]);
+    float sz = std::sqrt(tm[2][0] * tm[2][0] + tm[2][1] * tm[2][1] +
+                         tm[2][2] * tm[2][2]);
+    float s  = std::max(sx, std::max(sy, sz));
+    if (!frustum->containsSphere(wc.x, wc.y, wc.z, radius * s)) {
       OkFrustum::addCulled();
       return;
     }
@@ -393,6 +401,56 @@ void OkItem::drawSelf() {
     return;
   }
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+  // Point lights (L4): refresh the cached nearest set when the registry
+  // changed, then pass up to MAX_LIGHTS_PER_ITEM lights (position +
+  // radius, colour) to the Gouraud stage. World pass only (the GUI pass
+  // runs with lightingOn 0, where the shader ignores them).
+  {
+    if (nearLightGen != OkLighting::getLightGeneration()) {
+      nearLightCount = OkLighting::getNearestLights(
+          wc.x, wc.y, wc.z, nearLights, OkLighting::MAX_LIGHTS_PER_ITEM);
+      nearLightGen = OkLighting::getLightGeneration();
+    }
+    GLint cntLoc = glGetUniformLocation(current_program, "pointLightCount");
+    if (cntLoc != -1) {
+      glUniform1i(cntLoc, nearLightCount);
+      for (int i = 0; i < nearLightCount; i++) {
+        const float *lp = OkLighting::getLightPosition(nearLights[i]);
+        const float *lc = OkLighting::getLightColor(nearLights[i]);
+        float        lr = OkLighting::getLightRadius(nearLights[i]);
+        std::string  base = "pointLights[" + std::to_string(i) + "]";
+        GLint        pLoc = glGetUniformLocation(current_program,
+                                                 (base + ".posRadius").c_str());
+        GLint        cLoc = glGetUniformLocation(current_program,
+                                                 (base + ".color").c_str());
+        if (pLoc != -1) {
+          glUniform4f(pLoc, lp[0], lp[1], lp[2], lr);
+        }
+        if (cLoc != -1) {
+          glUniform3f(cLoc, lc[0], lc[1], lc[2]);
+        }
+      }
+    }
+  }
+
+  // Unlit items (halos, emissive glows) skip the Gouraud light and the
+  // atmosphere tint for this draw; world-pass values are restored after.
+  if (unlit) {
+    GLint litLoc  = glGetUniformLocation(current_program, "lightingOn");
+    GLint tintLoc = glGetUniformLocation(current_program, "sceneTint");
+    if (litLoc != -1) {
+      glUniform1f(litLoc, 0.0f);
+    }
+    if (tintLoc != -1) {
+      glUniform3f(tintLoc, 1.0f, 1.0f, 1.0f);
+    }
+  }
+  if (additive) {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glDepthMask(GL_FALSE);
+  }
 
   // Verify we have valid buffers
   if (VAO == 0) {
@@ -469,6 +527,24 @@ void OkItem::drawSelf() {
     // texture with
     // glBindTexture(GL_TEXTURE_2D, 0);
     OkTexture::unbind();
+  }
+
+  // Restore world-pass state after additive/unlit draws.
+  if (additive) {
+    glDepthMask(GL_TRUE);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_BLEND);
+  }
+  if (unlit) {
+    GLint litLoc  = glGetUniformLocation(current_program, "lightingOn");
+    GLint tintLoc = glGetUniformLocation(current_program, "sceneTint");
+    const float *wt = OkLighting::getSceneTint();
+    if (litLoc != -1) {
+      glUniform1f(litLoc, 1.0f);
+    }
+    if (tintLoc != -1) {
+      glUniform3f(tintLoc, wt[0], wt[1], wt[2]);
+    }
   }
 }
 

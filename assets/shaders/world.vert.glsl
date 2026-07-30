@@ -22,9 +22,12 @@ uniform vec3  sunDirection;  // normalized, pointing FROM the sun
 uniform vec3  sunColor;      // day-cycle sun colour (black at night)
 uniform float ambientLight;  // flat ambient floor
 
+
 out vec2  TexCoord;
 out float FogDist;  // view-space distance for the exponential fog
 out vec3  Light;    // Gouraud light, interpolated across the triangle
+out vec3  WorldPos; // for the per-fragment point lights
+out vec3  WorldN;
 
 void main() {
   vec4 viewPos = view * model * vec4(aPos, 1.0);
@@ -38,4 +41,11 @@ void main() {
   // the deliberately-poor-materials look) instead of washing them out.
   vec3  lit     = vec3(ambientLight) + sunColor * (diffuse * 0.6);
   Light         = mix(vec3(1.0), lit, lightingOn);
+
+  // Point lights are evaluated PER FRAGMENT (world.frag.glsl): with the
+  // city's huge ground triangles, per-vertex point light would smear one
+  // lit vertex across a 100 m face. The fragment stage needs the world
+  // position and normal.
+  WorldPos = (model * vec4(aPos, 1.0)).xyz;
+  WorldN   = worldN;
 }

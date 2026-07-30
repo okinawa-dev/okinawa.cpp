@@ -19,7 +19,6 @@ private:
   // Flat fill colour when untextured, and wireframe line colour (RGB, white).
   float fillColor[4];       // RGBA: alpha honoured by blended passes (GUI)
   float wireframeColor[3];
-  float tintColor[4];       // multiplies the texture in the fill pass
 
   // Geometry
   float        *vertices;
@@ -28,6 +27,11 @@ private:
   long          numIndices;
   float         radius;        // bounding-sphere radius (half bbox diagonal)
   float         sphereCenter[3];  // bounding-sphere centre, LOCAL coords
+  bool          additive;      // additive blending (light halos)
+  bool          unlit;         // skip Gouraud light AND scene tint
+  int           nearLights[8];    // cached nearest point-light indices
+  int           nearLightCount;
+  long          nearLightGen;     // registry generation of the cache
 
   // OpenGL objects
   GLuint VAO, VBO, EBO;
@@ -37,6 +41,10 @@ private:
   OkTexture  *texture;
 
 protected:
+  // Multiplies the texture in the fill pass; protected so subclasses can
+  // modulate it per frame (the billboard's proximity fade).
+  float tintColor[4];
+
   // Geometry
   void _calculateRadius();
 
@@ -96,6 +104,14 @@ public:
     fillColor[3] = a;
   }
   // Tint multiplied over the texture in the fill pass (white = untouched).
+  // Additive blending (glows/halos): drawn with src-alpha ONE blending
+  // and no depth writes. World pass only.
+  void setAdditive(bool on) { additive = on; }
+  // Unlit: this item ignores the Gouraud sun/point lights AND the scene
+  // tint (light sources must not be tinted by the atmosphere). World
+  // pass only -- the flag restores world-pass uniforms after drawing.
+  void setUnlit(bool on) { unlit = on; }
+
   void   setTintColor(float r, float g, float b, float a) {
     tintColor[0] = r;
     tintColor[1] = g;
