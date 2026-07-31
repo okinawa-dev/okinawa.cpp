@@ -20,6 +20,9 @@ float OkLighting::_ambient     = 0.55f;
 float OkLighting::_lightPos[OkLighting::MAX_LIGHTS][3];
 float OkLighting::_lightColor[OkLighting::MAX_LIGHTS][3];
 float OkLighting::_lightRadius[OkLighting::MAX_LIGHTS];
+float OkLighting::_lightDir[OkLighting::MAX_LIGHTS][3];
+float OkLighting::_lightCosCone[OkLighting::MAX_LIGHTS];
+float OkLighting::_lightIntensity[OkLighting::MAX_LIGHTS];
 int   OkLighting::_lightCount      = 0;
 long  OkLighting::_lightGeneration = 0;
 
@@ -223,8 +226,35 @@ int OkLighting::registerLight(float x, float y, float z, float r, float g,
   _lightColor[id][0] = r;
   _lightColor[id][1] = g;
   _lightColor[id][2] = b;
-  _lightRadius[id]   = radius;
+  _lightRadius[id]    = radius;
+  _lightDir[id][0]    = 0.0f;
+  _lightDir[id][1]    = -1.0f;
+  _lightDir[id][2]    = 0.0f;
+  _lightCosCone[id]   = -2.0f;  // omni
+  _lightIntensity[id] = 1.0f;
   _lightCount++;
+  _lightGeneration++;
+  return id;
+}
+
+int OkLighting::registerSpotLight(float x, float y, float z, float r,
+                                  float g, float b, float radius,
+                                  float dirX, float dirY, float dirZ,
+                                  float coneDeg, float intensity) {
+  int id = registerLight(x, y, z, r, g, b, radius);
+  if (id < 0) {
+    return id;
+  }
+  float len = std::sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+  if (len < 1e-6f) {
+    len  = 1.0f;
+    dirY = -1.0f;
+  }
+  _lightDir[id][0]    = dirX / len;
+  _lightDir[id][1]    = dirY / len;
+  _lightDir[id][2]    = dirZ / len;
+  _lightCosCone[id]   = std::cos(coneDeg * 3.14159265f / 180.0f);
+  _lightIntensity[id] = intensity;
   _lightGeneration++;
   return id;
 }
@@ -286,6 +316,14 @@ const float *OkLighting::getLightPosition(int idx) { return _lightPos[idx]; }
 const float *OkLighting::getLightColor(int idx) { return _lightColor[idx]; }
 
 float OkLighting::getLightRadius(int idx) { return _lightRadius[idx]; }
+
+const float *OkLighting::getLightDirection(int idx) {
+  return _lightDir[idx];
+}
+
+float OkLighting::getLightCosCone(int idx) { return _lightCosCone[idx]; }
+
+float OkLighting::getLightIntensity(int idx) { return _lightIntensity[idx]; }
 
 /**
  * @brief Shared radial halo texture: a soft white disc whose alpha

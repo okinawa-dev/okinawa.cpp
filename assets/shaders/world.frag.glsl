@@ -19,7 +19,8 @@ in vec3  WorldN;
 // vertex across the city's huge ground triangles.
 struct PointLight {
   vec4 posRadius;  // xyz world position, w radius (metres)
-  vec3 color;
+  vec4 color;      // rgb colour, w intensity multiplier
+  vec4 spot;       // xyz direction, w cos(cone half-angle); w <= -1.5 = omni
 };
 uniform PointLight pointLights[4];
 uniform int        pointLightCount;
@@ -46,8 +47,16 @@ void main() {
       float d     = length(toL);
       float atten = clamp(1.0 - d / pointLights[i].posRadius.w, 0.0, 1.0);
       atten       = atten * atten;
-      float nd    = max(dot(n, toL / max(d, 0.001)), 0.0);
-      pointSum   += pointLights[i].color * (atten * nd);
+      vec3  L     = toL / max(d, 0.001);
+      float nd    = max(dot(n, L), 0.0);
+      // Spot cone with a soft edge (omni lights pass w <= -1.5).
+      float cc    = pointLights[i].spot.w;
+      if (cc > -1.5) {
+        float s = dot(-L, pointLights[i].spot.xyz);
+        atten  *= clamp((s - cc) / max(1.0 - cc, 0.001), 0.0, 1.0);
+      }
+      pointSum   += pointLights[i].color.rgb *
+                    (atten * nd * pointLights[i].color.w);
     }
     color.rgb *= (Light + pointSum * lightingOn);
   } else {

@@ -418,17 +418,25 @@ void OkItem::drawSelf() {
       for (int i = 0; i < nearLightCount; i++) {
         const float *lp = OkLighting::getLightPosition(nearLights[i]);
         const float *lc = OkLighting::getLightColor(nearLights[i]);
+        const float *ld = OkLighting::getLightDirection(nearLights[i]);
         float        lr = OkLighting::getLightRadius(nearLights[i]);
+        float        cc = OkLighting::getLightCosCone(nearLights[i]);
+        float        li = OkLighting::getLightIntensity(nearLights[i]);
         std::string  base = "pointLights[" + std::to_string(i) + "]";
         GLint        pLoc = glGetUniformLocation(current_program,
                                                  (base + ".posRadius").c_str());
         GLint        cLoc = glGetUniformLocation(current_program,
                                                  (base + ".color").c_str());
+        GLint        sLoc = glGetUniformLocation(current_program,
+                                                 (base + ".spot").c_str());
         if (pLoc != -1) {
           glUniform4f(pLoc, lp[0], lp[1], lp[2], lr);
         }
         if (cLoc != -1) {
-          glUniform3f(cLoc, lc[0], lc[1], lc[2]);
+          glUniform4f(cLoc, lc[0], lc[1], lc[2], li);
+        }
+        if (sLoc != -1) {
+          glUniform4f(sLoc, ld[0], ld[1], ld[2], cc);
         }
       }
     }

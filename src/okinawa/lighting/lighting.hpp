@@ -58,9 +58,17 @@ public:
   static const int MAX_LIGHTS          = 256;
   static const int MAX_LIGHTS_PER_ITEM = 4;
 
-  // Register a light; returns its id, or -1 when the registry is full.
+  // Register an OMNI light (radiates equally in every direction);
+  // returns its id, or -1 when the registry is full.
   static int  registerLight(float x, float y, float z, float r, float g,
                             float b, float radius);
+  // Register a SPOT light: same as registerLight plus a direction, a
+  // cone half-angle (degrees) with a soft edge, and an intensity
+  // multiplier over the colour. A downward spot is the streetlamp model.
+  static int  registerSpotLight(float x, float y, float z, float r, float g,
+                                float b, float radius, float dirX,
+                                float dirY, float dirZ, float coneDeg,
+                                float intensity);
   static void clearLights();
   static long getLightGeneration();
   static int  getLightCount();
@@ -73,6 +81,9 @@ public:
   static const float *getLightPosition(int idx);   // xyz
   static const float *getLightColor(int idx);      // rgb
   static float        getLightRadius(int idx);
+  static const float *getLightDirection(int idx);  // xyz (spots)
+  static float        getLightCosCone(int idx);    // <= -1.5 for omni
+  static float        getLightIntensity(int idx);
 
   // Lazily-built shared radial halo texture ("ok_halo", additive white
   // falloff disc) for light glows; tint it per light.
@@ -96,6 +107,9 @@ private:
   static float _lightPos[MAX_LIGHTS][3];
   static float _lightColor[MAX_LIGHTS][3];
   static float _lightRadius[MAX_LIGHTS];
+  static float _lightDir[MAX_LIGHTS][3];
+  static float _lightCosCone[MAX_LIGHTS];   // cos(half-angle); -2 = omni
+  static float _lightIntensity[MAX_LIGHTS];
   static int   _lightCount;
   static long  _lightGeneration;
 };

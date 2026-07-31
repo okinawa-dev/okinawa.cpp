@@ -73,8 +73,18 @@ exact requested colour. The skybox and the GUI pass run with
 
 ## Point lights and halos
 
-`OkLighting` keeps a small registry of point lights (up to 256):
-`registerLight(x, y, z, r, g, b, radius)` / `clearLights()`. Every item
+`OkLighting` keeps a small registry of point lights (up to 256), in two
+flavours:
+
+- `registerLight(x, y, z, r, g, b, radius)` — an OMNI light radiating
+  equally in every direction (a bare bulb, a window glow).
+- `registerSpotLight(x, y, z, r, g, b, radius, dirX, dirY, dirZ,
+  coneDeg, intensity)` — the same light with a direction, a cone
+  half-angle (degrees, soft-edged) and an intensity multiplier over the
+  colour. A downward spot is the streetlamp model: the cone pools the
+  light on the pavement under the lamp.
+
+`clearLights()` empties the registry. Every item
 is lit by its nearest few lights (budget of 4, the era-friendly model,
 no shadows): the selection is cached per item and refreshed only when
 the registry generation changes, and the lighting itself is evaluated
