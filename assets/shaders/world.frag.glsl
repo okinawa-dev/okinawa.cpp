@@ -24,6 +24,7 @@ struct PointLight {
 };
 uniform PointLight pointLights[4];
 uniform int        pointLightCount;
+uniform float      pointLightLevel;  // 0 day .. 1 night (dusk ramp)
 uniform float     lightingOn;
 
 uniform sampler2D texture0;
@@ -58,7 +59,7 @@ void main() {
       pointSum   += pointLights[i].color.rgb *
                     (atten * nd * pointLights[i].color.w);
     }
-    color.rgb *= (Light + pointSum * lightingOn);
+    color.rgb *= (Light + pointSum * (lightingOn * pointLightLevel));
   } else {
     color = wireframeColor;
   }

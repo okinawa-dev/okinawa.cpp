@@ -23,6 +23,7 @@ float OkLighting::_lightRadius[OkLighting::MAX_LIGHTS];
 float OkLighting::_lightDir[OkLighting::MAX_LIGHTS][3];
 float OkLighting::_lightCosCone[OkLighting::MAX_LIGHTS];
 float OkLighting::_lightIntensity[OkLighting::MAX_LIGHTS];
+float OkLighting::_pointLightLevel = 0.0f;
 int   OkLighting::_lightCount      = 0;
 long  OkLighting::_lightGeneration = 0;
 
@@ -140,6 +141,20 @@ void OkLighting::update(float dt) {
   }
   evaluate(getTimeOfDay(), _tint, _fogColor, _fogDensity, _sunColor, _sunDir,
            _zenith, &_ambient);
+
+  // Point-light level: sin(sun elevation) is -_sunDir[1]; ramp 0 -> 1
+  // as it falls from +0.05 to -0.05 (through the sunset).
+  {
+    float sinElev    = -_sunDir[1];
+    float level      = (0.05f - sinElev) / 0.10f;
+    if (level < 0.0f) {
+      level = 0.0f;
+    }
+    if (level > 1.0f) {
+      level = 1.0f;
+    }
+    _pointLightLevel = level;
+  }
 }
 
 /**

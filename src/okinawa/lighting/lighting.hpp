@@ -55,7 +55,7 @@ public:
   // classic era-friendly model, no shadows. Lights are expected to be
   // mostly static: items cache their nearest set and refresh it only
   // when the registry generation changes.
-  static const int MAX_LIGHTS          = 256;
+  static const int MAX_LIGHTS          = 4096;
   static const int MAX_LIGHTS_PER_ITEM = 4;
 
   // Register an OMNI light (radiates equally in every direction);
@@ -85,6 +85,12 @@ public:
   static float        getLightCosCone(int idx);    // <= -1.5 for omni
   static float        getLightIntensity(int idx);
 
+  // Global point-light level: 0 by day, ramping to 1 as the sun drops
+  // through the horizon (computed every update from the sun elevation).
+  // The shader multiplies every point light by it -- streetlamps and
+  // window glows switch on at dusk with no per-light bookkeeping.
+  static float getPointLightLevel() { return _pointLightLevel; }
+
   // Lazily-built shared radial halo texture ("ok_halo", additive white
   // falloff disc) for light glows; tint it per light.
   static class OkTexture *getHaloTexture();
@@ -110,6 +116,7 @@ private:
   static float _lightDir[MAX_LIGHTS][3];
   static float _lightCosCone[MAX_LIGHTS];   // cos(half-angle); -2 = omni
   static float _lightIntensity[MAX_LIGHTS];
+  static float _pointLightLevel;
   static int   _lightCount;
   static long  _lightGeneration;
 };

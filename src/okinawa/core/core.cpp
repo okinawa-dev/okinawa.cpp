@@ -421,6 +421,11 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
         if (ambLoc != -1) {
           glUniform1f(ambLoc, OkLighting::getAmbientLight());
         }
+        GLint plvLoc = glGetUniformLocation(_shaderProgram,
+                                            "pointLightLevel");
+        if (plvLoc != -1) {
+          glUniform1f(plvLoc, OkLighting::getPointLightLevel());
+        }
       }
 
       // Set view and projection matrices
