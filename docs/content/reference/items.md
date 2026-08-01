@@ -39,6 +39,35 @@ Every drawable inherits these:
 | `void updateVertexData(float *data, long count)` | Replace the vertex data in place (stride-5 contract; normals recomputed against the item's indices). |
 | `float getRadius() const` | The mesh's maximum dimension. |
 
+## OkInstancedItem
+
+One mesh drawn many times in a SINGLE draw call: the base `OkItem` holds
+the shared mesh (uploaded once), and this subclass adds a per-instance
+buffer of world transforms (position, uniform scale, Y rotation) wired
+with an attribute divisor. A thousand streetlamps cost one draw call
+instead of a thousand items. It is the foundation for every repeated
+world object: street furniture, trees, parked cars, later pedestrians.
+
+Instances are entities, not anonymous triangles — each one can be moved,
+hidden or removed at runtime (a lamp knocked down by a car), and the
+buffer is recomposed cheaply. The mesh is authored around its own origin
+and each instance places a copy of it. Instances are frustum-culled
+INDIVIDUALLY (the mesh bounding sphere at each instance position), so
+only what is on screen is uploaded and drawn.
+
+The logical side of an object — state, collision, its light — belongs to
+the game, never to this class: collision never comes from render
+triangles.
+
+| Method | Purpose |
+| --- | --- |
+| `OkInstancedItem(name, vertexData, vertexCount, indexData, indexCount, stride = 5)` | Same mesh contract as `OkItem`. |
+| `int addInstance(x, y, z, yaw = 0, scale = 1)` | Place a copy; returns its index. |
+| `void setInstance(index, x, y, z, yaw, scale)` | Move an existing instance. |
+| `void setInstanceVisible(index, bool)` | Hide/show one instance (a broken lamp). |
+| `void clearInstances()` | Drop every instance. |
+| `int getInstanceCount() const` / `int getDrawnCount() const` | Total instances, and how many survived frustum culling last frame. |
+
 ## OkItemGroup
 
 | Method | Purpose |

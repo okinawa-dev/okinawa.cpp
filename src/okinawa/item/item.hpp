@@ -11,7 +11,11 @@ class OkItem : public OkObject {
 private:
   void _initBuffers();
 
-  // Flags
+protected:
+  // Mesh, material and GL state. Protected rather than private because
+  // subclasses issue their own draws with the same state: OkBillboard
+  // modulates the tint per frame, OkInstancedItem replaces the draw call
+  // with an instanced one.
   bool   visible;
   bool   drawWireframe;  // Flag to control wireframe rendering
   GLenum drawMode;       // GL_TRIANGLES, GL_LINES, etc.
@@ -40,9 +44,7 @@ private:
   std::string textureName;  // Name/path of the texture for reference counting
   OkTexture  *texture;
 
-protected:
-  // Multiplies the texture in the fill pass; protected so subclasses can
-  // modulate it per frame (the billboard's proximity fade).
+  // Multiplies the texture in the fill pass.
   float tintColor[4];
 
   // Geometry
