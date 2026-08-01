@@ -42,12 +42,13 @@ struct OkAtmoKey {
 };
 
 static const OkAtmoKey ATMO_KEYS[] = {
-    // deep night: cold teal soak, dense milky haze (no sun: the flat
-    // ambient carries the whole city, the tint does the darkening)
+    // deep night: cold teal soak, dense milky haze. The ambient is LOW
+    // on purpose: the streetlamps carry the city now, and warm pools
+    // only exist against a dark ambience.
     {0.0f, {0.30f, 0.40f, 0.48f}, {0.10f, 0.16f, 0.20f}, 0.0060f,
-     {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}, 0.78f},
+     {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}, 0.22f},
     {5.0f, {0.30f, 0.40f, 0.48f}, {0.10f, 0.16f, 0.20f}, 0.0060f,
-     {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}, 0.78f},
+     {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}, 0.22f},
     // dawn: haze warms and thins
     {7.0f, {0.85f, 0.75f, 0.70f}, {0.70f, 0.60f, 0.55f}, 0.0035f,
      {1.0f, 0.75f, 0.55f}, {0.30f, 0.35f, 0.50f}, 0.65f},
@@ -61,9 +62,9 @@ static const OkAtmoKey ATMO_KEYS[] = {
      {1.0f, 0.55f, 0.30f}, {0.25f, 0.22f, 0.38f}, 0.60f},
     // dusk into night: the teal takes over
     {22.0f, {0.42f, 0.48f, 0.55f}, {0.16f, 0.22f, 0.27f}, 0.0050f,
-     {0.2f, 0.15f, 0.15f}, {0.04f, 0.08f, 0.14f}, 0.72f},
+     {0.2f, 0.15f, 0.15f}, {0.04f, 0.08f, 0.14f}, 0.35f},
     {23.0f, {0.30f, 0.40f, 0.48f}, {0.10f, 0.16f, 0.20f}, 0.0060f,
-     {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}, 0.78f},
+     {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}, 0.22f},
 };
 static const int ATMO_KEY_COUNT = (int)(sizeof(ATMO_KEYS) / sizeof(ATMO_KEYS[0]));
 // NOLINTEND(readability-magic-numbers)

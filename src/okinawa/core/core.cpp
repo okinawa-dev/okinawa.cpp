@@ -1,6 +1,7 @@
 #include "core.hpp"
 #include "../gui/console.hpp"
 #include "../lighting/lighting.hpp"
+#include "../lighting/light_clusters.hpp"
 #include "../math/frustum.hpp"
 #include "../render/postprocess.hpp"
 #include "../lighting/skybox.hpp"
@@ -97,6 +98,7 @@ bool OkCore::initialize() {
   OkConsole::initialize();
   OkLighting::initialize();
   OkPostProcess::initialize();
+  OkLightClusters::initialize();
 
   // Typed characters feed the console while it is open.
   glfwSetCharCallback(_window, [](GLFWwindow * /*w*/, unsigned int cp) {
@@ -144,6 +146,7 @@ void OkCore::exit() {
   OkGui::shutdown();
   OkSkybox::shutdown();
   OkPostProcess::shutdown();
+  OkLightClusters::shutdown();
 
   // Delete scene and input handlers first
   delete _sceneHandler;
@@ -425,6 +428,20 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
                                             "pointLightLevel");
         if (plvLoc != -1) {
           glUniform1f(plvLoc, OkLighting::getPointLightLevel());
+        }
+
+        // Clustered forward: assign the registry's lights to the frame's
+        // cluster grid and bind the buffers the shader reads.
+        {
+          OkCamera *cam = _cameras[_currentCamera];
+          glm::mat4 viewM = glm::make_mat4(cam->getViewPtr());
+          glm::mat4 projM = glm::make_mat4(cam->getProjectionPtr());
+          int fbw = 0, fbh = 0;
+          glfwGetFramebufferSize(_window, &fbw, &fbh);
+          OkLightClusters::update(viewM, projM, cam->getNearPlane(),
+                                  cam->getFarPlane());
+          OkLightClusters::bind(_shaderProgram, fbw, fbh,
+                                cam->getNearPlane(), cam->getFarPlane());
         }
       }
 

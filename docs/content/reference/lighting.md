@@ -102,6 +102,35 @@ camera approaches — without it a billboard crossing the camera plane
 fills the screen). Halos live in the scene like any item: frustum
 culled, fogged with distance, blurred by the depth of field.
 
+## Clustered forward
+
+Point lights are selected PER PIXEL, not per object. `OkLightClusters`
+divides the view frustum into a 3D grid (16 x 9 x 24: screen tiles by
+exponential depth slices) and, every frame on the CPU, assigns each light
+to the clusters its sphere of influence touches; the world fragment
+shader finds its own cluster from `gl_FragCoord` and the fragment depth
+and iterates only those lights.
+
+This is what a city of huge meshes needs: a sidewalk item spanning a
+whole block now gets every lamp along it, instead of the four nearest to
+the item's centre. Two details matter:
+
+- **Culling is by sphere of influence, not by visibility** — a lamp
+  around the corner still lights the street it spills into.
+- **Lights are sorted by view distance before assignment**, because
+  clusters have a per-cluster cap: without the ordering, a dozen distant
+  lamps fill the budget and the lamp directly overhead is dropped.
+
+Clustering uses its own depth range (1 m to 350 m), independent of the
+camera planes: a 0.1 m near plane makes the first exponential slices
+microscopic and blows the reference budget. Past that distance the fog
+has swallowed everything anyway. Assignment runs on the CPU because the
+engine targets OpenGL 4.1 (no compute shaders), and the data reaches the
+shader as buffer textures.
+
+`set lighting.clustered false` falls back to the old per-item path
+(useful for A/B comparisons).
+
 `OkLighting::evaluate(hour, ...)` exposes the pure curve for tests and
 tools; the interpolated values are read every frame by the render pass
 (`getSceneTint`, `getFogColor`, `getFogDensity`, `getSunColor`,

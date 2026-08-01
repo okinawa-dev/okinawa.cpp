@@ -25,6 +25,19 @@ struct PointLight {
 uniform PointLight pointLights[4];
 uniform int        pointLightCount;
 uniform float      pointLightLevel;  // 0 day .. 1 night (dusk ramp)
+
+// Clustered forward (LA1): the frustum is split into a 3D cluster grid;
+// each fragment finds its own cluster from gl_FragCoord and its depth,
+// and iterates only the lights assigned to it. Light selection is PER
+// PIXEL, so a sidewalk mesh spanning a whole block gets every lamp along
+// it instead of the four nearest to the item's centre.
+uniform float       clusteredOn;
+uniform samplerBuffer  clusterLights;   // 3 texels per light
+uniform isamplerBuffer clusterIndices;  // light slots
+uniform isamplerBuffer clusterGrid;     // (offset, count) per cluster
+uniform ivec3       clusterDims;
+uniform vec2        clusterScreen;      // framebuffer size in pixels
+uniform vec2        clusterPlanes;      // near, far
 uniform float     lightingOn;
 
 uniform sampler2D texture0;
@@ -47,21 +60,54 @@ void main() {
 
   vec3 pointSum = vec3(0.0);
   vec3 n        = normalize(WorldN);
-  for (int i = 0; i < pointLightCount; i++) {
-    vec3  toL   = pointLights[i].posRadius.xyz - WorldPos;
-    float d     = length(toL);
-    float atten = clamp(1.0 - d / pointLights[i].posRadius.w, 0.0, 1.0);
-    atten       = atten * atten;
-    vec3  L     = toL / max(d, 0.001);
-    float nd    = max(dot(n, L), 0.0);
-    // Spot cone with a soft edge (omni lights pass w <= -1.5).
-    float cc    = pointLights[i].spot.w;
-    if (cc > -1.5) {
-      float s = dot(-L, pointLights[i].spot.xyz);
-      atten  *= clamp((s - cc) / max(1.0 - cc, 0.001), 0.0, 1.0);
+  if (clusteredOn > 0.5) {
+    // Cluster lookup: tile from the pixel position, depth slice from the
+    // view distance on the same exponential distribution the CPU used.
+    ivec2 tile = ivec2(gl_FragCoord.xy / clusterScreen *
+                       vec2(clusterDims.xy));
+    tile = clamp(tile, ivec2(0), clusterDims.xy - ivec2(1));
+    float vz = max(FogDist, clusterPlanes.x);
+    int slice = int(log(vz / clusterPlanes.x) /
+                    log(clusterPlanes.y / clusterPlanes.x) *
+                    float(clusterDims.z));
+    slice = clamp(slice, 0, clusterDims.z - 1);
+    int ci = (slice * clusterDims.y + tile.y) * clusterDims.x + tile.x;
+
+    ivec2 range = texelFetch(clusterGrid, ci).xy;  // offset, count
+    for (int k = 0; k < range.y; k++) {
+      int   slot = texelFetch(clusterIndices, range.x + k).r;
+      vec4  pr   = texelFetch(clusterLights, slot * 3);
+      vec4  col  = texelFetch(clusterLights, slot * 3 + 1);
+      vec4  sp   = texelFetch(clusterLights, slot * 3 + 2);
+      vec3  toL   = pr.xyz - WorldPos;
+      float d     = length(toL);
+      float atten = clamp(1.0 - d / pr.w, 0.0, 1.0);
+      atten       = atten * atten;
+      vec3  L     = toL / max(d, 0.001);
+      float nd    = max(dot(n, L), 0.0);
+      if (sp.w > -1.5) {
+        float s = dot(-L, sp.xyz);
+        atten  *= clamp((s - sp.w) / max(1.0 - sp.w, 0.001), 0.0, 1.0);
+      }
+      pointSum += col.rgb * (atten * nd * col.w);
     }
-    pointSum   += pointLights[i].color.rgb *
-                  (atten * nd * pointLights[i].color.w);
+  } else {
+    for (int i = 0; i < pointLightCount; i++) {
+      vec3  toL   = pointLights[i].posRadius.xyz - WorldPos;
+      float d     = length(toL);
+      float atten = clamp(1.0 - d / pointLights[i].posRadius.w, 0.0, 1.0);
+      atten       = atten * atten;
+      vec3  L     = toL / max(d, 0.001);
+      float nd    = max(dot(n, L), 0.0);
+      // Spot cone with a soft edge (omni lights pass w <= -1.5).
+      float cc    = pointLights[i].spot.w;
+      if (cc > -1.5) {
+        float s = dot(-L, pointLights[i].spot.xyz);
+        atten  *= clamp((s - cc) / max(1.0 - cc, 0.001), 0.0, 1.0);
+      }
+      pointSum   += pointLights[i].color.rgb *
+                    (atten * nd * pointLights[i].color.w);
+    }
   }
   color.rgb *= (Light + pointSum * (lightingOn * pointLightLevel));
   color.rgb *= sceneTint;
