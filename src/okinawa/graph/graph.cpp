@@ -63,6 +63,7 @@ void OkGraph::setEdgeColor(float r, float g, float b) {
   _edgeColor[2] = b;
   if (_edgesItem) {
     _edgesItem->setFillColor(r, g, b);
+    _edgesItem->setUnlit(true);  // debug layer: exact colour
     _edgesItem->setWireframeColor(r * 0.35f, g * 0.35f, b * 0.35f);
   }
 }
@@ -73,6 +74,7 @@ void OkGraph::setNodeColor(float r, float g, float b) {
   _nodeColor[2] = b;
   if (_nodesItem) {
     _nodesItem->setFillColor(r, g, b);
+    _nodesItem->setUnlit(true);  // debug layer: exact colour
     _nodesItem->setWireframeColor(r * 0.35f, g * 0.35f, b * 0.35f);
   }
 }
@@ -128,6 +130,7 @@ void OkGraph::buildLines() {
                             static_cast<long>(edgeIdx.size()));
     _edgesItem->setDrawMode(GL_LINES);
     _edgesItem->setFillColor(_edgeColor[0], _edgeColor[1], _edgeColor[2]);
+    _edgesItem->setUnlit(true);  // debug layer: exact colour
     _edgesItem->setVisible(_showEdges);
     attach(_edgesItem);
   }
@@ -143,6 +146,7 @@ void OkGraph::buildLines() {
                           static_cast<long>(nodeIdx.size()));
   _nodesItem->setDrawMode(GL_POINTS);
   _nodesItem->setFillColor(_nodeColor[0], _nodeColor[1], _nodeColor[2]);
+    _nodesItem->setUnlit(true);  // debug layer: exact colour
   _nodesItem->setVisible(_showNodes);
   attach(_nodesItem);
 }
@@ -190,6 +194,7 @@ void OkGraph::buildPolygons() {
                               static_cast<long>(ev.size()), ei.data(),
                               static_cast<long>(ei.size()));
       _edgesItem->setFillColor(_edgeColor[0], _edgeColor[1], _edgeColor[2]);
+    _edgesItem->setUnlit(true);  // debug layer: exact colour
       _edgesItem->setWireframe(true);  // outline over the fill
       _edgesItem->setWireframeColor(_edgeColor[0] * 0.35f, _edgeColor[1] * 0.35f,
                                     _edgeColor[2] * 0.35f);
@@ -227,6 +232,7 @@ void OkGraph::buildPolygons() {
                           static_cast<long>(nv.size()), ni.data(),
                           static_cast<long>(ni.size()));
   _nodesItem->setFillColor(_nodeColor[0], _nodeColor[1], _nodeColor[2]);
+    _nodesItem->setUnlit(true);  // debug layer: exact colour
   _nodesItem->setWireframe(true);  // outline over the fill
   _nodesItem->setWireframeColor(_nodeColor[0] * 0.35f, _nodeColor[1] * 0.35f,
                                 _nodeColor[2] * 0.35f);

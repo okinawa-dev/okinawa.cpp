@@ -507,8 +507,13 @@ void OkItem::drawSelf() {
   }
 
   // Wireframe overlay pass (in the wireframe colour, on top of the fill).
+  // Always UNLIT: the overlay is a drawing aid, not a surface.
   if (drawWireframe) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    GLint wLitLoc = glGetUniformLocation(current_program, "lightingOn");
+    if (wLitLoc != -1) {
+      glUniform1f(wLitLoc, 0.0f);
+    }
 
     GLint hasTexLoc = glGetUniformLocation(current_program, "hasTexture");
     if (hasTexLoc != -1) {
@@ -524,9 +529,13 @@ void OkItem::drawSelf() {
     glDrawElements(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT, nullptr);
   }
 
-  // Reset polygon mode to default if needed
+  // Reset polygon mode and the lighting flag after the overlay.
   if (drawWireframe) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    GLint wLitLoc = glGetUniformLocation(current_program, "lightingOn");
+    if (wLitLoc != -1) {
+      glUniform1f(wLitLoc, unlit ? 0.0f : 1.0f);
+    }
   }
 
   if (texture) {
