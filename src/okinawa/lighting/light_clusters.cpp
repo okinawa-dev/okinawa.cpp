@@ -104,7 +104,11 @@ void OkLightClusters::update(const glm::mat4 &view,
     if (vz + lr < nearPlane || vz - lr > farPlane) {
       continue;
     }
-    ordered.push_back(std::make_pair(vz, li));
+    // Order by DISTANCE to the eye, not by signed view depth: a lamp
+    // behind the camera has negative depth and would sort first,
+    // filling the near clusters before the lamp overhead gets in.
+    float dist = std::sqrt(vp.x * vp.x + vp.y * vp.y + vp.z * vp.z);
+    ordered.push_back(std::make_pair(dist, li));
   }
   std::sort(ordered.begin(), ordered.end());
 

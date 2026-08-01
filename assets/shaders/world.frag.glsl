@@ -13,6 +13,7 @@ in float FogDist;
 in vec3  Light;  // Gouraud light from the vertex stage (1 when lighting off)
 in vec3  WorldPos;
 in vec3  WorldN;
+in float ViewDepth;
 
 // Point lights (L4), evaluated per fragment: quadratic falloff inside
 // each light's radius, no shadows. Per-vertex would smear one lit
@@ -66,7 +67,10 @@ void main() {
     ivec2 tile = ivec2(gl_FragCoord.xy / clusterScreen *
                        vec2(clusterDims.xy));
     tile = clamp(tile, ivec2(0), clusterDims.xy - ivec2(1));
-    float vz = max(FogDist, clusterPlanes.x);
+    // MUST match the CPU: slices are cut on view-space depth, not on
+    // euclidean distance (they differ off-centre, and the error grows
+    // as the camera approaches -- lights would vanish in patches).
+    float vz = max(ViewDepth, clusterPlanes.x);
     int slice = int(log(vz / clusterPlanes.x) /
                     log(clusterPlanes.y / clusterPlanes.x) *
                     float(clusterDims.z));

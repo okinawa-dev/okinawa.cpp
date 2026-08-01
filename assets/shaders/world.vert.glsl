@@ -35,6 +35,7 @@ out float FogDist;  // view-space distance for the exponential fog
 out vec3  Light;    // Gouraud light, interpolated across the triangle
 out vec3  WorldPos; // for the per-fragment point lights
 out vec3  WorldN;
+out float ViewDepth;  // view-space depth (-z), for the cluster slice
 
 void main() {
   // Instanced draws build the world transform from the per-instance
@@ -70,6 +71,7 @@ void main() {
   // city's huge ground triangles, per-vertex point light would smear one
   // lit vertex across a 100 m face. The fragment stage needs the world
   // position and normal.
-  WorldPos = worldPos4.xyz;
-  WorldN   = worldN;
+  WorldPos  = worldPos4.xyz;
+  WorldN    = worldN;
+  ViewDepth = -viewPos.z;
 }
