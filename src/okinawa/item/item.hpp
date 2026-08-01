@@ -107,6 +107,7 @@ public:
   // Additive blending (glows/halos): drawn with src-alpha ONE blending
   // and no depth writes. World pass only.
   void setAdditive(bool on) { additive = on; }
+  bool isBlended() const override { return additive; }
   // Unlit: this item ignores the Gouraud sun/point lights AND the scene
   // tint (light sources must not be tinted by the atmosphere). World
   // pass only -- the flag restores world-pass uniforms after drawing.

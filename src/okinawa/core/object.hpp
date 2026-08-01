@@ -95,6 +95,13 @@ public:
 
   // Final draw method that enforces the drawing sequence
   virtual void draw() final;
+
+  // Blended/additive objects (light halos, glows) must be drawn AFTER
+  // all opaque geometry: they deliberately do not write depth, so any
+  // opaque surface drawn later would pass the depth test and paint over
+  // them. OkScene::draw uses this to order the two passes; subtrees
+  // report true when any descendant is blended.
+  virtual bool isBlended() const { return false; }
 };
 
 #endif

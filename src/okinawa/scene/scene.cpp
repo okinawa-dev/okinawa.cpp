@@ -102,9 +102,21 @@ void OkScene::draw() {
   if (!_isActive)
     return;
 
-  // Draw root objects (they will draw their children)
+  // TWO PASSES: opaque geometry first, blended/additive objects (light
+  // halos and glows) afterwards. Blended objects do not write depth on
+  // purpose, so any opaque surface drawn after them would pass the
+  // depth test and paint over them -- which is exactly what happened
+  // when streetlamp halos were created per chunk, before later chunks'
+  // buildings existed.
   for (size_t i = 0; i < rootObjects.size(); ++i) {
-    rootObjects[i]->draw();
+    if (!rootObjects[i]->isBlended()) {
+      rootObjects[i]->draw();
+    }
+  }
+  for (size_t i = 0; i < rootObjects.size(); ++i) {
+    if (rootObjects[i]->isBlended()) {
+      rootObjects[i]->draw();
+    }
   }
 }
 
