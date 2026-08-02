@@ -48,6 +48,7 @@ protected:
   float tintColor[4];
   bool  maskedMaterials;
   float matTint[3][3];
+  float matLuma[3];
 
   // Geometry
   void _calculateRadius();
@@ -122,6 +123,15 @@ public:
   // so one texture serves many colour variants. Codes are read as
   // ~1.00, ~0.50 and ~0.25; anything below ~0.12 is discarded.
   void setMaskedMaterials(bool on) { maskedMaterials = on; }
+  // Per-slot: false multiplies the tint over the texture (keeping its
+  // hue), true keeps only the texture's luminance so the tint sets the
+  // hue -- what an emissive surface wants, where the artwork gives the
+  // shading and the tint gives the colour of the light.
+  void setMaterialLuminance(int slot, bool on) {
+    if (slot >= 0 && slot <= 2) {
+      matLuma[slot] = on ? 1.0f : 0.0f;
+    }
+  }
   void setMaterialTint(int slot, float r, float g, float b) {
     if (slot < 0 || slot > 2) {
       return;

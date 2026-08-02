@@ -59,6 +59,7 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
     matTint[i][0] = 1.0f;
     matTint[i][1] = 1.0f;
     matTint[i][2] = 1.0f;
+    matLuma[i]    = 0.0f;
   }
   nearLightCount  = 0;
   nearLightGen    = -1;
@@ -502,6 +503,11 @@ void OkItem::drawSelf() {
           glUniform4f(loc, matTint[i][0], matTint[i][1], matTint[i][2],
                       1.0f);
         }
+      }
+      GLint lumaLoc = glGetUniformLocation(current_program,
+                                           "matLuminance");
+      if (lumaLoc != -1) {
+        glUniform3f(lumaLoc, matLuma[0], matLuma[1], matLuma[2]);
       }
     }
     if (drawTexture) {

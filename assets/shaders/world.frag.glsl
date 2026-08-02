@@ -55,6 +55,11 @@ uniform float     maskedMaterials;  // 0 = alpha is plain opacity
 uniform vec4      matTintA;         // mask ~1.00
 uniform vec4      matTintB;         // mask ~0.50
 uniform vec4      matTintC;         // mask ~0.25
+// Per-slot: 0 multiplies the tint over the texel (keeping its hue),
+// 1 takes only the texel's LUMINANCE and lets the tint set the hue.
+// The second is what an emissive surface needs: the artwork supplies
+// the shading, the tint supplies the colour of the light.
+uniform vec3      matLuminance;
 uniform vec3      sceneTint;   // global atmosphere tint (day cycle)
 uniform vec3      fogColor;    // exponential distance fog (day cycle)
 uniform float     fogDensity;  // 0 disables (the GUI pass resets it)
@@ -76,13 +81,18 @@ void main() {
       if (m < 0.12) {
         discard;
       }
-      vec4 tint = matTintC;
+      vec4  tint = matTintC;
+      float luma = matLuminance.z;
       if (m > 0.75) {
         tint = matTintA;
+        luma = matLuminance.x;
       } else if (m > 0.37) {
         tint = matTintB;
+        luma = matLuminance.y;
       }
-      color = vec4(texel.rgb * tint.rgb, 1.0) * tintColor;
+      float grey = dot(texel.rgb, vec3(0.299, 0.587, 0.114));
+      vec3  base = mix(texel.rgb, vec3(grey), luma);
+      color = vec4(base * tint.rgb, 1.0) * tintColor;
     } else {
       color = texel * tintColor;
     }
