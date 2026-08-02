@@ -32,7 +32,10 @@ uniform float ambientLight;  // flat ambient floor
 
 out vec2  TexCoord;
 out float FogDist;  // view-space distance for the exponential fog
-out vec3  Light;    // Gouraud light, interpolated across the triangle
+// The directional contribution travels apart from the ambient floor, so
+// the fragment stage can shadow the first without touching the second.
+out vec3  SunLight;
+out vec3  AmbientLight;
 out vec3  WorldPos; // for the per-fragment point lights
 out vec3  WorldN;
 out float ViewDepth;  // view-space depth (-z), for the cluster slice
@@ -64,8 +67,8 @@ void main() {
   float diffuse = max(dot(worldN, -sunDirection), 0.0);
   // 0.6 keeps full sun-facing surfaces just over 1.0 (slight burnout,
   // the deliberately-poor-materials look) instead of washing them out.
-  vec3  lit     = vec3(ambientLight) + sunColor * (diffuse * 0.6);
-  Light         = mix(vec3(1.0), lit, lightingOn);
+  SunLight     = mix(vec3(0.0), sunColor * (diffuse * 0.6), lightingOn);
+  AmbientLight = mix(vec3(1.0), vec3(ambientLight), lightingOn);
 
   // Point lights are evaluated PER FRAGMENT (world.frag.glsl): with the
   // city's huge ground triangles, per-vertex point light would smear one

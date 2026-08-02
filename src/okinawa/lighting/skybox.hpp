@@ -33,9 +33,13 @@ public:
 private:
   static void ensure();
   static void refreshGradient();
+  static void ensureSunDisc();
+  static void drawSun(float camX, float camY, float camZ);
 
   static OkItem    *_dome;      // owned
+  static OkItem    *_sunDisc;   // owned: the light's visible body
   static OkTexture *_gradient;  // owned by the texture handler
+  static OkTexture *_sunTex;    // owned by the texture handler
   static float      _builtFog[3];
   static float      _builtZenith[3];
 };

@@ -2,11 +2,15 @@
 #include "../handlers/textures.hpp"
 #include "../item/item.hpp"
 #include "../item/texture.hpp"
+#include "../item/billboard.hpp"
+#include "../math/point.hpp"
 #include "lighting.hpp"
 #include <cmath>
 #include <vector>
 
 OkItem    *OkSkybox::_dome           = nullptr;
+OkItem    *OkSkybox::_sunDisc        = nullptr;
+OkTexture *OkSkybox::_sunTex         = nullptr;
 OkTexture *OkSkybox::_gradient       = nullptr;
 float      OkSkybox::_builtFog[3]    = {-1.0f, -1.0f, -1.0f};
 float      OkSkybox::_builtZenith[3] = {-1.0f, -1.0f, -1.0f};
@@ -117,6 +121,117 @@ void OkSkybox::refreshGradient() {
 }
 
 /**
+ * @brief The light's visible body: a camera-facing quad with a soft
+ *        radial falloff, placed on the dome along the light's own
+ *        direction, so what casts the shadows is what is seen in the
+ *        sky.
+ */
+void OkSkybox::ensureSunDisc() {
+  if (_sunDisc != nullptr) {
+    return;
+  }
+  const int     SUN_TEX = 64;
+  unsigned char rgba[SUN_TEX * SUN_TEX * 4];
+  for (int y = 0; y < SUN_TEX; y++) {
+    for (int x = 0; x < SUN_TEX; x++) {
+      float dx = (x + 0.5f) / SUN_TEX - 0.5f;
+      float dy = (y + 0.5f) / SUN_TEX - 0.5f;
+      float d  = std::sqrt(dx * dx + dy * dy) * 2.0f;
+      // A solid core inside a wide soft corona, which is how a bright
+      // source reads through atmosphere.
+      float core = 1.0f - d / 0.42f;
+      if (core < 0.0f) {
+        core = 0.0f;
+      }
+      float glow = 1.0f - d;
+      if (glow < 0.0f) {
+        glow = 0.0f;
+      }
+      float a = core + glow * glow * 0.55f;
+      if (a > 1.0f) {
+        a = 1.0f;
+      }
+      int off       = (y * SUN_TEX + x) * 4;
+      rgba[off]     = 255;
+      rgba[off + 1] = 255;
+      rgba[off + 2] = 255;
+      rgba[off + 3] = (unsigned char)(a * 255.0f);
+    }
+  }
+  _sunTex = OkTextureHandler::getInstance()->createTextureFromRawData(
+      "ok_sun", rgba, SUN_TEX, SUN_TEX, 4);
+
+  const float S = 90.0f;
+  float verts[20] = {-S, -S, 0.0f, 0.0f, 0.0f, S,  -S, 0.0f, 1.0f, 0.0f,
+                     S,  S,  0.0f, 1.0f, 1.0f, -S, S,  0.0f, 0.0f, 1.0f};
+  unsigned int idx[6] = {0, 1, 2, 0, 2, 3};
+  _sunDisc = new OkItem("ok_sun_disc", verts, 20, idx, 6);
+  if (_sunTex != nullptr) {
+    _sunDisc->setTexture("ok_sun", _sunTex);
+  }
+  _sunDisc->setAdditive(true);
+  _sunDisc->setUnlit(true);
+}
+
+/**
+ * @brief Place the sun on the dome along the cycle's own light
+ *        direction, tinted by its current colour, fading out as it
+ *        sinks below the horizon.
+ */
+void OkSkybox::drawSun(float camX, float camY, float camZ) {
+  ensureSunDisc();
+  if (_sunDisc == nullptr) {
+    return;
+  }
+  const float *dir = OkLighting::getSunDirection();
+  // The direction points FROM the light toward the scene, so the body
+  // sits the other way.
+  float sx  = -dir[0];
+  float sy  = -dir[1];
+  float sz  = -dir[2];
+  float len = std::sqrt(sx * sx + sy * sy + sz * sz);
+  if (len < 1e-6f) {
+    return;
+  }
+  sx /= len;
+  sy /= len;
+  sz /= len;
+
+  float horizon = sy + 0.06f;
+  if (horizon <= 0.0f) {
+    return;               // below the horizon: nothing to draw
+  }
+  float fade = horizon / 0.20f;
+  if (fade > 1.0f) {
+    fade = 1.0f;
+  }
+
+  const float DIST = 820.0f;   // inside the dome
+  OkPoint     pos(camX + sx * DIST, camY + sy * DIST, camZ + sz * DIST);
+  _sunDisc->setPosition(pos.x(), pos.y(), pos.z());
+  _sunDisc->setRotation(
+      OkBillboard::facingRotation(pos, OkPoint(camX, camY, camZ)));
+
+  const float *col = OkLighting::getSunColor();
+  float        r = col[0], g = col[1], b = col[2];
+  float        m = r > g ? (r > b ? r : b) : (g > b ? g : b);
+  if (m < 0.35f) {
+    // Deep dusk: the curve's colour has gone dark, but the body itself
+    // should still read as a light, only a red one.
+    r = 1.0f;
+    g = 0.45f;
+    b = 0.25f;
+  }
+  _sunDisc->setTintColor(r, g, b, fade);
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  _sunDisc->draw();
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_BLEND);
+}
+
+/**
  * @brief Draw the dome centred on the camera, depth writes off, so the
  *        whole scene paints over it and it never occludes anything.
  */
@@ -132,6 +247,7 @@ void OkSkybox::draw(float camX, float camY, float camZ) {
   glDepthMask(GL_FALSE);
   glDisable(GL_CULL_FACE);
   _dome->draw();
+  drawSun(camX, camY, camZ);
   glEnable(GL_CULL_FACE);
   glDepthMask(GL_TRUE);
   glEnable(GL_DEPTH_TEST);
@@ -139,6 +255,9 @@ void OkSkybox::draw(float camX, float camY, float camZ) {
 
 void OkSkybox::shutdown() {
   delete _dome;
+  delete _sunDisc;
   _dome     = nullptr;
+  _sunDisc  = nullptr;
   _gradient = nullptr;  // owned by the texture handler
+  _sunTex   = nullptr;
 }

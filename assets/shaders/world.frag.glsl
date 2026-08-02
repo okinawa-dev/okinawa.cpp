@@ -10,7 +10,8 @@
 out vec4 FragColor;
 in vec2  TexCoord;
 in float FogDist;
-in vec3  Light;  // Gouraud light from the vertex stage (1 when lighting off)
+in vec3  SunLight;      // directional contribution, shadowed below
+in vec3  AmbientLight;  // ambient floor, never shadowed
 in vec3  WorldPos;
 in vec3  WorldN;
 in float ViewDepth;
@@ -27,7 +28,17 @@ uniform PointLight pointLights[4];
 uniform int        pointLightCount;
 uniform float      pointLightLevel;  // 0 day .. 1 night (dusk ramp)
 
-// Clustered forward (LA1): the frustum is split into a 3D cluster grid;
+// Directional shadows: the fragment is projected into the light's own
+// space and its depth compared with what the light could see. A small
+// PCF kernel softens the comparison; shadowStrength is 0 when shadows
+// are off or the source is below the horizon.
+uniform sampler2D  shadowMap;
+uniform mat4       lightSpace;
+uniform float      shadowStrength;
+uniform float      shadowTexel;
+uniform float      shadowBias;
+
+// Clustered forward: the frustum is split into a 3D cluster grid;
 // each fragment finds its own cluster from gl_FragCoord and its depth,
 // and iterates only the lights assigned to it. Light selection is PER
 // PIXEL, so a sidewalk mesh spanning a whole block gets every lamp along
@@ -154,7 +165,28 @@ void main() {
                     (atten * nd * pointLights[i].color.w);
     }
   }
-  color.rgb *= (Light + pointSum * (lightingOn * pointLightLevel));
+  // Shadowing applies only to the directional light: the ambient floor
+  // and the point lights still reach a shadowed surface, which is what
+  // keeps shadows from turning into black holes.
+  float shade = 1.0;
+  if (shadowStrength > 0.0 && lightingOn > 0.5) {
+    vec4 lp = lightSpace * vec4(WorldPos, 1.0);
+    vec3 pc = lp.xyz / lp.w * 0.5 + 0.5;
+    if (pc.z <= 1.0 && pc.x > 0.0 && pc.x < 1.0 && pc.y > 0.0 &&
+        pc.y < 1.0) {
+      float lit = 0.0;
+      for (int oy = -1; oy <= 1; oy++) {
+        for (int ox = -1; ox <= 1; ox++) {
+          vec2  o = vec2(float(ox), float(oy)) * shadowTexel;
+          float d = texture(shadowMap, pc.xy + o).r;
+          lit += (pc.z - shadowBias > d) ? 0.0 : 1.0;
+        }
+      }
+      shade = mix(1.0, lit / 9.0, shadowStrength);
+    }
+  }
+  color.rgb *= (SunLight * shade + AmbientLight +
+                pointSum * (lightingOn * pointLightLevel));
   color.rgb *= sceneTint;
 
   float fogFactor = exp(-fogDensity * FogDist);

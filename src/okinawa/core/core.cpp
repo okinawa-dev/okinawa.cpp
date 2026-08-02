@@ -2,6 +2,7 @@
 #include "../gui/console.hpp"
 #include "../lighting/lighting.hpp"
 #include "../lighting/light_clusters.hpp"
+#include "../lighting/shadow_map.hpp"
 #include "../math/frustum.hpp"
 #include "../render/postprocess.hpp"
 #include "../lighting/skybox.hpp"
@@ -99,6 +100,7 @@ bool OkCore::initialize() {
   OkLighting::initialize();
   OkPostProcess::initialize();
   OkLightClusters::initialize();
+  OkShadowMap::initialize();
 
   // Typed characters feed the console while it is open.
   glfwSetCharCallback(_window, [](GLFWwindow * /*w*/, unsigned int cp) {
@@ -147,6 +149,7 @@ void OkCore::exit() {
   OkSkybox::shutdown();
   OkPostProcess::shutdown();
   OkLightClusters::shutdown();
+  OkShadowMap::shutdown();
 
   // Delete scene and input handlers first
   delete _sceneHandler;
@@ -342,6 +345,18 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
         currentScene->step(dt);
       }
 
+      // Shadows: the scene's depth as the light sees it, rendered before
+      // anything else so the world pass can sample it. Built around the
+      // avatar (or the camera when there is none).
+      if (currentScene != nullptr) {
+        OkPoint   focus = _cameras[_currentCamera]->getPosition();
+        OkAvatar *av    = OkCore::getActiveAvatar();
+        if (av != nullptr && av->getControlledObject() != nullptr) {
+          focus = av->getControlledObject()->getPosition();
+        }
+        OkShadowMap::render(currentScene, focus.x(), focus.y(), focus.z());
+      }
+
       // Post-process: with render.post on, the whole world pass renders
       // into the offscreen target and end() composites it to the window
       // before the camera-attached and GUI passes (which stay sharp).
@@ -424,6 +439,7 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
         if (ambLoc != -1) {
           glUniform1f(ambLoc, OkLighting::getAmbientLight());
         }
+        OkShadowMap::bind(_shaderProgram);
         GLint plvLoc = glGetUniformLocation(_shaderProgram,
                                             "pointLightLevel");
         if (plvLoc != -1) {

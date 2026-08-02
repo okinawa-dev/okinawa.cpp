@@ -71,6 +71,43 @@ untextured fill/wireframe branch (debug layers, graph lines) keeps its
 exact requested colour. The skybox and the GUI pass run with
 `lightingOn = 0`, which makes the Gouraud stage a neutral 1.
 
+## Directional shadows
+
+`OkShadowMap` renders the scene's depth once per frame from the
+directional light and the world pass compares against it: a fragment
+further from the light than what the light could see is in shadow.
+
+The map covers a box that FOLLOWS THE VIEWER — there is no point
+spending resolution on ground nobody can see — and its origin is snapped
+to whole texels, without which the sampling grid slides under the
+geometry as the camera moves and every shadow edge shimmers. Filling the
+map culls FRONT faces, which pushes the recorded depth to the back of
+each caster and removes most of the self-shadowing acne a bias alone
+would have to hide. Sampling uses a small percentage-closer kernel, so
+edges are softened rather than stair-stepped.
+
+Only the DIRECTIONAL contribution is shadowed: the ambient floor and the
+point lights still reach a shadowed surface, which is what keeps shadows
+from becoming black holes. Strength follows the light's elevation and
+fades to nothing as it reaches the horizon, where a hard shadow would
+look wrong anyway.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `shadows` | `true` | Shadow pass on/off. |
+| `shadows.size` | `2048` | Depth map resolution. |
+| `shadows.extent` | `90` | Half-width in metres of the area covered. |
+| `shadows.strength` | `0.62` | How dark a fully shadowed surface goes. |
+| `shadows.bias` | `0.0016` | Depth bias against self-shadowing. |
+
+## The sun's body
+
+`OkSkybox` also draws the light's visible body: a camera-facing disc
+with a solid core inside a soft corona, placed on the dome along the
+light's OWN direction, so what casts the shadows is what is seen in the
+sky. It takes the cycle's sun colour, and fades out as it sinks below
+the horizon.
+
 ## Point lights and halos
 
 `OkLighting` keeps a small registry of point lights (up to 256), in two
