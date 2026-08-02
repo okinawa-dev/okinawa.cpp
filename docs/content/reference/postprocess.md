@@ -29,6 +29,15 @@ All in one composite shader, each gated by its config toggle:
 - **Film grain** (`post.grain`) — animated per-pixel hash noise,
   `post.grain.strength` in colour units. Also hides procedural
   repetition and banding.
+- **Bloom** (`post.bloom`) — the frame's bright areas are extracted
+  above `post.bloom.threshold` (with a soft shoulder set by
+  `post.bloom.knee`), blurred separably at half resolution and added
+  back with `post.bloom.strength`. Because it works on the finished
+  frame rather than on the objects, the cost is the same whether one
+  surface glows or ten thousand do, which is what makes it the
+  affordable way to sell emissive surfaces as sources of light. A
+  surface that should glow needs to be driven PAST white, so it clears
+  the threshold.
 - **Directional motion blur** (`post.motionblur`) — screen-space smear
   along a game-supplied velocity vector:
   `OkPostProcess::setMotionVector(dx, dy, strength)` each frame (e.g.
@@ -48,6 +57,10 @@ All in one composite shader, each gated by its config toggle:
 | `post.grain` | `true` | Film grain on/off. |
 | `post.grain.strength` | `0.035` | Grain amplitude. |
 | `post.motionblur` | `true` | Directional blur (needs a motion vector). |
+| `post.bloom` | `true` | Bloom on/off. |
+| `post.bloom.threshold` | `0.40` | Luminance where glowing starts. |
+| `post.bloom.knee` | `0.30` | Soft shoulder around the threshold. |
+| `post.bloom.strength` | `1.60` | How much glow is added back. |
 
 Everything is console-reachable (`set post.dof.focus 25`, `set
 render.post false`).
