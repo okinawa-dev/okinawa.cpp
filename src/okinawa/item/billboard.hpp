@@ -27,7 +27,11 @@ class OkBillboard : public OkItem {
 protected:
   void stepSelf(float dt) override;
   float proximityFade;
-  float baseAlpha;  // tint alpha before the fade modulation
+  float baseAlpha;     // tint alpha before the fade modulation
+  float cameraOffset;  // depth bias toward the camera, metres
+  float anchor[3];     // position as set by the caller (offset applied on top)
+  float applied[3];    // position this class last wrote, to detect moves
+  bool  anchorValid;
 
 public:
   OkBillboard(const std::string &name, float width, float height);
@@ -37,6 +41,17 @@ public:
   // `nearDist * 2`). 0 disables. Essential for light halos: a quad
   // crossing the camera plane would otherwise fill the screen.
   void setProximityFade(float nearDist) { proximityFade = nearDist; }
+
+  // Camera offset (depth bias): each frame the quad is drawn `metres`
+  // closer to the camera ALONG THE VIEW RAY. Since a point moved along
+  // its own view ray projects to the same pixel, the quad does not
+  // shift on screen at all -- it only wins the depth test against the
+  // object it belongs to. The classic fix for a light corona being
+  // sliced by its own lamp. 0 disables.
+  //
+  // setPosition() sets the ANCHOR: the offset is applied on top of it
+  // every frame, never accumulated.
+  void setCameraOffset(float metres) { cameraOffset = metres; }
 
   // The rotation that turns a +Z-facing quad placed at `from` toward
   // `to` (pitch and yaw; roll always 0). Static so the math is testable

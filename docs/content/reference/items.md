@@ -44,13 +44,13 @@ Every drawable inherits these:
 One mesh drawn many times in a SINGLE draw call: the base `OkItem` holds
 the shared mesh (uploaded once), and this subclass adds a per-instance
 buffer of world transforms (position, uniform scale, Y rotation) wired
-with an attribute divisor. A thousand streetlamps cost one draw call
-instead of a thousand items. It is the foundation for every repeated
-world object: street furniture, trees, parked cars, later pedestrians.
+with an attribute divisor. A thousand copies cost one draw call instead
+of a thousand items, which is what makes large numbers of repeated
+objects affordable.
 
-Instances are entities, not anonymous triangles — each one can be moved,
-hidden or removed at runtime (a lamp knocked down by a car), and the
-buffer is recomposed cheaply. The mesh is authored around its own origin
+Instances are addressable, not anonymous triangles — each one can be
+moved, hidden or removed at runtime, and the buffer is recomposed
+cheaply. The mesh is authored around its own origin
 and each instance places a copy of it. Instances are frustum-culled
 INDIVIDUALLY (the mesh bounding sphere at each instance position), so
 only what is on screen is uploaded and drawn.
@@ -64,7 +64,7 @@ triangles.
 | `OkInstancedItem(name, vertexData, vertexCount, indexData, indexCount, stride = 5)` | Same mesh contract as `OkItem`. |
 | `int addInstance(x, y, z, yaw = 0, scale = 1)` | Place a copy; returns its index. |
 | `void setInstance(index, x, y, z, yaw, scale)` | Move an existing instance. |
-| `void setInstanceVisible(index, bool)` | Hide/show one instance (a broken lamp). |
+| `void setInstanceVisible(index, bool)` | Hide/show one instance. |
 | `void clearInstances()` | Drop every instance. |
 | `int getInstanceCount() const` / `int getDrawnCount() const` | Total instances, and how many survived frustum culling last frame. |
 
@@ -113,7 +113,35 @@ at scene root (not attached under a transformed parent).
 | Method | Purpose |
 | --- | --- |
 | `OkBillboard(name, width, height)` | Construct a `width` x `height` camera-facing quad. |
+| `void setCameraOffset(float metres)` | Depth bias: draw the quad `metres` closer to the camera along the view ray. |
+| `void setProximityFade(float nearDist)` | Fade the tint alpha out as the camera approaches (0 disables). |
 | `static OkRotation facingRotation(from, to)` | The rotation that points a +Z quad at `from` toward `to`. |
+
+### Camera offset (depth bias)
+
+A billboard placed AT a solid object intersects it: the quad is flat,
+the object is not, and the sprite gets sliced along a hard straight
+edge wherever the geometry pokes through. Typical cases are a glow
+sprite centred on the thing that emits it, or a marker pinned to a
+character's head.
+
+`setCameraOffset(metres)` draws the quad a short distance TOWARD THE
+CAMERA along the view ray, recomputed every frame, so it wins the depth
+test against the object it belongs to.
+
+Because the displacement follows the view ray, a point moved along it
+projects to the SAME pixel: the quad does not shift on screen at all,
+only its depth changes. Orbiting the object keeps the sprite exactly
+where it was from every angle.
+
+`setPosition()` keeps meaning "the anchor": the offset is applied on top
+of it each frame and never accumulates, and moving the billboard from
+outside re-anchors it automatically.
+
+Its limit: it only resolves intersections with geometry nearer to the
+anchor than the offset. For sprites that must blend against arbitrary
+geometry, a depth bias is not enough: those cases need the sprite to
+fade by its depth difference with the scene.
 
 ```cpp
 OkBillboard *label = new OkBillboard("label", 8.0f, 4.0f);

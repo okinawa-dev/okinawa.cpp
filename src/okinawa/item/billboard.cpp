@@ -30,6 +30,14 @@ OkBillboard::OkBillboard(const std::string &name, float width, float height)
     : OkItem(name, _quadVertexData(width, height), 20, _quadIndexData(), 6) {
   proximityFade = 0.0f;
   baseAlpha     = 1.0f;
+  cameraOffset  = 0.0f;
+  anchor[0]     = 0.0f;
+  anchor[1]     = 0.0f;
+  anchor[2]     = 0.0f;
+  applied[0]    = 0.0f;
+  applied[1]    = 0.0f;
+  applied[2]    = 0.0f;
+  anchorValid   = false;
 }
 
 /**
@@ -53,11 +61,43 @@ void OkBillboard::stepSelf(float dt) {
   const OkRotation &cr = cam->getRotation();
   setRotation(OkRotation(cr.getPitch(), cr.getYaw(), 0.0f));
 
+  // Camera offset (see setCameraOffset): pull the quad toward the
+  // camera along the view ray. The anchor is captured the first time,
+  // so the offset is recomputed from it every frame instead of
+  // accumulating (which would send the quad flying at the lens).
+  if (cameraOffset > 0.0f) {
+    OkPoint p = getPosition();
+    // Re-anchor whenever the caller moved us (the current position is
+    // not the one we wrote last frame), so setPosition keeps meaning
+    // "the anchor" for the owner of the billboard.
+    if (!anchorValid || std::fabs(p.x() - applied[0]) > 1e-4f ||
+        std::fabs(p.y() - applied[1]) > 1e-4f ||
+        std::fabs(p.z() - applied[2]) > 1e-4f) {
+      anchor[0]   = p.x();
+      anchor[1]   = p.y();
+      anchor[2]   = p.z();
+      anchorValid = true;
+    }
+    OkPoint c  = cam->getPosition();
+    float   dx = c.x() - anchor[0];
+    float   dy = c.y() - anchor[1];
+    float   dz = c.z() - anchor[2];
+    float   d  = std::sqrt(dx * dx + dy * dy + dz * dz);
+    if (d > 1e-4f) {
+      float k    = cameraOffset / d;
+      applied[0] = anchor[0] + dx * k;
+      applied[1] = anchor[1] + dy * k;
+      applied[2] = anchor[2] + dz * k;
+      setPosition(applied[0], applied[1], applied[2]);
+    }
+  }
+
   // Proximity fade (see setProximityFade): modulate the tint alpha by
   // the camera distance so a quad near the lens vanishes instead of
   // filling the screen.
   if (proximityFade > 0.0f) {
-    OkPoint p  = getPosition();
+    OkPoint p  = anchorValid ? OkPoint(anchor[0], anchor[1], anchor[2])
+                             : getPosition();
     OkPoint c  = cam->getPosition();
     float   dx = p.x() - c.x();
     float   dy = p.y() - c.y();
