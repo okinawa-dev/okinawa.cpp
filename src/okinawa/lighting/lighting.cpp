@@ -43,8 +43,8 @@ struct OkAtmoKey {
 
 static const OkAtmoKey ATMO_KEYS[] = {
     // deep night: cold teal soak, dense milky haze. The ambient is LOW
-    // on purpose: the streetlamps carry the city now, and warm pools
-    // only exist against a dark ambience.
+    // on purpose: artificial lights carry the scene at night, and warm
+    // pools only read against a dark ambience.
     {0.0f, {0.30f, 0.40f, 0.48f}, {0.10f, 0.16f, 0.20f}, 0.0060f,
      {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}, 0.22f},
     {5.0f, {0.30f, 0.40f, 0.48f}, {0.10f, 0.16f, 0.20f}, 0.0060f,

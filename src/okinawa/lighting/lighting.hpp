@@ -50,11 +50,11 @@ public:
   static float        getAmbientLight() { return _ambient; }
 
   // --- Point lights (L4) ---------------------------------------------
-  // Small registry of point lights (streetlamps, shop windows). Each
-  // item is lit by its nearest lights up to the per-item budget -- the
-  // classic era-friendly model, no shadows. Lights are expected to be
-  // mostly static: items cache their nearest set and refresh it only
-  // when the registry generation changes.
+  // Small registry of point lights. Each item is lit by its nearest
+  // lights up to the per-item budget -- the classic cheap model, no
+  // shadows. Lights are expected to be mostly static: items cache their
+  // nearest set and refresh it only when the registry generation
+  // changes.
   static const int MAX_LIGHTS          = 4096;
   static const int MAX_LIGHTS_PER_ITEM = 4;
 
@@ -64,7 +64,8 @@ public:
                             float b, float radius);
   // Register a SPOT light: same as registerLight plus a direction, a
   // cone half-angle (degrees) with a soft edge, and an intensity
-  // multiplier over the colour. A downward spot is the streetlamp model.
+  // multiplier over the colour. A spot aimed downward pools its light
+  // on the surface below.
   static int  registerSpotLight(float x, float y, float z, float r, float g,
                                 float b, float radius, float dirX,
                                 float dirY, float dirZ, float coneDeg,
@@ -87,8 +88,8 @@ public:
 
   // Global point-light level: 0 by day, ramping to 1 as the sun drops
   // through the horizon (computed every update from the sun elevation).
-  // The shader multiplies every point light by it -- streetlamps and
-  // window glows switch on at dusk with no per-light bookkeeping.
+  // The shader multiplies every point light by it, so artificial
+  // lights come up at dusk with no per-light bookkeeping.
   static float getPointLightLevel() { return _pointLightLevel; }
 
   // Lazily-built shared radial halo texture ("ok_halo", additive white

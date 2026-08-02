@@ -81,16 +81,16 @@ flavours:
 - `registerSpotLight(x, y, z, r, g, b, radius, dirX, dirY, dirZ,
   coneDeg, intensity)` — the same light with a direction, a cone
   half-angle (degrees, soft-edged) and an intensity multiplier over the
-  colour. A downward spot is the streetlamp model: the cone pools the
-  light on the pavement under the lamp.
+  colour. A spot aimed downward pools its light on the surface below,
+  the usual shape for an overhead fixture.
 
 `clearLights()` empties the registry. Every item
 is lit by its nearest few lights (budget of 4, the era-friendly model,
 no shadows): the selection is cached per item and refreshed only when
 the registry generation changes, and the lighting itself is evaluated
 PER FRAGMENT with a quadratic falloff inside each light's radius — with
-the city's huge ground triangles, per-vertex point light would smear one
-lit vertex across a 100 m face.
+large triangles, per-vertex point light would smear a single lit vertex
+across the whole face.
 
 The glow itself is a separate, composable piece: `getHaloTexture()`
 returns a shared radial falloff disc ("ok_halo"), and a light's halo is

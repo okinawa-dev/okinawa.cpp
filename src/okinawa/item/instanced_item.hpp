@@ -9,16 +9,15 @@
  *
  *        The base OkItem holds the shared mesh (uploaded once); this
  *        class adds a per-instance buffer of world transforms, so a
- *        thousand streetlamps cost one draw call instead of a thousand.
- *        It is the foundation for every repeated world object: street
- *        furniture, trees, parked cars, later pedestrians.
+ *        thousand copies cost one draw call instead of a thousand
+ *        items, which is what makes large numbers of repeated objects
+ *        affordable.
  *
- *        Instances are ENTITIES, not anonymous triangles: each one can
- *        be moved, hidden or removed at runtime (a lamp knocked down by
- *        a car), and the buffer is recomposed cheaply. The logical side
- *        of an object (state, collision, its light) lives in the game,
- *        never in this class -- collision never comes from render
- *        triangles.
+ *        Instances are ADDRESSABLE, not anonymous triangles: each one
+ *        can be moved, hidden or removed at runtime, and the buffer is
+ *        recomposed cheaply. The logical side of an object (its state,
+ *        its collision volume) belongs to the application, never to
+ *        this class -- collision should not come from render triangles.
  *
  *        Instances are frustum-culled individually against the frame's
  *        frustum, using the mesh's bounding sphere at each instance
@@ -41,7 +40,7 @@ public:
   // Move an existing instance.
   void setInstance(int index, float x, float y, float z, float yaw = 0.0f,
                    float scale = 1.0f);
-  // Hide/show one instance (a broken lamp): hidden instances are not
+  // Hide/show one instance: hidden instances are not
   // drawn and cost nothing but their slot.
   void setInstanceVisible(int index, bool visible);
   // Drop every instance.

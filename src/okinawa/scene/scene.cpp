@@ -106,8 +106,8 @@ void OkScene::draw() {
   // halos and glows) afterwards. Blended objects do not write depth on
   // purpose, so any opaque surface drawn after them would pass the
   // depth test and paint over them -- which is exactly what happened
-  // when streetlamp halos were created per chunk, before later chunks'
-  // buildings existed.
+  // when blended objects are created before opaque ones that end up
+  // behind them.
   for (size_t i = 0; i < rootObjects.size(); ++i) {
     if (!rootObjects[i]->isBlended()) {
       rootObjects[i]->draw();
