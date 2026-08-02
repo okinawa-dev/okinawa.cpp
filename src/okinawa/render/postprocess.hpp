@@ -46,18 +46,30 @@ public:
   // decays to zero strength when not refreshed).
   static void setMotionVector(float dx, float dy, float strength);
 
+  // Bloom: bright areas of the frame bleed a soft glow over their
+  // surroundings. Costs the same whether one surface glows or ten
+  // thousand do, because it works on the finished frame rather than on
+  // the objects -- the cheap way to make emissive surfaces read as
+  // sources of light.
+
   // Destroy GL resources. Called by OkCore::exit.
   static void shutdown();
 
 private:
   static void ensureTarget(int width, int height);
   static void ensureProgram();
+  static void renderBloom();
 
   static GLuint _fbo;
   static GLuint _colorTex;
   static GLuint _depthTex;
   static int    _width, _height;
   static GLuint _program;
+  static GLuint _brightProgram;
+  static GLuint _blurProgram;
+  static GLuint _bloomFbo[2];
+  static GLuint _bloomTex[2];
+  static int    _bloomW, _bloomH;
   static GLuint _quadVao;
   static float  _time;
   static float  _motion[3];  // dx, dy, strength

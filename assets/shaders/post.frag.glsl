@@ -15,6 +15,8 @@ in vec2  TexCoord;
 
 uniform sampler2D frameTex;
 uniform sampler2D depthTex;
+uniform sampler2D bloomTex;      // blurred bright areas
+uniform float     bloomStrength; // 0 = off
 uniform vec2      texelSize;      // 1 / framebuffer size
 uniform vec2      planes;         // near, far (depth linearization)
 uniform float     timeSec;        // grain animation
@@ -73,7 +75,13 @@ void main() {
     }
   }
 
-  // 3. Film grain.
+  // 3. Bloom: add back the blurred bright areas, so light sources bleed
+  //    over their surroundings the way a lens does.
+  if (bloomStrength > 0.0) {
+    color += texture(bloomTex, uv).rgb * bloomStrength;
+  }
+
+  // 4. Film grain.
   if (grainStrength > 0.0) {
     color += hashNoise(uv * vec2(1920.0, 1080.0)) * grainStrength;
   }
