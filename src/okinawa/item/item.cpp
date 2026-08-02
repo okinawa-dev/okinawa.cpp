@@ -54,6 +54,12 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   sphereCenter[2] = 0.0f;
   additive        = false;
   unlit           = false;
+  maskedMaterials = false;
+  for (int i = 0; i < 3; i++) {
+    matTint[i][0] = 1.0f;
+    matTint[i][1] = 1.0f;
+    matTint[i][2] = 1.0f;
+  }
   nearLightCount  = 0;
   nearLightGen    = -1;
 
@@ -482,6 +488,21 @@ void OkItem::drawSelf() {
     if (tintLoc != -1) {
       glUniform4f(tintLoc, tintColor[0], tintColor[1], tintColor[2],
                   tintColor[3]);
+    }
+    GLint maskLoc = glGetUniformLocation(current_program,
+                                         "maskedMaterials");
+    if (maskLoc != -1) {
+      glUniform1f(maskLoc, maskedMaterials ? 1.0f : 0.0f);
+    }
+    if (maskedMaterials) {
+      const char *names[3] = {"matTintA", "matTintB", "matTintC"};
+      for (int i = 0; i < 3; i++) {
+        GLint loc = glGetUniformLocation(current_program, names[i]);
+        if (loc != -1) {
+          glUniform4f(loc, matTint[i][0], matTint[i][1], matTint[i][2],
+                      1.0f);
+        }
+      }
     }
     if (drawTexture) {
       glActiveTexture(GL_TEXTURE0);

@@ -46,6 +46,8 @@ protected:
 
   // Multiplies the texture in the fill pass.
   float tintColor[4];
+  bool  maskedMaterials;
+  float matTint[3][3];
 
   // Geometry
   void _calculateRadius();
@@ -114,6 +116,20 @@ public:
   // tint (light sources must not be tinted by the atmosphere). World
   // pass only -- the flag restores world-pass uniforms after drawing.
   void setUnlit(bool on) { unlit = on; }
+
+  // Masked materials: when the texture carries a MATERIAL CODE in its
+  // alpha channel (instead of opacity), each code takes its own tint,
+  // so one texture serves many colour variants. Codes are read as
+  // ~1.00, ~0.50 and ~0.25; anything below ~0.12 is discarded.
+  void setMaskedMaterials(bool on) { maskedMaterials = on; }
+  void setMaterialTint(int slot, float r, float g, float b) {
+    if (slot < 0 || slot > 2) {
+      return;
+    }
+    matTint[slot][0] = r;
+    matTint[slot][1] = g;
+    matTint[slot][2] = b;
+  }
 
   void   setTintColor(float r, float g, float b, float a) {
     tintColor[0] = r;

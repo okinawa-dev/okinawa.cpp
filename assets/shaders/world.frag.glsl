@@ -45,6 +45,16 @@ uniform sampler2D texture0;
 uniform bool      hasTexture;
 uniform vec4      wireframeColor;
 uniform vec4      tintColor;   // multiplies the texture (white = untouched)
+
+// Material mask: some textures carry, in their ALPHA channel, a code
+// saying what each pixel IS rather than how opaque it is. With
+// maskedMaterials on, each code takes its own tint, so one texture can
+// be recoloured per object -- different joinery colours, different
+// glass or emissive temperatures -- without duplicating the image.
+uniform float     maskedMaterials;  // 0 = alpha is plain opacity
+uniform vec4      matTintA;         // mask ~1.00
+uniform vec4      matTintB;         // mask ~0.50
+uniform vec4      matTintC;         // mask ~0.25
 uniform vec3      sceneTint;   // global atmosphere tint (day cycle)
 uniform vec3      fogColor;    // exponential distance fog (day cycle)
 uniform float     fogDensity;  // 0 disables (the GUI pass resets it)
@@ -56,8 +66,29 @@ void main() {
   // requested colour is anything the caller marked unlit -- debug
   // layers, wireframe overlays, light sources -- which reaches here as
   // lightingOn = 0.
-  vec4 color = hasTexture ? texture(texture0, TexCoord) * tintColor
-                          : wireframeColor;
+  vec4 color;
+  if (hasTexture) {
+    vec4 texel = texture(texture0, TexCoord);
+    if (maskedMaterials > 0.5) {
+      // Pick the tint whose code is nearest this pixel's mask, and drop
+      // pixels that belong to no material at all.
+      float m = texel.a;
+      if (m < 0.12) {
+        discard;
+      }
+      vec4 tint = matTintC;
+      if (m > 0.75) {
+        tint = matTintA;
+      } else if (m > 0.37) {
+        tint = matTintB;
+      }
+      color = vec4(texel.rgb * tint.rgb, 1.0) * tintColor;
+    } else {
+      color = texel * tintColor;
+    }
+  } else {
+    color = wireframeColor;
+  }
 
   vec3 pointSum = vec3(0.0);
   vec3 n        = normalize(WorldN);

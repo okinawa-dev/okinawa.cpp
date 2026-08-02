@@ -68,6 +68,47 @@ triangles.
 | `void clearInstances()` | Drop every instance. |
 | `int getInstanceCount() const` / `int getDrawnCount() const` | Total instances, and how many survived frustum culling last frame. |
 
+## OkSpriteSheet
+
+One texture holding many named regions. The image is uploaded ONCE
+(through the texture handler, so it is refcounted and shared like any
+other texture) and the regions are metadata: rectangles with a name. A
+region is never a texture of its own — that is the whole point of a
+sheet: one upload, one bind, and the chance to draw many different
+pieces in a single call.
+
+The description file is read in the **Aseprite / TexturePacker JSON**
+dialect, which is what pixel-art and packing tools emit. An artist can
+redraw or repack the sheet in their tool of choice, export, and the
+application picks it up with no code change. Only the parser speaks that
+vocabulary; the API calls the pieces REGIONS, and reserves the word
+frame for actual animation (each region's duration and the sheet's tags
+are kept for that).
+
+| Method | Purpose |
+| --- | --- |
+| `bool load(jsonPath, imageOverride = "")` | Read the description and the image it names. |
+| `OkTexture *getTexture() const` | The shared GPU texture, to hand to items. |
+| `const OkSpriteRegion *getRegion(name) const` | A region's pixel rect and ready-to-use UVs, or null. |
+| `bool hasRegion(name) const` | Whether a region exists. |
+| `std::vector<std::string> getRegionNames() const` | Every region, in sheet order. |
+| `std::vector<std::string> getGroup(tag) const` | The regions covered by a tag, for picking a member of a family. |
+| `int getWidth() / getHeight() const` | Sheet size in pixels. |
+
+`OkSpriteRegion` carries `x, y, w, h` in pixels and `u0, v0, u1, v1`
+ready for a quad, already accounting for the engine loading textures
+flipped for GL.
+
+### Material masks
+
+A sheet may carry, in its ALPHA channel, a code saying what each pixel
+IS rather than how opaque it is. With `OkItem::setMaskedMaterials(true)`
+the shader gives each code its own tint (`setMaterialTint(slot, r, g,
+b)`), so a single sheet serves many colour variants: the same artwork
+recoloured per object, with pixels below the lowest code discarded.
+
+Codes are read as roughly 1.00, 0.50 and 0.25 for slots 0, 1 and 2.
+
 ## OkItemGroup
 
 | Method | Purpose |
