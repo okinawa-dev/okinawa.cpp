@@ -60,7 +60,7 @@ All in one composite shader, each gated by its config toggle:
 | `post.bloom` | `true` | Bloom on/off. |
 | `post.bloom.threshold` | `0.40` | Luminance where glowing starts. |
 | `post.bloom.knee` | `0.30` | Soft shoulder around the threshold. |
-| `post.bloom.strength` | `1.60` | How much glow is added back. |
+| `post.bloom.strength` | `1.00` | How much glow is added back. |
 
 Everything is console-reachable (`set post.dof.focus 25`, `set
 render.post false`).

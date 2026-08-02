@@ -36,7 +36,7 @@ void OkPostProcess::initialize() {
   OkConfig::setBool("post.bloom", true);
   OkConfig::setFloat("post.bloom.threshold", 0.40f);
   OkConfig::setFloat("post.bloom.knee", 0.30f);
-  OkConfig::setFloat("post.bloom.strength", 1.60f);
+  OkConfig::setFloat("post.bloom.strength", 1.00f);
   // NOLINTEND(readability-magic-numbers)
   OkLogger::info("PostProcess", "Config defaults registered");
 }
