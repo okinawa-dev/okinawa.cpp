@@ -37,6 +37,8 @@ uniform mat4       lightSpace;
 uniform float      shadowStrength;
 uniform float      shadowTexel;
 uniform float      shadowBias;
+uniform float      shadowTexelWorld;  // world size of one shadow texel
+uniform vec3       sunDirection;      // for the shadow normal offset
 
 // Clustered forward: the frustum is split into a 3D cluster grid;
 // each fragment finds its own cluster from gl_FragCoord and its depth,
@@ -170,7 +172,13 @@ void main() {
   // keeps shadows from turning into black holes.
   float shade = 1.0;
   if (shadowStrength > 0.0 && lightingOn > 0.5) {
-    vec4 lp = lightSpace * vec4(WorldPos, 1.0);
+    // Normal offset: sample from slightly OFF the surface, more so the
+    // more it faces away from the light. This cures acne by moving the
+    // sample rather than the shadow, so contact stays tight.
+    vec3  sn    = normalize(WorldN);
+    float slope = 1.0 - abs(dot(sn, normalize(sunDirection)));
+    vec3  sp    = WorldPos + sn * (shadowTexelWorld * (0.6 + slope * 2.2));
+    vec4 lp = lightSpace * vec4(sp, 1.0);
     vec3 pc = lp.xyz / lp.w * 0.5 + 0.5;
     if (pc.z <= 1.0 && pc.x > 0.0 && pc.x < 1.0 && pc.y > 0.0 &&
         pc.y < 1.0) {

@@ -23,7 +23,7 @@ void OkShadowMap::initialize() {
   OkConfig::setInt("shadows.size", 2048);      // depth map resolution
   OkConfig::setFloat("shadows.extent", 90.0f); // metres covered, half-width
   OkConfig::setFloat("shadows.strength", 0.62f);
-  OkConfig::setFloat("shadows.bias", 0.0016f);
+  OkConfig::setFloat("shadows.bias", 0.00035f);
   // NOLINTEND(readability-magic-numbers)
   OkLogger::info("ShadowMap", "Config defaults registered");
 }
@@ -131,18 +131,23 @@ void OkShadowMap::render(OkScene *scene, float centreX, float centreY,
   glUniformMatrix4fv(glGetUniformLocation(_program, "lightSpace"), 1,
                      GL_FALSE, glm::value_ptr(_lightSpace));
 
-  // Front-face culling while filling the map pushes the depth to the
-  // BACK faces of casters, which removes most of the self-shadowing
-  // acne a bias alone would have to hide.
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_FRONT);
+  // Slope-scaled depth offset instead of front-face culling. Culling
+  // front faces hides acne but records each caster as starting at its
+  // BACK, so shadows visibly detach from the object casting them
+  // (peter panning). A polygon offset that grows with the surface's
+  // slope pushes only the problem cases, leaving contact shadows in
+  // place.
+  glEnable(GL_POLYGON_OFFSET_FILL);
+  glPolygonOffset(2.2f, 3.5f);
+  glDisable(GL_CULL_FACE);
   // The camera's frustum means nothing here: everything the light sees
   // must be drawn, including casters behind the viewer.
   const OkFrustum *saved = OkFrustum::getActive();
   OkFrustum::setActive(nullptr);
   scene->draw();
   OkFrustum::setActive(saved);
-  glCullFace(GL_BACK);
+  glDisable(GL_POLYGON_OFFSET_FILL);
+  glEnable(GL_CULL_FACE);
 
   glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)previousFbo);
 }
@@ -174,6 +179,14 @@ void OkShadowMap::bind(GLuint program) {
   loc = glGetUniformLocation(program, "shadowBias");
   if (loc != -1) {
     glUniform1f(loc, OkConfig::getFloat("shadows.bias"));
+  }
+  // World size of one shadow texel: the sampling point is nudged along
+  // the receiving surface's normal by roughly this much, which removes
+  // the remaining acne without moving the shadow along the ground.
+  loc = glGetUniformLocation(program, "shadowTexelWorld");
+  if (loc != -1) {
+    float extent = OkConfig::getFloat("shadows.extent");
+    glUniform1f(loc, (2.0f * extent) / (float)_size);
   }
 }
 

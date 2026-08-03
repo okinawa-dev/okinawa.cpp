@@ -161,7 +161,11 @@ void OkSkybox::ensureSunDisc() {
   _sunTex = OkTextureHandler::getInstance()->createTextureFromRawData(
       "ok_sun", rgba, SUN_TEX, SUN_TEX, 4);
 
-  const float S = 90.0f;
+  // Angular size. The real sun subtends about half a degree; a disc
+  // that small reads as a dot, so the core is drawn slightly larger and
+  // the corona around it carries the perceived size. At the dome
+  // distance below, this quad spans ~4 degrees with a ~1.7 degree core.
+  const float S = 28.0f;
   float verts[20] = {-S, -S, 0.0f, 0.0f, 0.0f, S,  -S, 0.0f, 1.0f, 0.0f,
                      S,  S,  0.0f, 1.0f, 1.0f, -S, S,  0.0f, 0.0f, 1.0f};
   unsigned int idx[6] = {0, 1, 2, 0, 2, 3};
