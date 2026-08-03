@@ -7,6 +7,7 @@
 #include "../render/postprocess.hpp"
 #include "../lighting/skybox.hpp"
 #include "../gui/gui.hpp"
+#include "../gui/stats.hpp"
 #include "../avatar/avatar.hpp"
 #include "../config/config.hpp"
 #include "../input/input.hpp"
@@ -101,6 +102,7 @@ bool OkCore::initialize() {
   OkPostProcess::initialize();
   OkLightClusters::initialize();
   OkShadowMap::initialize();
+  OkGuiStats::initialize();
 
   // Typed characters feed the console while it is open.
   glfwSetCharCallback(_window, [](GLFWwindow * /*w*/, unsigned int cp) {
@@ -150,6 +152,7 @@ void OkCore::exit() {
   OkPostProcess::shutdown();
   OkLightClusters::shutdown();
   OkShadowMap::shutdown();
+  OkGuiStats::shutdown();
 
   // Delete scene and input handlers first
   delete _sceneHandler;
@@ -310,6 +313,7 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
 
       // Advance the day cycle and refresh the atmosphere values.
       OkLighting::update(dt);
+      OkGuiStats::update(dt);
 
       // Handle camera switching based on input state
       OkInputState state = _input->getState();

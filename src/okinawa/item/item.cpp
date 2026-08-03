@@ -531,6 +531,7 @@ void OkItem::drawSelf() {
       }
     }
     glDrawElements(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT, nullptr);
+    OkFrustum::addDraw(numIndices / 3);
   }
 
   // Wireframe overlay pass (in the wireframe colour, on top of the fill).

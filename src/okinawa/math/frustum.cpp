@@ -3,6 +3,8 @@
 
 const OkFrustum *OkFrustum::_active = nullptr;
 long             OkFrustum::_culled = 0;
+long             OkFrustum::_drawCalls = 0;
+long             OkFrustum::_triangles = 0;
 
 OkFrustum::OkFrustum() {
   for (int i = 0; i < 6; i++) {
@@ -65,6 +67,19 @@ const OkFrustum *OkFrustum::getActive() { return _active; }
 
 long OkFrustum::getCulledCount() { return _culled; }
 
-void OkFrustum::resetStats() { _culled = 0; }
+void OkFrustum::resetStats() {
+  _culled    = 0;
+  _drawCalls = 0;
+  _triangles = 0;
+}
+
+long OkFrustum::getDrawCalls() { return _drawCalls; }
+
+long OkFrustum::getTriangles() { return _triangles; }
+
+void OkFrustum::addDraw(long triangles) {
+  _drawCalls++;
+  _triangles += triangles;
+}
 
 void OkFrustum::addCulled() { _culled++; }

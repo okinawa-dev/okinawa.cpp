@@ -39,12 +39,21 @@ public:
   static void resetStats();
   static void addCulled();
 
+  // Per-frame render counters, reset alongside the culling stats: draw
+  // calls actually issued and triangles submitted. They are what tells
+  // a project whether a change cost what it thought it would.
+  static long getDrawCalls();
+  static long getTriangles();
+  static void addDraw(long triangles);
+
 private:
   // plane i: ax + by + cz + d, inside when >= -radius
   float planes[6][4];
 
   static const OkFrustum *_active;
   static long             _culled;
+  static long             _drawCalls;
+  static long             _triangles;
 };
 
 #endif

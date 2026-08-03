@@ -207,6 +207,7 @@ void OkInstancedItem::drawSelf() {
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glDrawElementsInstanced(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT,
                           nullptr, (GLsizei)_drawnCount);
+  OkFrustum::addDraw((numIndices / 3) * _drawnCount);
   glBindVertexArray(0);
 
   if (texture) {

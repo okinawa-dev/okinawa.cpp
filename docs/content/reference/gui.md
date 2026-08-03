@@ -147,6 +147,44 @@ cells, and the two `0,0` axes highlighted. It rebuilds itself when the
 window size, cell size or scale change, so it is also the quickest way to
 verify the coordinate system on a new monitor or window size.
 
+## OkGuiStats
+
+A small runtime statistics panel, in the spirit of the debug overlays
+engines ship with: numbers plus a live frame-time graph, anchored to a
+screen corner so it survives resizes. It is built on the same GUI pieces
+any project would use — a layer, text elements and an image — and reads
+what the engine already tracks, so it adds nothing to the frame it is
+measuring beyond its own handful of quads.
+
+It reports frames per second and average frame time, the worst recent
+frame, draw calls and triangles submitted, scene objects and how many
+were culled, loaded textures, and the day clock.
+
+The GRAPH is the point: an average hides hitches, a history shows them.
+The panel keeps the last few seconds as a strip, one column per frame,
+coloured green inside a 60Hz budget, amber past it and red beyond two
+refreshes, with a reference line at 16.7 ms. Its vertical range adapts
+to the worst sample so the strip stays informative at any framerate.
+
+Off by default. The panel registers a console command:
+
+```
+stats            # toggle
+stats on
+stats off
+```
+
+| Method | Purpose |
+| --- | --- |
+| `static void initialize()` | Build the panel and register its command (called by the core). |
+| `static void update(float dtMs)` | Refresh the readings (called by the core each frame). |
+| `static void setVisible(bool)` / `static bool isVisible()` | Show or hide it. |
+
+Draw calls and triangles come from counters kept in `OkFrustum`
+alongside the culling statistics: `getDrawCalls()`, `getTriangles()` and
+`getCulledCount()`, all reset at the start of each frame. A project can
+read them directly to assert a budget in a test.
+
 ## Configuration keys
 
 | Key | Default | Meaning |
