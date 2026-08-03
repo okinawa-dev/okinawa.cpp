@@ -22,9 +22,32 @@
  *        `timescale [x]` reads or sets how much faster than real time the
  *        clock runs.
  */
+/**
+ * @brief One keyframe of the atmosphere curve: what the sky and the
+ *        light look like at a given hour. The engine interpolates
+ *        between consecutive keys, wrapping around midnight.
+ */
+struct OkAtmosphereKey {
+  float hour;        // 0..24, keys must be given in ascending order
+  float tint[3];     // multiplied over every world fragment
+  float fog[3];      // fog colour, and the sky at the horizon
+  float fogDensity;  // exponential fog, per metre
+  float sun[3];      // directional light colour (black = no sun)
+  float zenith[3];   // sky colour straight up
+  float ambient;     // flat ambient floor under the directional light
+};
+
 class OkLighting {
 public:
   OkLighting() = delete;
+
+  // Replace the atmosphere curve. The engine ships a neutral default
+  // (clear day, blue-ish night) so any project runs out of the box;
+  // a game with its own look supplies its own keys, which is where
+  // artistic direction belongs. Keys are copied. Passing fewer than two
+  // keys leaves the current curve untouched.
+  static void setAtmosphereCurve(const OkAtmosphereKey *keys, int count);
+  static int  getAtmosphereKeyCount();
 
   // Register config defaults' consumers and the console commands. Called
   // by OkCore::initialize (after OkConsole::initialize).

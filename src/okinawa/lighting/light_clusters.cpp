@@ -41,6 +41,9 @@ float sliceDepth(int k, float nearPlane, float farPlane) {
 
 void OkLightClusters::initialize() {
   OkConfig::setBool("lighting.clustered", true);
+  // Depth range the cluster grid spans, in world units (see the header).
+  OkConfig::setFloat("lighting.cluster.near", 1.0f);
+  OkConfig::setFloat("lighting.cluster.far", 350.0f);
   g_clusterLists.resize(CLUSTER_COUNT);
   OkLogger::info("LightClusters", "Config defaults registered");
 }
@@ -80,8 +83,8 @@ void OkLightClusters::update(const glm::mat4 &view,
 
   // Clustering uses its own depth range (see the header): the camera's
   // 0.1 m near plane would make the first slices microscopic.
-  nearPlane = (float)CLUSTER_NEAR;
-  farPlane  = (float)CLUSTER_FAR;
+  nearPlane = OkConfig::getFloat("lighting.cluster.near");
+  farPlane  = OkConfig::getFloat("lighting.cluster.far");
 
   for (int i = 0; i < CLUSTER_COUNT; i++) {
     g_clusterLists[(size_t)i].clear();
@@ -297,7 +300,8 @@ void OkLightClusters::bind(GLuint program, int screenWidth, int screenHeight,
     // The shader must slice with the SAME range update() used.
     (void)nearPlane;
     (void)farPlane;
-    glUniform2f(loc, (float)CLUSTER_NEAR, (float)CLUSTER_FAR);
+    glUniform2f(loc, OkConfig::getFloat("lighting.cluster.near"),
+                OkConfig::getFloat("lighting.cluster.far"));
   }
 }
 

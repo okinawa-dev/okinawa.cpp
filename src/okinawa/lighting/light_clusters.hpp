@@ -43,12 +43,12 @@ public:
   // costs N references) and per single cluster.
   static const int MAX_LIGHT_REFS        = 262144;
   static const int MAX_LIGHTS_PER_CLUSTER = 16;
-  // Clustering depth range, INDEPENDENT of the camera planes: the camera
-  // far plane is kilometres away, which would make the near exponential
-  // slices microscopic and blow the reference budget. Past this distance
-  // the fog has swallowed everything anyway, so point lights stop.
-  static const int CLUSTER_NEAR = 1;    // metres
-  static const int CLUSTER_FAR  = 350;  // metres
+  // Clustering depth range lives in the config (lighting.cluster.near /
+  // lighting.cluster.far) rather than here, because it depends on the
+  // SCALE of the world: it must stay independent of the camera planes
+  // (a far plane kilometres away would make the near exponential slices
+  // microscopic and blow the reference budget), and it should end where
+  // the project's fog has swallowed everything anyway.
   // Cap on lights reaching a single frustum.
   static const int MAX_VISIBLE_LIGHTS = 1024;
 

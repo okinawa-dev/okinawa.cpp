@@ -31,43 +31,72 @@ long  OkLighting::_lightGeneration = 0;
 // around the clock (the last segment wraps 23 -> 5). The palette follows the
 // agreed look: neutral day, warm sunset, cold teal night.
 // NOLINTBEGIN(readability-magic-numbers)
-struct OkAtmoKey {
-  float hour;
-  float tint[3];      // scene tint (multiplies albedo)
-  float fog[3];       // fog colour (also the sky at the horizon)
-  float density;      // exponential fog density (per metre)
-  float sun[3];       // sun colour (consumed by the directional stage later)
-  float zenith[3];    // sky colour straight up (skybox gradient top)
-  float ambient;      // flat ambient floor under the Gouraud sun
+// The engine's DEFAULT curve: a neutral clear day and a plain blue
+// night. It exists so any project renders sensibly out of the box; a
+// game with its own look replaces it through setAtmosphereCurve, which
+// is where artistic direction belongs.
+// NOLINTBEGIN(readability-magic-numbers)
+static const OkAtmosphereKey ATMO_DEFAULT[] = {
+    // night
+    {0.0f, {0.34f, 0.38f, 0.46f}, {0.08f, 0.10f, 0.15f}, 0.0040f,
+     {0.0f, 0.0f, 0.0f}, {0.03f, 0.05f, 0.10f}, 0.30f},
+    {5.0f, {0.34f, 0.38f, 0.46f}, {0.08f, 0.10f, 0.15f}, 0.0040f,
+     {0.0f, 0.0f, 0.0f}, {0.03f, 0.05f, 0.10f}, 0.30f},
+    // dawn
+    {7.0f, {0.88f, 0.84f, 0.80f}, {0.66f, 0.63f, 0.62f}, 0.0028f,
+     {1.0f, 0.86f, 0.72f}, {0.32f, 0.42f, 0.60f}, 0.50f},
+    // day
+    {9.0f, {1.00f, 1.00f, 1.00f}, {0.72f, 0.80f, 0.90f}, 0.0012f,
+     {1.0f, 0.98f, 0.94f}, {0.26f, 0.50f, 0.85f}, 0.55f},
+    {17.0f, {1.00f, 1.00f, 1.00f}, {0.72f, 0.80f, 0.90f}, 0.0012f,
+     {1.0f, 0.98f, 0.94f}, {0.26f, 0.50f, 0.85f}, 0.55f},
+    // sunset
+    {20.0f, {1.00f, 0.82f, 0.68f}, {0.74f, 0.58f, 0.50f}, 0.0026f,
+     {1.0f, 0.70f, 0.45f}, {0.28f, 0.30f, 0.48f}, 0.50f},
+    // dusk
+    {22.0f, {0.46f, 0.50f, 0.58f}, {0.16f, 0.20f, 0.28f}, 0.0036f,
+     {0.2f, 0.18f, 0.20f}, {0.06f, 0.10f, 0.18f}, 0.38f},
+    {23.0f, {0.34f, 0.38f, 0.46f}, {0.08f, 0.10f, 0.15f}, 0.0040f,
+     {0.0f, 0.0f, 0.0f}, {0.03f, 0.05f, 0.10f}, 0.30f},
 };
-
-static const OkAtmoKey ATMO_KEYS[] = {
-    // deep night: cold teal soak, dense milky haze. The ambient is LOW
-    // on purpose: artificial lights carry the scene at night, and warm
-    // pools only read against a dark ambience.
-    {0.0f, {0.30f, 0.40f, 0.48f}, {0.10f, 0.16f, 0.20f}, 0.0060f,
-     {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}, 0.22f},
-    {5.0f, {0.30f, 0.40f, 0.48f}, {0.10f, 0.16f, 0.20f}, 0.0060f,
-     {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}, 0.22f},
-    // dawn: haze warms and thins
-    {7.0f, {0.85f, 0.75f, 0.70f}, {0.70f, 0.60f, 0.55f}, 0.0035f,
-     {1.0f, 0.75f, 0.55f}, {0.30f, 0.35f, 0.50f}, 0.65f},
-    // day: neutral light, light blue distance haze
-    {9.0f, {1.00f, 1.00f, 1.00f}, {0.72f, 0.78f, 0.85f}, 0.0018f,
-     {1.0f, 0.98f, 0.92f}, {0.25f, 0.48f, 0.80f}, 0.55f},
-    {17.0f, {1.00f, 1.00f, 1.00f}, {0.72f, 0.78f, 0.85f}, 0.0018f,
-     {1.0f, 0.98f, 0.92f}, {0.25f, 0.48f, 0.80f}, 0.55f},
-    // sunset: everything warms, haze turns amber-pink
-    {20.0f, {1.00f, 0.72f, 0.52f}, {0.75f, 0.50f, 0.42f}, 0.0032f,
-     {1.0f, 0.55f, 0.30f}, {0.25f, 0.22f, 0.38f}, 0.60f},
-    // dusk into night: the teal takes over
-    {22.0f, {0.42f, 0.48f, 0.55f}, {0.16f, 0.22f, 0.27f}, 0.0050f,
-     {0.2f, 0.15f, 0.15f}, {0.04f, 0.08f, 0.14f}, 0.35f},
-    {23.0f, {0.30f, 0.40f, 0.48f}, {0.10f, 0.16f, 0.20f}, 0.0060f,
-     {0.0f, 0.0f, 0.0f}, {0.02f, 0.05f, 0.09f}, 0.22f},
-};
-static const int ATMO_KEY_COUNT = (int)(sizeof(ATMO_KEYS) / sizeof(ATMO_KEYS[0]));
 // NOLINTEND(readability-magic-numbers)
+
+// The curve in use: the default until a project replaces it.
+static const int              ATMO_MAX_KEYS = 32;
+static OkAtmosphereKey        ATMO_KEYS[ATMO_MAX_KEYS];
+static int                    ATMO_KEY_COUNT = 0;
+
+static void ensureCurve() {
+  if (ATMO_KEY_COUNT > 0) {
+    return;
+  }
+  int n = (int)(sizeof(ATMO_DEFAULT) / sizeof(ATMO_DEFAULT[0]));
+  for (int i = 0; i < n; i++) {
+    ATMO_KEYS[i] = ATMO_DEFAULT[i];
+  }
+  ATMO_KEY_COUNT = n;
+}
+
+void OkLighting::setAtmosphereCurve(const OkAtmosphereKey *keys,
+                                    int count) {
+  if (keys == nullptr || count < 2) {
+    return;
+  }
+  if (count > ATMO_MAX_KEYS) {
+    count = ATMO_MAX_KEYS;
+  }
+  for (int i = 0; i < count; i++) {
+    ATMO_KEYS[i] = keys[i];
+  }
+  ATMO_KEY_COUNT = count;
+  OkLogger::info("Lighting", "Atmosphere curve replaced (" +
+                                 std::to_string(count) + " keys)");
+}
+
+int OkLighting::getAtmosphereKeyCount() {
+  ensureCurve();
+  return ATMO_KEY_COUNT;
+}
 
 /**
  * @brief Register the console commands and log the starting state. The
@@ -167,14 +196,15 @@ void OkLighting::evaluate(float hours, float outTint[3], float outFogColor[3],
                           float &outFogDensity, float outSunColor[3],
                           float outSunDir[3], float outZenith[3],
                           float *outAmbient) {
+  ensureCurve();
   float h = std::fmod(hours, 24.0f);
   if (h < 0.0f) {
     h += 24.0f;
   }
 
   // Find the surrounding keyframes (wrapping around midnight).
-  const OkAtmoKey *prev = &ATMO_KEYS[ATMO_KEY_COUNT - 1];
-  const OkAtmoKey *next = &ATMO_KEYS[0];
+  const OkAtmosphereKey *prev = &ATMO_KEYS[ATMO_KEY_COUNT - 1];
+  const OkAtmosphereKey *next = &ATMO_KEYS[0];
   float            span = (24.0f - prev->hour) + next->hour;
   float            frac = 0.0f;
   if (h < ATMO_KEYS[0].hour) {
@@ -204,7 +234,7 @@ void OkLighting::evaluate(float hours, float outTint[3], float outFogColor[3],
           prev->zenith[c] + (next->zenith[c] - prev->zenith[c]) * frac;
     }
   }
-  outFogDensity = prev->density + (next->density - prev->density) * frac;
+  outFogDensity = prev->fogDensity + (next->fogDensity - prev->fogDensity) * frac;
   if (outAmbient != nullptr) {
     *outAmbient = prev->ambient + (next->ambient - prev->ambient) * frac;
   }

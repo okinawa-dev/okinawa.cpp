@@ -28,8 +28,33 @@ timescale 300   # a full day in 4.8 real minutes
 
 ## The atmosphere curve
 
-A keyframe curve — deep night, dawn, day, sunset, dusk — interpolates
-per frame:
+A keyframe curve — night, dawn, day, sunset, dusk — interpolates per
+frame. **The curve is data, not code**: the engine ships a neutral
+default (clear day, blue-ish night) so any project renders sensibly out
+of the box, and a game supplies its own with
+`OkLighting::setAtmosphereCurve(keys, count)`, which is where artistic
+direction belongs. Each `OkAtmosphereKey` carries an hour and the look
+at that hour:
+
+```cpp
+static const OkAtmosphereKey MY_CURVE[] = {
+  // hour   tint (rgb)          fog (rgb)           density
+  //        sun (rgb)           zenith (rgb)        ambient
+  { 0.0f, {0.30f,0.40f,0.48f}, {0.10f,0.16f,0.20f}, 0.0060f,
+          {0.0f, 0.0f, 0.0f},  {0.02f,0.05f,0.09f}, 0.22f },
+  { 9.0f, {1.00f,1.00f,1.00f}, {0.72f,0.78f,0.85f}, 0.0018f,
+          {1.0f, 0.98f,0.92f}, {0.25f,0.48f,0.80f}, 0.55f },
+  {20.0f, {1.00f,0.72f,0.52f}, {0.75f,0.50f,0.42f}, 0.0032f,
+          {1.0f, 0.55f,0.30f}, {0.25f,0.22f,0.38f}, 0.60f },
+  {23.0f, {0.30f,0.40f,0.48f}, {0.10f,0.16f,0.20f}, 0.0060f,
+          {0.0f, 0.0f, 0.0f},  {0.02f,0.05f,0.09f}, 0.22f },
+};
+
+OkLighting::setAtmosphereCurve(MY_CURVE, 4);
+```
+
+Keys go in ascending hour order and the curve wraps around midnight, so
+the last key blends back into the first. What gets interpolated:
 
 - **Scene tint**: a colour multiplied over every world fragment. Neutral
   at noon, warm amber through the sunset, cold blue-teal at night — the
@@ -91,14 +116,6 @@ point lights still reach a shadowed surface, which is what keeps shadows
 from becoming black holes. Strength follows the light's elevation and
 fades to nothing as it reaches the horizon, where a hard shadow would
 look wrong anyway.
-
-| Key | Default | Meaning |
-| --- | --- | --- |
-| `shadows` | `true` | Shadow pass on/off. |
-| `shadows.size` | `2048` | Depth map resolution. |
-| `shadows.extent` | `90` | Half-width in metres of the area covered. |
-| `shadows.strength` | `0.62` | How dark a fully shadowed surface goes. |
-| `shadows.bias` | `0.0016` | Depth bias against self-shadowing. |
 
 ## The sun's body
 
@@ -183,3 +200,11 @@ never tinted, fogged or sunlit.
 | `lighting.time` | `12` | Hour of day, 0-24 (wraps). |
 | `lighting.timescale` | `30` | Clock speed vs real time; `0` freezes it. |
 | `lighting.fog` | `true` | Distance fog on/off (the colour keeps driving the sky and clear). |
+| `lighting.clustered` | `true` | Per-pixel cluster lookup; off falls back to a per-item budget. |
+| `lighting.cluster.near` | `1` | Near end of the clustering depth range, world units. |
+| `lighting.cluster.far` | `350` | Far end; past it point lights stop contributing. |
+| `shadows` | `true` | Directional shadow pass on/off. |
+| `shadows.size` | `2048` | Depth map resolution. |
+| `shadows.extent` | `90` | Half-width of the shadowed area, world units. |
+| `shadows.strength` | `0.62` | How dark a fully shadowed surface goes. |
+| `shadows.bias` | `0.00035` | Depth bias against self-shadowing. |
