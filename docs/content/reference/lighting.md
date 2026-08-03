@@ -59,10 +59,29 @@ the last key blends back into the first. What gets interpolated:
 - **Scene tint**: a colour multiplied over every world fragment. Neutral
   at noon, warm amber through the sunset, cold blue-teal at night — the
   night look's "two temperatures" starts here.
-- **Fog colour and density**: exponential distance fog
-  (`exp(-density * viewDistance)`). Distance dissolves into a milky
-  haze that thickens at night. Until a skybox exists, the frame clear
-  colour *is* the fog colour, so the scene fades into the sky seamlessly.
+- **Fog colour and density**: exponential fog whose density falls off
+  with altitude (see below). Distance dissolves into a milky haze that
+  thickens at night. Until a skybox exists, the frame clear colour *is*
+  the fog colour, so the scene fades into the sky seamlessly.
+### Height fog
+
+Fog density is not uniform: it is the density at `lighting.fog.base`,
+falling off exponentially with altitude over `lighting.fog.height`
+metres. The amount along a view ray is the integral of that density
+over the ray rather than density times length, solved in closed form,
+so a ray that climbs passes through steadily thinner air.
+
+This matters as soon as a project can be seen from above. Plain
+distance fog calibrated for the end of a street will swallow an entire
+city viewed from a rooftop or an aircraft, because every pixel of
+ground is then far away. Setting `lighting.fog.height` very large makes
+the air uniform again, which is exactly the distance fog this replaced.
+
+`lighting.fog.base` is world Y, not height above the ground: a project
+whose terrain sits well above zero should set it to its own ground
+level, or the whole scene reads as far above the dense layer and never
+fogs at all.
+
 - **Sun colour and direction**: elevation follows a sine over the 6h-21h
   daylight arc, azimuth sweeps east to west, parked below the horizon at
   night. Consumed every frame by the Gouraud sun (below).
@@ -199,7 +218,9 @@ never tinted, fogged or sunlit.
 | --- | --- | --- |
 | `lighting.time` | `12` | Hour of day, 0-24 (wraps). |
 | `lighting.timescale` | `30` | Clock speed vs real time; `0` freezes it. |
-| `lighting.fog` | `true` | Distance fog on/off (the colour keeps driving the sky and clear). |
+| `lighting.fog` | `true` | Fog on/off (the colour keeps driving the sky and clear). |
+| `lighting.fog.height` | `25` | Metres of altitude over which fog density falls off by *e*; very large = uniform. |
+| `lighting.fog.base` | `0` | World Y at which the curve's density applies; set it to the project's ground level. |
 | `lighting.clustered` | `true` | Per-pixel cluster lookup; off falls back to a per-item budget. |
 | `lighting.cluster.near` | `1` | Near end of the clustering depth range, world units. |
 | `lighting.cluster.far` | `350` | Far end; past it point lights stop contributing. |

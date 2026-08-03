@@ -52,6 +52,13 @@ void OkConfig::setDefaults() {
   floatValues["lighting.time"]      = 12.0f;
   floatValues["lighting.timescale"] = 30.0f;
   boolValues["lighting.fog"]        = true;
+  // Fog thins with altitude: the atmosphere curve's density applies at
+  // "base", and every "height" metres above it the air is e times
+  // thinner. A very large height makes the air uniform, which is plain
+  // distance fog. Projects with terrain should set base to their ground
+  // level, since world Y is not altitude above the ground.
+  floatValues["lighting.fog.height"] = 25.0f;
+  floatValues["lighting.fog.base"]   = 0.0f;
   floatValues["gui.scale"]      = 0.0f;
   floatValues["gui.fov"]        = 35.0f;
   boolValues["gui.debug.grid"]  = false;

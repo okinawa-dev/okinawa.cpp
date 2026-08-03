@@ -76,6 +76,13 @@ uniform vec3      matLuminance;
 uniform vec3      sceneTint;   // global atmosphere tint (day cycle)
 uniform vec3      fogColor;    // exponential distance fog (day cycle)
 uniform float     fogDensity;  // 0 disables (the GUI pass resets it)
+// Height fog: the density above is the density at fogBaseY, and it
+// falls off exponentially with altitude over fogHeight metres. A very
+// large fogHeight makes the air uniform again, which is the plain
+// distance fog this replaced.
+uniform float     fogHeight;   // e-folding height in metres
+uniform float     fogBaseY;    // altitude at which fogDensity applies
+uniform vec3      fogEyePos;   // camera position, world space
 
 void main() {
   // Lighting applies to WORLD objects, textured or not: a plain-colour
@@ -197,7 +204,30 @@ void main() {
                 pointSum * (lightingOn * pointLightLevel));
   color.rgb *= sceneTint;
 
-  float fogFactor = exp(-fogDensity * FogDist);
+  // Fog thins with altitude, so the amount along a view ray is the
+  // integral of the density over it rather than density times length.
+  // Solved in closed form: for a ray climbing dy over dist metres,
+  // starting at the camera's own density, the integral is
+  //   rho_eye * H * (1 - exp(-dy/H)) * dist/dy
+  // which degenerates to rho_eye * dist for a level ray. Without this,
+  // fog calibrated for the end of a street at ground level swallows
+  // everything seen from the air, where every pixel is far away.
+  float fogAmount;
+  if (fogDensity <= 0.0) {
+    fogAmount = 0.0;
+  } else {
+    vec3  toFrag  = WorldPos - fogEyePos;
+    float dist    = length(toFrag);
+    float dy      = toFrag.y;
+    float H       = max(fogHeight, 1.0);
+    float rhoEye  = fogDensity * exp(-(fogEyePos.y - fogBaseY) / H);
+    if (abs(dy) < 0.001) {
+      fogAmount = rhoEye * dist;
+    } else {
+      fogAmount = rhoEye * H * (1.0 - exp(-dy / H)) * (dist / dy);
+    }
+  }
+  float fogFactor = exp(-fogAmount);
   color.rgb       = mix(fogColor, color.rgb, clamp(fogFactor, 0.0, 1.0));
 
   FragColor = color;

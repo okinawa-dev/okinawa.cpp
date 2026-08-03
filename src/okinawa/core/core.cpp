@@ -435,6 +435,21 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
         if (fogDenLoc != -1) {
           glUniform1f(fogDenLoc, OkLighting::getFogDensity());
         }
+        // Height fog needs where the eye is and how fast the air thins
+        // with altitude.
+        GLint fogHLoc   = glGetUniformLocation(_shaderProgram, "fogHeight");
+        GLint fogBLoc   = glGetUniformLocation(_shaderProgram, "fogBaseY");
+        GLint fogEyeLoc = glGetUniformLocation(_shaderProgram, "fogEyePos");
+        if (fogHLoc != -1) {
+          glUniform1f(fogHLoc, OkConfig::getFloat("lighting.fog.height"));
+        }
+        if (fogBLoc != -1) {
+          glUniform1f(fogBLoc, OkConfig::getFloat("lighting.fog.base"));
+        }
+        if (fogEyeLoc != -1) {
+          OkPoint eye = _cameras[_currentCamera]->getPosition();
+          glUniform3f(fogEyeLoc, eye.x(), eye.y(), eye.z());
+        }
         // Gouraud sun (L3): direction/colour from the day cycle, over a
         // flat ambient floor. The GUI pass resets lightingOn to 0.
         GLint litLoc    = glGetUniformLocation(_shaderProgram, "lightingOn");
