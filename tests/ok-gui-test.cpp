@@ -194,22 +194,26 @@ TEST_CASE("OkConfig prefix lookup", "[gui]") {
 TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
   float tint[3], fog[3], density, sun[3], dir[3];
 
-  SECTION("Midday is neutral and thin") {
+  // These assert the MECHANISM, not a particular look: the values in
+  // the engine's default curve are a starting point projects replace,
+  // so a test that pinned them down would only pin down one project's
+  // art direction.
+
+  SECTION("The sun rides above the horizon by day and below it at night") {
     OkLighting::evaluate(12.0f, tint, fog, density, sun, dir);
-    REQUIRE_THAT(tint[0], WithinAbs(1.0f, 0.01f));
-    REQUIRE_THAT(tint[1], WithinAbs(1.0f, 0.01f));
-    REQUIRE(density < 0.003f);
-    REQUIRE(dir[1] < -0.5f);  // sun high above, light points down
-  }
-  SECTION("Deep night is cold teal and dense") {
+    REQUIRE(dir[1] < -0.5f);  // high above: the light points down
     OkLighting::evaluate(2.0f, tint, fog, density, sun, dir);
-    REQUIRE(tint[2] > tint[0]);  // blue over red: cold
-    REQUIRE(density > 0.005f);
-    REQUIRE(dir[1] > 0.0f);  // sun parked below the horizon
+    REQUIRE(dir[1] > 0.0f);   // parked below the horizon
   }
-  SECTION("Sunset is warm") {
-    OkLighting::evaluate(20.0f, tint, fog, density, sun, dir);
-    REQUIRE(tint[0] > tint[2]);  // red over blue: warm
+  SECTION("Night is darker than midday") {
+    float dayTint[3], dayFog[3], dayDensity, daySun[3], dayDir[3];
+    OkLighting::evaluate(12.0f, dayTint, dayFog, dayDensity, daySun, dayDir);
+    OkLighting::evaluate(2.0f, tint, fog, density, sun, dir);
+    float dayLum = dayTint[0] + dayTint[1] + dayTint[2];
+    float nightLum = tint[0] + tint[1] + tint[2];
+    REQUIRE(nightLum < dayLum);
+    // and no directional light is left at night
+    REQUIRE(sun[0] + sun[1] + sun[2] < daySun[0] + daySun[1] + daySun[2]);
   }
   SECTION("Hours wrap") {
     float t2[3], f2[3], d2, s2[3], dd2[3];
@@ -218,19 +222,34 @@ TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
     REQUIRE_THAT(tint[0], WithinAbs(t2[0], 0.0001f));
     REQUIRE_THAT(density, WithinAbs(d2, 0.0001f));
   }
-  SECTION("Sky zenith follows the cycle") {
-    float z[3];
-    OkLighting::evaluate(12.0f, tint, fog, density, sun, dir, z);
-    REQUIRE(z[2] > z[0]);       // day zenith: blue over red
-    REQUIRE(z[2] > 0.5f);
-    OkLighting::evaluate(2.0f, tint, fog, density, sun, dir, z);
-    REQUIRE(z[2] < 0.15f);      // night zenith: near-black petrol
-  }
   SECTION("Continuity across midnight") {
     float a[3], b[3], fa[3], fb[3], da, db, sa[3], sb[3], za[3], zb[3];
     OkLighting::evaluate(23.99f, a, fa, da, sa, za);
     OkLighting::evaluate(0.01f, b, fb, db, sb, zb);
     REQUIRE_THAT(a[0], WithinAbs(b[0], 0.01f));
     REQUIRE_THAT(da, WithinAbs(db, 0.0005f));
+  }
+  SECTION("A project can replace the curve") {
+    // Two keys are enough to describe a world: the engine must take
+    // them and interpolate between them, wrapping around midnight.
+    const OkAtmosphereKey CUSTOM[] = {
+        {0.0f, {0.10f, 0.10f, 0.10f}, {0.0f, 0.0f, 0.0f}, 0.0100f,
+         {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 0.10f},
+        {12.0f, {0.90f, 0.90f, 0.90f}, {1.0f, 1.0f, 1.0f}, 0.0000f,
+         {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, 0.90f},
+    };
+    OkLighting::setAtmosphereCurve(CUSTOM, 2);
+    REQUIRE(OkLighting::getAtmosphereKeyCount() == 2);
+
+    OkLighting::evaluate(0.0f, tint, fog, density, sun, dir);
+    REQUIRE_THAT(tint[0], WithinAbs(0.10f, 0.001f));
+    OkLighting::evaluate(12.0f, tint, fog, density, sun, dir);
+    REQUIRE_THAT(tint[0], WithinAbs(0.90f, 0.001f));
+    // halfway between the keys, halfway between the values
+    OkLighting::evaluate(6.0f, tint, fog, density, sun, dir);
+    REQUIRE_THAT(tint[0], WithinAbs(0.50f, 0.01f));
+    // a curve with too few keys is rejected rather than half-applied
+    OkLighting::setAtmosphereCurve(CUSTOM, 1);
+    REQUIRE(OkLighting::getAtmosphereKeyCount() == 2);
   }
 }
