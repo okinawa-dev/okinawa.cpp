@@ -14,6 +14,7 @@
 #include "gui_image.hpp"
 #include "gui_layer.hpp"
 #include "gui_text.hpp"
+#include <algorithm>
 #include <cstdio>
 
 OkGuiLayer *OkGuiStats::_layer    = nullptr;
@@ -26,6 +27,9 @@ std::vector<float> OkGuiStats::_history;
 float              OkGuiStats::_accum   = 0.0f;
 float              OkGuiStats::_worst   = 0.0f;
 bool               OkGuiStats::_visible = false;
+// Several seconds even at a high frame rate: long enough to judge a
+// change rather than catch a lucky frame.
+int                OkGuiStats::_historyMax = 600;
 
 namespace {
 
@@ -112,8 +116,13 @@ void OkGuiStats::rebuildGraph() {
       rgba[off + 3] = 170;
     }
   }
+  // The graph shows the most recent GRAPH_W samples; the history behind
+  // it is longer and is there for callers asking for a series.
+  size_t from = _history.size() > (size_t)GRAPH_W
+                    ? _history.size() - (size_t)GRAPH_W
+                    : 0;
   float top = GRAPH_MS_MIN;
-  for (size_t i = 0; i < _history.size(); i++) {
+  for (size_t i = from; i < _history.size(); i++) {
     if (_history[i] > top) {
       top = _history[i];
     }
@@ -135,6 +144,7 @@ void OkGuiStats::rebuildGraph() {
   int n = (int)_history.size();
   for (int i = 0; i < n && i < GRAPH_W; i++) {
     float ms = _history[(size_t)(n - 1 - i)];
+    (void)from;
     int   x  = GRAPH_W - 1 - i;
     float t  = ms / top;
     if (t > 1.0f) {
@@ -182,8 +192,11 @@ void OkGuiStats::update(float dtMs) {
   // The history is kept even while hidden, so opening the panel shows
   // what just happened instead of starting blank.
   _history.push_back(dtMs);
-  if ((int)_history.size() > GRAPH_W) {
-    _history.erase(_history.begin());
+  if ((int)_history.size() > _historyMax) {
+    // Drop the oldest in one go rather than one per frame, so the cost
+    // does not fall on every single frame.
+    _history.erase(_history.begin(),
+                   _history.begin() + (_history.size() - _historyMax));
   }
   if (dtMs > _worst) {
     _worst = dtMs;
@@ -200,11 +213,15 @@ void OkGuiStats::update(float dtMs) {
 
   // Averages over the whole window, not the last frame: a single frame
   // bounces too much to read.
-  float sum = 0.0f;
-  for (size_t i = 0; i < _history.size(); i++) {
+  size_t avgFrom = _history.size() > (size_t)GRAPH_W
+                       ? _history.size() - (size_t)GRAPH_W
+                       : 0;
+  float  sum     = 0.0f;
+  for (size_t i = avgFrom; i < _history.size(); i++) {
     sum += _history[i];
   }
-  float avg = _history.empty() ? 0.0f : sum / (float)_history.size();
+  size_t avgN = _history.size() - avgFrom;
+  float  avg  = avgN == 0 ? 0.0f : sum / (float)avgN;
   float fps = avg > 0.0001f ? 1000.0f / avg : 0.0f;
 
   OkSceneHandler *sh    = OkCore::getSceneHandler();
@@ -243,6 +260,38 @@ void OkGuiStats::update(float dtMs) {
   // The worst frame decays, so an old hitch stops dominating the panel
   // forever while a recurring one keeps it pinned.
   _worst *= 0.96f;
+}
+
+const std::vector<float> &OkGuiStats::getHistory() { return _history; }
+
+void OkGuiStats::setHistoryLength(int samples) {
+  _historyMax = samples < 2 ? 2 : samples;
+}
+
+/**
+ * @brief Min, max, mean and median of the recorded frame times.
+ *
+ *        The median as well as the mean because they disagree in the
+ *        interesting case: a run with occasional long frames has a mean
+ *        dragged up by the hitches and a median that ignores them, and
+ *        the gap between the two is the hitching itself.
+ */
+void OkGuiStats::getSummary(int &count, float &minMs, float &maxMs,
+                            float &meanMs, float &medianMs) {
+  count = (int)_history.size();
+  if (count == 0) {
+    return;
+  }
+  std::vector<float> sorted = _history;
+  std::sort(sorted.begin(), sorted.end());
+  float sum = 0.0f;
+  for (size_t i = 0; i < sorted.size(); i++) {
+    sum += sorted[i];
+  }
+  minMs    = sorted.front();
+  maxMs    = sorted.back();
+  meanMs   = sum / (float)sorted.size();
+  medianMs = sorted[sorted.size() / 2];
 }
 
 void OkGuiStats::setVisible(bool visible) {

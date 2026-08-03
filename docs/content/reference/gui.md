@@ -161,6 +161,22 @@ frame, draw calls and triangles submitted, scene objects and how many
 were culled, loaded textures, and the day clock.
 
 The graph is the point: an average hides hitches, a history shows them.
+
+The panel is off by default and toggled with the `stats` console
+command or `OkGuiStats::setVisible`. Frame times are recorded either
+way, so opening it shows what just happened rather than starting
+blank — and so a tool can ask for the series at any moment.
+
+| Method | Purpose |
+| --- | --- |
+| `static const std::vector<float> &getHistory()` | The recorded frame times, oldest first, milliseconds. |
+| `static void getSummary(int &count, float &min, float &max, float &mean, float &median)` | Summary of that history; `count` is 0 when nothing is recorded yet. |
+| `static void setHistoryLength(int samples)` | How many samples to keep (600 by default, several seconds even at a high frame rate). The graph draws its own shorter window. |
+
+The history is deliberately longer than the strip the panel draws: the
+graph is for spotting a hitch at a glance, the history is for answering
+"is this build slower than that one", which one frame cannot do. The
+MCP server exposes it as `get_performance`.
 The panel keeps the last few seconds as a strip, one column per frame,
 coloured green inside a 60Hz budget, amber past it and red beyond two
 refreshes, with a reference line at 16.7 ms. Its vertical range adapts

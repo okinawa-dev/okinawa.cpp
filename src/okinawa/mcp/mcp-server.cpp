@@ -11,6 +11,7 @@
 #include "../avatar/avatar.hpp"
 #include "../core/core.hpp"  // OkCore + OpenGL / GLFW headers
 #include "../core/object.hpp"
+#include "../gui/stats.hpp"
 #include "../handlers/scenes.hpp"
 #include "../input/input.hpp"
 #include "../item/item.hpp"
@@ -351,6 +352,12 @@ struct OkMcpServer::Impl {
     setVis["inputSchema"] = {{"type", "object"}, {"properties", {{"name", {{"type", "string"}, {"description", "Item name or, with prefix=true, a name prefix."}}}, {"visible", {{"type", "boolean"}}}, {"prefix", {{"type", "boolean"}, {"description", "Match all names starting with `name` (default false = exact)."}}}}}, {"required", json::array({"name", "visible"})}, {"additionalProperties", false}};
     tools.push_back(setVis);
 
+    json perf;
+    perf["name"]        = "get_performance";
+    perf["description"] = "Return the recorded frame-time SERIES, not a single reading: count, min/max/mean/median in milliseconds, the equivalent fps, and optionally the raw samples (oldest first). A one-off fps value cannot tell a real change from a lucky frame, so use this to compare builds or viewpoints. Samples are collected whether or not the stats panel is visible.";
+    perf["inputSchema"] = {{"type", "object"}, {"properties", {{"samples", {{"type", "boolean"}, {"description", "Include the raw per-frame milliseconds (default false)."}}}}}, {"additionalProperties", false}};
+    tools.push_back(perf);
+
     json getState;
     getState["name"]        = "get_state";
     getState["description"] = "Return numeric runtime state: active camera pose, fps, scene object count, window size and resident memory.";
@@ -505,6 +512,44 @@ struct OkMcpServer::Impl {
         return json{{"changed", 1}};
       });
       return textResult(r.dump(2));
+    }
+
+    if (name == "get_performance") {
+      bool wantSamples = args.contains("samples") &&
+                         args["samples"].is_boolean() &&
+                         args["samples"].get<bool>();
+      json out = runOnLoop([wantSamples]() -> json {
+        json r;
+        int   count = 0;
+        float lo = 0.0f, hi = 0.0f, mean = 0.0f, median = 0.0f;
+        OkGuiStats::getSummary(count, lo, hi, mean, median);
+        r["count"] = count;
+        if (count == 0) {
+          r["note"] = "no frames recorded yet";
+          return r;
+        }
+        r["frame_ms"] = {{"min", lo},
+                         {"max", hi},
+                         {"mean", mean},
+                         {"median", median}};
+        r["fps"]      = {{"min", hi > 0.0f ? 1000.0f / hi : 0.0f},
+                         {"max", lo > 0.0f ? 1000.0f / lo : 0.0f},
+                         {"mean", mean > 0.0f ? 1000.0f / mean : 0.0f},
+                         {"median", median > 0.0f ? 1000.0f / median : 0.0f}};
+        // The mean sits below the median when long frames are dragging
+        // it down, which is what a hitch looks like in a summary.
+        r["hitching"] = mean > median * 1.15f;
+        if (wantSamples) {
+          const std::vector<float> &h = OkGuiStats::getHistory();
+          json                      arr = json::array();
+          for (size_t i = 0; i < h.size(); i++) {
+            arr.push_back(h[i]);
+          }
+          r["samples_ms"] = arr;
+        }
+        return r;
+      });
+      return textResult(out.dump(2));
     }
 
     if (name == "get_state") {

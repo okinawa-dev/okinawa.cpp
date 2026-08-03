@@ -42,6 +42,18 @@ public:
   static void setVisible(bool visible);
   static bool isVisible();
 
+  // The frame-time history, oldest first, in milliseconds. Kept whether
+  // or not the panel is shown, and long enough to cover several seconds
+  // -- a single instantaneous reading says nothing about how a build
+  // performs, and comparing two of them says less.
+  static const std::vector<float> &getHistory();
+  // Summary of that history. `count` is 0 when nothing has been
+  // recorded yet, in which case the other outputs are left alone.
+  static void getSummary(int &count, float &minMs, float &maxMs,
+                         float &meanMs, float &medianMs);
+  // How many samples to keep. The graph draws its own shorter window.
+  static void setHistoryLength(int samples);
+
   static void shutdown();
 
 private:
@@ -53,6 +65,7 @@ private:
   static OkTexture  *_graphTex;
 
   static std::vector<float> _history;   // frame times, milliseconds
+  static int                _historyMax;  // samples kept
   static float              _accum;     // time since the last refresh
   static float              _worst;     // worst frame in the window
   static bool               _visible;
