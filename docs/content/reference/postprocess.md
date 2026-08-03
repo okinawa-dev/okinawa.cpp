@@ -51,16 +51,33 @@ All in one composite shader, each gated by its config toggle:
 | `render.post` | `true` | Master switch: offscreen chain vs direct rendering. |
 | `post.dof` | `true` | Depth of field on/off. |
 | `post.dof.focus` | `30` | Focus distance, metres. |
-| `post.dof.range` | `50` | Fully sharp half-band around the focus, metres. |
+| `post.dof.range` | `200` | Fully sharp half-band around the focus, metres. |
 | `post.dof.maxblur` | `2` | Maximum blur radius, pixels. |
-| `post.dof.falloff` | `100` | Metres past the sharp band to reach the maximum blur. |
+| `post.dof.falloff` | `600` | Metres past the sharp band to reach the maximum blur. |
 | `post.grain` | `true` | Film grain on/off. |
 | `post.grain.strength` | `0.035` | Grain amplitude. |
 | `post.motionblur` | `true` | Directional blur (needs a motion vector). |
 | `post.bloom` | `true` | Bloom on/off. |
-| `post.bloom.threshold` | `0.40` | Luminance where glowing starts. |
+| `post.bloom.threshold` | `0.85` | Luminance where glowing starts. |
 | `post.bloom.knee` | `0.30` | Soft shoulder around the threshold. |
 | `post.bloom.strength` | `1.00` | How much glow is added back. |
+
+### Choosing the numbers
+
+Two defaults are set wide on purpose, and both for the same reason: a
+viewpoint that can climb.
+
+The sharp band and falloff are generous because the focus distance is
+fixed. A tight band suits a camera a few metres from its subject, but
+once the viewpoint rises, everything on screen is hundreds of metres
+away and a tight band blurs the whole frame.
+
+The bloom threshold is high enough that only actual light sources
+glow — lit windows, lamps, a sun disc. A daytime sky is bright over
+most of its area, so a low threshold sends the entire sky through the
+blur and washes the top half of the screen to white. At night nothing
+but the lights passes either threshold, so raising it costs nothing
+there.
 
 Everything is console-reachable (`set post.dof.focus 25`, `set
 render.post false`).

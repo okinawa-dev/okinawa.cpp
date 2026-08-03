@@ -27,14 +27,22 @@ void OkPostProcess::initialize() {
   OkConfig::setBool("render.post", true);
   OkConfig::setBool("post.dof", true);
   OkConfig::setFloat("post.dof.focus", 30.0f);    // metres, sharp centre
-  OkConfig::setFloat("post.dof.range", 50.0f);    // +/- fully sharp band
+  // The sharp band and the falloff are generous on purpose. A tight
+  // band suits a fixed camera a few metres from the subject, but the
+  // moment the viewpoint climbs, everything on screen is hundreds of
+  // metres away and a tight band blurs the entire frame.
+  OkConfig::setFloat("post.dof.range", 200.0f);   // +/- fully sharp band
   OkConfig::setFloat("post.dof.maxblur", 2.0f);   // max blur radius (px)
-  OkConfig::setFloat("post.dof.falloff", 100.0f); // metres to reach max
+  OkConfig::setFloat("post.dof.falloff", 600.0f); // metres to reach max
   OkConfig::setBool("post.grain", true);
   OkConfig::setFloat("post.grain.strength", 0.015f);
   OkConfig::setBool("post.motionblur", true);     // needs a motion vector
   OkConfig::setBool("post.bloom", true);
-  OkConfig::setFloat("post.bloom.threshold", 0.40f);
+  // High enough that only actual light sources glow -- lit windows,
+  // lamps, the sun's disc. A daytime sky is bright over most of its
+  // area, so a low threshold sends the whole sky through the blur and
+  // washes the top half of the screen to white.
+  OkConfig::setFloat("post.bloom.threshold", 0.85f);
   OkConfig::setFloat("post.bloom.knee", 0.30f);
   OkConfig::setFloat("post.bloom.strength", 1.00f);
   // NOLINTEND(readability-magic-numbers)
