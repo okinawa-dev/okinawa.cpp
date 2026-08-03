@@ -59,6 +59,9 @@ private:
   static void ensureTarget(int width, int height);
   static void ensureProgram();
   static void renderBloom();
+  // Read back the depth at the centre of the frame, one frame late, and
+  // ease the focus toward it.
+  static void updateAutoFocus(float nearPlane, float farPlane);
 
   static GLuint _fbo;
   static GLuint _colorTex;
@@ -74,6 +77,9 @@ private:
   static float  _time;
   static float  _motion[3];  // dx, dy, strength
   static bool   _active;
+  static GLuint _focusPbo;    // async depth readback, avoids a GPU stall
+  static bool   _focusPending;
+  static float  _focusMetres;  // the eased focus distance
 };
 
 #endif

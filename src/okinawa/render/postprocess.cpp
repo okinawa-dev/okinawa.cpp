@@ -19,6 +19,9 @@ int    OkPostProcess::_bloomH = 0;
 GLuint OkPostProcess::_quadVao   = 0;
 float  OkPostProcess::_time      = 0.0f;
 float  OkPostProcess::_motion[3] = {0.0f, 0.0f, 0.0f};
+GLuint OkPostProcess::_focusPbo     = 0;
+bool   OkPostProcess::_focusPending = false;
+float  OkPostProcess::_focusMetres  = 30.0f;
 bool   OkPostProcess::_active    = false;
 
 void OkPostProcess::initialize() {
@@ -27,6 +30,13 @@ void OkPostProcess::initialize() {
   OkConfig::setBool("render.post", true);
   OkConfig::setBool("post.dof", true);
   OkConfig::setFloat("post.dof.focus", 30.0f);    // metres, sharp centre
+  // Autofocus: the focus distance follows whatever is under the middle
+  // of the screen, so a camera that can climb is not permanently out of
+  // focus. "max" caps it, since past a point the whole distance is one
+  // plane anyway; "ease" is how fast the lens catches up per frame.
+  OkConfig::setBool("post.dof.autofocus", true);
+  OkConfig::setFloat("post.dof.autofocus.max", 900.0f);
+  OkConfig::setFloat("post.dof.autofocus.ease", 0.06f);
   // The sharp band and the falloff are generous on purpose. A tight
   // band suits a fixed camera a few metres from the subject, but the
   // moment the viewpoint climbs, everything on screen is hundreds of
@@ -198,6 +208,65 @@ void OkPostProcess::renderBloom() {
   glBindVertexArray(0);
 }
 
+/**
+ * @brief Point the focus at whatever is under the middle of the screen.
+ *
+ *        A fixed focus distance only works for a viewpoint that stays a
+ *        fixed distance from its subject. The moment the camera can
+ *        climb, everything is far away and the whole frame falls out of
+ *        focus, so the distance has to follow what is being looked at.
+ *
+ *        The depth of one pixel is read back through a pixel buffer
+ *        object and collected on the NEXT frame, so the CPU never waits
+ *        for the GPU. One frame of lag is invisible; a stall is not.
+ *        The result is eased rather than applied outright: a hard cut
+ *        as the camera sweeps past a near wall reads as a glitch, while
+ *        a lens takes a moment to find its subject.
+ */
+void OkPostProcess::updateAutoFocus(float nearPlane, float farPlane) {
+  if (_focusPbo == 0) {
+    glGenBuffers(1, &_focusPbo);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, _focusPbo);
+    glBufferData(GL_PIXEL_PACK_BUFFER, sizeof(float), 0, GL_STREAM_READ);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+  }
+
+  glBindBuffer(GL_PIXEL_PACK_BUFFER, _focusPbo);
+  if (_focusPending) {
+    void *mapped = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+    if (mapped != 0) {
+      float raw = *(float *)mapped;
+      glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+      // Depth 1.0 is the far plane: empty sky, nothing to focus on, so
+      // the lens keeps whatever it had.
+      if (raw < 0.9999f) {
+        float z      = raw * 2.0f - 1.0f;
+        float linear = 2.0f * nearPlane * farPlane /
+                       (farPlane + nearPlane - z * (farPlane - nearPlane));
+        float target = OkConfig::getFloat("post.dof.autofocus.max");
+        if (linear < target) {
+          target = linear;
+        }
+        float ease = OkConfig::getFloat("post.dof.autofocus.ease");
+        if (ease < 0.0f) {
+          ease = 0.0f;
+        }
+        if (ease > 1.0f) {
+          ease = 1.0f;
+        }
+        _focusMetres += (target - _focusMetres) * ease;
+      }
+    }
+  }
+
+  // Queue the next read from the frame just rendered.
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo);
+  glReadPixels(_width / 2, _height / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+  glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+  _focusPending = true;
+}
+
 void OkPostProcess::end(float nearPlane, float farPlane, float dt) {
   if (!_active) {
     return;
@@ -235,8 +304,14 @@ void OkPostProcess::end(float nearPlane, float farPlane, float dt) {
   glUniform1f(glGetUniformLocation(_program, "timeSec"), _time);
 
   bool dof = OkConfig::getBool("post.dof");
+  bool autoFocus = OkConfig::getBool("post.dof.autofocus");
+  if (dof && autoFocus) {
+    updateAutoFocus(nearPlane, farPlane);
+  } else {
+    _focusMetres = OkConfig::getFloat("post.dof.focus");
+  }
   glUniform4f(glGetUniformLocation(_program, "dofParams"),
-              OkConfig::getFloat("post.dof.focus"),
+              autoFocus ? _focusMetres : OkConfig::getFloat("post.dof.focus"),
               OkConfig::getFloat("post.dof.range"),
               OkConfig::getFloat("post.dof.maxblur"),
               OkConfig::getFloat("post.dof.falloff"));

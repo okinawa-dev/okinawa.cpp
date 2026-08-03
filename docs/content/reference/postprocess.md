@@ -23,7 +23,7 @@ intensities, e.g. a HUD that motion-blurs less than the world.)
 All in one composite shader, each gated by its config toggle:
 
 - **Depth of field** (`post.dof`) — diorama-style: fragments inside the
-  focus band (`post.dof.focus` ± `post.dof.range`, metres) stay sharp;
+  focus band (the focus distance ± `post.dof.range`, metres) stay sharp;
   blur grows with distance from the band up to `post.dof.maxblur`
   pixels (8-tap ring blur over the linearized depth buffer).
 - **Film grain** (`post.grain`) — animated per-pixel hash noise,
@@ -61,6 +61,28 @@ All in one composite shader, each gated by its config toggle:
 | `post.bloom.threshold` | `0.85` | Luminance where glowing starts. |
 | `post.bloom.knee` | `0.30` | Soft shoulder around the threshold. |
 | `post.bloom.strength` | `1.00` | How much glow is added back. |
+
+### Autofocus
+
+With `post.dof.autofocus` on (the default), the focus distance follows
+whatever is under the middle of the screen instead of sitting at
+`post.dof.focus`. A fixed distance only suits a camera that stays a
+fixed distance from its subject; as soon as the viewpoint can climb,
+everything is far away and the whole frame falls out of focus.
+
+The depth of a single pixel is read back through a pixel buffer object
+and collected on the *next* frame, so the CPU never waits on the GPU —
+one frame of lag is invisible, a stall is not. The result is eased
+rather than applied outright, because a hard cut as the camera sweeps
+past a near wall reads as a glitch while a real lens takes a moment to
+find its subject. Sky (nothing at that pixel) leaves the focus where it
+was.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `post.dof.autofocus` | `true` | Follow the centre of the screen; off uses `post.dof.focus`. |
+| `post.dof.autofocus.max` | `900` | Cap on the focus distance, metres. |
+| `post.dof.autofocus.ease` | `0.06` | Fraction of the remaining distance closed per frame. |
 
 ### Choosing the numbers
 
