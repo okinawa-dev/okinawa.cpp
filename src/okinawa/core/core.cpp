@@ -103,6 +103,9 @@ bool OkCore::initialize() {
   OkLightClusters::initialize();
   OkShadowMap::initialize();
   OkGuiStats::initialize();
+  // Beyond this range distance fog has swallowed the world, so drawing
+  // is waste; 0 disables the cut. Projects tune it to their fog.
+  OkConfig::setFloat("render.drawdistance", 0.0f);
 
   // Typed characters feed the console while it is open.
   glfwSetCharCallback(_window, [](GLFWwindow * /*w*/, unsigned int cp) {
@@ -491,6 +494,9 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
             glm::make_mat4(_cameras[_currentCamera]->getProjectionPtr());
         frameFrustum.setFromMatrix(projM * viewM);
         OkFrustum::resetStats();
+        OkPoint eye = _cameras[_currentCamera]->getPosition();
+        OkFrustum::setViewer(eye.x(), eye.y(), eye.z(),
+                             OkConfig::getFloat("render.drawdistance"));
         OkFrustum::setActive(&frameFrustum);
       }
 

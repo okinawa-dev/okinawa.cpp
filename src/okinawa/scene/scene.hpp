@@ -4,6 +4,7 @@
 #include "../core/object.hpp"
 #include <cstddef>
 #include <string>
+#include <utility>
 #include <vector>
 
 class OkItem;
@@ -42,7 +43,17 @@ public:
   const std::string &getName() const { return name; }
   size_t             getObjectCount() const { return rootObjects.size(); }
 
+  // Force the draw order to be rebuilt on the next frame (after adding
+  // or removing objects in bulk).
+  void invalidateDrawOrder() { _drawOrder.clear(); }
+
 private:
+  // Opaque objects sorted near-to-far, refreshed periodically (see the
+  // note in draw()).
+  std::vector<std::pair<float, OkObject *> > _drawOrder;
+  unsigned int                               _sortTimer = 0;
+
+
   std::string             name;
   bool                    _isActive;
   bool                    _isPlayable;

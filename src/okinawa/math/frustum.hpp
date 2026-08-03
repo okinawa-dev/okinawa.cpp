@@ -34,6 +34,20 @@ public:
   static void             setActive(const OkFrustum *frustum);
   static const OkFrustum *getActive();
 
+  // Viewer position and draw distance for the frame. Anything whose
+  // bounding sphere lies entirely beyond `maxDistance` is skipped: past
+  // a certain range distance fog has swallowed the world anyway, and
+  // sending those draws is pure waste. A maxDistance of 0 disables the
+  // test. Set by the core from the active camera each frame.
+  static void  setViewer(float x, float y, float z, float maxDistance);
+  static bool  isBeyondDrawDistance(float x, float y, float z,
+                                    float radius);
+  static float getViewerX();
+  static float getViewerY();
+  static float getViewerZ();
+  // Draws skipped for being too far, this frame.
+  static long getDistanceCulledCount();
+
   // Draws skipped by the sphere test since the last resetStats() call.
   static long getCulledCount();
   static void resetStats();
@@ -54,6 +68,9 @@ private:
   static long             _culled;
   static long             _drawCalls;
   static long             _triangles;
+  static long             _distanceCulled;
+  static float            _viewer[3];
+  static float            _maxDistance;
 };
 
 #endif

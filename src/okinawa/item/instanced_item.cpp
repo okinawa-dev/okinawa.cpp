@@ -126,7 +126,9 @@ void OkInstancedItem::drawSelf() {
       float cx = inst.x + sphereCenter[0] * inst.scale;
       float cy = inst.y + sphereCenter[1] * inst.scale;
       float cz = inst.z + sphereCenter[2] * inst.scale;
-      if (!frustum->containsSphere(cx, cy, cz, radius * inst.scale)) {
+      if (OkFrustum::isBeyondDrawDistance(cx, cy, cz,
+                                          radius * inst.scale) ||
+          !frustum->containsSphere(cx, cy, cz, radius * inst.scale)) {
         OkFrustum::addCulled();
         continue;
       }

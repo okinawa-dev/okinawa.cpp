@@ -368,6 +368,17 @@ void OkItem::drawSelf() {
   // scaled by the largest axis scale of the transform.
   const OkFrustum *frustum = OkFrustum::getActive();
   if (frustum != nullptr) {
+    // Draw distance first: it is a single comparison and rejects far
+    // more than the frustum test in an open world.
+    float sx0 = std::sqrt(tm[0][0] * tm[0][0] + tm[0][1] * tm[0][1] +
+                          tm[0][2] * tm[0][2]);
+    if (OkFrustum::isBeyondDrawDistance(wc.x, wc.y, wc.z,
+                                        radius * sx0)) {
+      OkFrustum::addCulled();
+      return;
+    }
+  }
+  if (frustum != nullptr) {
     float sx = std::sqrt(tm[0][0] * tm[0][0] + tm[0][1] * tm[0][1] +
                          tm[0][2] * tm[0][2]);
     float sy = std::sqrt(tm[1][0] * tm[1][0] + tm[1][1] * tm[1][1] +

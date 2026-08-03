@@ -5,6 +5,9 @@ const OkFrustum *OkFrustum::_active = nullptr;
 long             OkFrustum::_culled = 0;
 long             OkFrustum::_drawCalls = 0;
 long             OkFrustum::_triangles = 0;
+long             OkFrustum::_distanceCulled = 0;
+float            OkFrustum::_viewer[3] = {0.0f, 0.0f, 0.0f};
+float            OkFrustum::_maxDistance = 0.0f;
 
 OkFrustum::OkFrustum() {
   for (int i = 0; i < 6; i++) {
@@ -68,10 +71,41 @@ const OkFrustum *OkFrustum::getActive() { return _active; }
 long OkFrustum::getCulledCount() { return _culled; }
 
 void OkFrustum::resetStats() {
-  _culled    = 0;
-  _drawCalls = 0;
-  _triangles = 0;
+  _culled         = 0;
+  _drawCalls      = 0;
+  _triangles      = 0;
+  _distanceCulled = 0;
 }
+
+void OkFrustum::setViewer(float x, float y, float z, float maxDistance) {
+  _viewer[0]   = x;
+  _viewer[1]   = y;
+  _viewer[2]   = z;
+  _maxDistance = maxDistance;
+}
+
+float OkFrustum::getViewerX() { return _viewer[0]; }
+float OkFrustum::getViewerY() { return _viewer[1]; }
+float OkFrustum::getViewerZ() { return _viewer[2]; }
+
+/**
+ * @brief True when a bounding sphere lies entirely past the draw
+ *        distance. The radius counts, so a large object stays visible
+ *        while any part of it is within range.
+ */
+bool OkFrustum::isBeyondDrawDistance(float x, float y, float z,
+                                     float radius) {
+  if (_maxDistance <= 0.0f) {
+    return false;
+  }
+  float dx = x - _viewer[0];
+  float dy = y - _viewer[1];
+  float dz = z - _viewer[2];
+  float limit = _maxDistance + radius;
+  return (dx * dx + dy * dy + dz * dz) > (limit * limit);
+}
+
+long OkFrustum::getDistanceCulledCount() { return _distanceCulled; }
 
 long OkFrustum::getDrawCalls() { return _drawCalls; }
 

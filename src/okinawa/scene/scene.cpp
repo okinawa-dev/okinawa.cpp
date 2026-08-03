@@ -1,4 +1,6 @@
 #include "scene.hpp"
+#include "../math/frustum.hpp"
+#include <algorithm>
 #include "../item/item.hpp"
 #include "../utils/logger.hpp"
 #include "core/object.hpp"
@@ -108,10 +110,37 @@ void OkScene::draw() {
   // depth test and paint over them -- which is exactly what happened
   // when blended objects are created before opaque ones that end up
   // behind them.
-  for (size_t i = 0; i < rootObjects.size(); ++i) {
-    if (!rootObjects[i]->isBlended()) {
-      rootObjects[i]->draw();
+  // Opaque geometry goes NEAREST FIRST. The depth buffer then rejects
+  // hidden fragments early, so a wall behind another wall costs almost
+  // nothing to shade -- the cheapest defence against overdraw in a
+  // scene full of occluders. The order is refreshed periodically
+  // rather than every frame: it only has to be roughly right, and
+  // sorting thousands of objects every frame would cost more than it
+  // saves.
+  _sortTimer++;
+  if (_drawOrder.size() != rootObjects.size() || (_sortTimer % 12) == 0) {
+    _drawOrder.clear();
+    _drawOrder.reserve(rootObjects.size());
+    for (size_t i = 0; i < rootObjects.size(); ++i) {
+      OkObject *o = rootObjects[i];
+      if (o->isBlended()) {
+        continue;
+      }
+      OkPoint p  = o->getPosition();
+      float   dx = p.x() - OkFrustum::getViewerX();
+      float   dy = p.y() - OkFrustum::getViewerY();
+      float   dz = p.z() - OkFrustum::getViewerZ();
+      _drawOrder.push_back(
+          std::make_pair(dx * dx + dy * dy + dz * dz, o));
     }
+    std::sort(_drawOrder.begin(), _drawOrder.end(),
+              [](const std::pair<float, OkObject *> &a,
+                 const std::pair<float, OkObject *> &b) {
+                return a.first < b.first;
+              });
+  }
+  for (size_t i = 0; i < _drawOrder.size(); ++i) {
+    _drawOrder[i].second->draw();
   }
   for (size_t i = 0; i < rootObjects.size(); ++i) {
     if (rootObjects[i]->isBlended()) {
