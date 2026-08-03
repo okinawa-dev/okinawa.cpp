@@ -24,6 +24,12 @@ public:
 
   // Scene management
   void addObject(OkObject *object);
+
+  // Remove an object from the scene and DELETE it. The scene owns what
+  // it holds, so this is how a world that streams pieces in and out
+  // gives memory back. Safe to call with an object the scene does not
+  // hold (it is ignored). Invalidates the draw order.
+  void removeObject(OkObject *object);
   void step(float dt);
   void draw();
   void activate();

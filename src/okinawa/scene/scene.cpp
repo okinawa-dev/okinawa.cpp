@@ -34,6 +34,28 @@ OkScene::~OkScene() {
 }
 
 /**
+ * @brief Remove an object from the scene and delete it.
+ *
+ *        The scene owns its objects, so removing is also freeing:
+ *        anything that streams pieces of a world in and out needs this
+ *        to give the memory back. The draw order is invalidated because
+ *        it holds pointers into what just went away.
+ */
+void OkScene::removeObject(OkObject *object) {
+  if (object == nullptr) {
+    return;
+  }
+  for (size_t i = 0; i < rootObjects.size(); ++i) {
+    if (rootObjects[i] == object) {
+      rootObjects.erase(rootObjects.begin() + (long)i);
+      _drawOrder.clear();
+      delete object;
+      return;
+    }
+  }
+}
+
+/**
  * @brief Add an object to the scene.
  * @param object The object to add (can be OkItem, OkItemGroup, etc.).
  */
@@ -44,6 +66,7 @@ void OkScene::addObject(OkObject *object) {
   // Only add objects that don't have a parent
   if (object->getParent() == nullptr) {
     rootObjects.push_back(object);
+    _drawOrder.clear();
   } else {
     OkLogger::warning("Scene",
                       "Cannot add object with parent directly to scene");
