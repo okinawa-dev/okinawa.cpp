@@ -508,14 +508,26 @@ void OkItem::drawSelf() {
     if (maskLoc != -1) {
       glUniform1f(maskLoc, maskedMaterials ? 1.0f : 0.0f);
     }
-    GLint fadeLoc = glGetUniformLocation(current_program, "itemFade");
-    if (fadeLoc != -1) {
-      glUniform1f(fadeLoc, fade);
-    }
-    GLint fadeInvLoc = glGetUniformLocation(current_program,
-                                            "itemFadeInvert");
-    if (fadeInvLoc != -1) {
-      glUniform1f(fadeInvLoc, fadeInverted ? 1.0f : 0.0f);
+    // Uniform locations are fixed for the life of a program, so they are
+    // looked up once per program rather than once per draw: with a few
+    // thousand objects on screen, a name lookup per object per frame is
+    // a measurable slice of the frame on its own.
+    {
+      static GLuint cachedProgram = 0;
+      static GLint  cachedFade    = -1;
+      static GLint  cachedInvert  = -1;
+      if (cachedProgram != current_program) {
+        cachedProgram = current_program;
+        cachedFade    = glGetUniformLocation(current_program, "itemFade");
+        cachedInvert  = glGetUniformLocation(current_program,
+                                             "itemFadeInvert");
+      }
+      if (cachedFade != -1) {
+        glUniform1f(cachedFade, fade);
+      }
+      if (cachedInvert != -1) {
+        glUniform1f(cachedInvert, fadeInverted ? 1.0f : 0.0f);
+      }
     }
     if (maskedMaterials) {
       const char *names[3] = {"matTintA", "matTintB", "matTintC"};
