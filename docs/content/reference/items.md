@@ -33,11 +33,33 @@ Every drawable inherits these:
 | `void setVisible(bool)` | Show or hide the item. |
 | `void setDrawMode(GLenum mode)` | Set the GL primitive (`GL_TRIANGLES`, `GL_LINES`, ...). |
 | `void loadTextureFromFile(const std::string &path)` | Load and apply a texture from disk. |
-| `void setTexture(const std::string &name, OkTexture *tex)` | Apply an already-loaded texture. |
+| `void setTexture(const std::string &name, OkTexture *tex)` | Apply an already-loaded texture. The item takes its own reference (see below). |
 | `void setFillColor(float r, float g, float b, float a = 1)` | Untextured fill colour; the alpha is honoured by blended passes (the GUI). |
 | `void setTintColor(float r, float g, float b, float a)` | Multiplied over the texture in the fill pass (white = untouched); how GUI text is coloured. |
 | `void updateVertexData(float *data, long count)` | Replace the vertex data in place (stride-5 contract; normals recomputed against the item's indices). |
 | `float getRadius() const` | The mesh's maximum dimension. |
+
+### Texture ownership
+
+Both texture setters leave the item holding ONE reference in
+`OkTextureHandler`, released when the item is destroyed. `setTexture`
+therefore adds a reference even though the caller already has the
+pointer: a texture shared by many items (a sprite sheet, the font atlas)
+would otherwise be freed by the first item to die, leaving the rest with
+a dangling pointer.
+
+The consequence for callers: code that CREATES a texture and hands it to
+a single item should release its own creation reference straight after,
+so destroying the item frees the texture.
+
+```cpp
+OkTexture *tex = OkFont::bake("label", "TEXT", 8, fg, bg);
+billboard->setTexture("label", tex);
+OkTextureHandler::getInstance()->removeReference("label");  // item owns it now
+```
+
+Code that keeps the texture alive for its own use (a sheet, a cached
+atlas) simply keeps its reference and does nothing extra.
 
 ## OkInstancedItem
 

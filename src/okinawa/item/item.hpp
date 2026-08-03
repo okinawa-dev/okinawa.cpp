@@ -83,12 +83,19 @@ public:
 
   // Texture methods
   void loadTextureFromFile(const std::string &texturePath);
+  // Adopt a texture the caller already has a pointer to. The item takes
+  // its OWN reference: the destructor releases one, so an item that only
+  // borrowed the pointer would push the count below what the sharers
+  // actually hold and free a texture still in use.
   void setTexture(const std::string &name, OkTexture *tex) {
     if (texture && !textureName.empty()) {
       OkTextureHandler::getInstance()->removeReference(textureName);
     }
     texture     = tex;
     textureName = name;
+    if (texture && !textureName.empty()) {
+      OkTextureHandler::getInstance()->addReference(textureName);
+    }
   }
 
   // Flags
