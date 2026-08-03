@@ -31,6 +31,8 @@ Every drawable inherits these:
 | `OkItem(name, vertexData, vertexCount, indexData, indexCount, stride = 5)` | Construct from interleaved vertex data and indices. Stride 5 (`x,y,z,u,v`) computes vertex normals from the triangle list — de-indexed meshes get exact flat face normals, indexed meshes get smoothed ones; stride 8 (`x,y,z,u,v,nx,ny,nz`) takes caller normals verbatim. Internally vertices are always stored with stride 8. |
 | `void setWireframe(bool)` | Draw as wireframe. |
 | `void setVisible(bool)` | Show or hide the item. |
+| `void setFade(float)` | Cross-fade amount, 1 solid and 0 gone (see below). |
+| `void setFadeInverted(bool)` | Use the opposite half of the dither pattern. |
 | `void setDrawMode(GLenum mode)` | Set the GL primitive (`GL_TRIANGLES`, `GL_LINES`, ...). |
 | `void loadTextureFromFile(const std::string &path)` | Load and apply a texture from disk. |
 | `void setTexture(const std::string &name, OkTexture *tex)` | Apply an already-loaded texture. The item takes its own reference (see below). |
@@ -38,6 +40,30 @@ Every drawable inherits these:
 | `void setTintColor(float r, float g, float b, float a)` | Multiplied over the texture in the fill pass (white = untouched); how GUI text is coloured. |
 | `void updateVertexData(float *data, long count)` | Replace the vertex data in place (stride-5 contract; normals recomputed against the item's indices). |
 | `float getRadius() const` | The mesh's maximum dimension. |
+
+### Cross-fading between two versions
+
+`setFade` drops a share of an item's pixels on an ordered 4x4 pattern:
+1 draws it whole, 0 drops it entirely, and values between dissolve it.
+The point is swapping one version of an object for another — a detailed
+build for a cheap stand-in — without a frame where everything changes
+at once.
+
+A dither rather than transparency, because a dithered item stays in the
+opaque pass: no blending, no sorting, and the depth buffer keeps
+working. An alpha fade of anything with depth to it (a building, a
+whole block) shows the object fighting with itself.
+
+The two sides of a handover must drop **opposite** pixels, so call
+`setFadeInverted(true)` on exactly one of the pair. With the same
+pattern on both, each keeps the same half of the pixels and the other
+half shows the background straight through.
+
+```cpp
+detailed->setFade(t);                  // 0 -> 1 as it takes over
+standIn->setFade(1.0f - t);
+standIn->setFadeInverted(true);        // opposite half of the pattern
+```
 
 ### Texture ownership
 

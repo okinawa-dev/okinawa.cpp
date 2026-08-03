@@ -47,6 +47,8 @@ protected:
   // Multiplies the texture in the fill pass.
   float tintColor[4];
   bool  maskedMaterials;
+  float fade;                // 1 = solid; below that, dithered away
+  bool  fadeInverted;        // use the opposite half of the pattern
   float matTint[3][3];
   float matLuma[3];
 
@@ -154,6 +156,17 @@ public:
     tintColor[2] = b;
     tintColor[3] = a;
   }
+  // Cross-fade for level-of-detail handovers: 1 draws the item whole,
+  // 0 drops it entirely, and values between drop that share of its
+  // pixels on an ordered pattern. Two versions of the same object can
+  // therefore trade places gradually while both stay in the opaque
+  // pass -- no blending, no sorting, depth buffer intact.
+  void   setFade(float f) { fade = f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f); }
+  float  getFade() const { return fade; }
+  // The two sides of a handover must drop opposite pixels, or each
+  // keeps the same half and the rest shows through to the background.
+  // Set this on one of the pair, not on both.
+  void   setFadeInverted(bool on) { fadeInverted = on; }
   void   setDrawMode(GLenum mode) { drawMode = mode; }
   GLenum getDrawMode() const { return drawMode; }
   void   setVisible(bool visible) { this->visible = visible; }

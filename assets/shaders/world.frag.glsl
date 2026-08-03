@@ -65,6 +65,15 @@ uniform vec4      tintColor;   // multiplies the texture (white = untouched)
 // be recoloured per object -- different joinery colours, different
 // glass or emissive temperatures -- without duplicating the image.
 uniform float     maskedMaterials;  // 0 = alpha is plain opacity
+// Cross-fade between levels of detail. 1 draws the item whole; below
+// that, a share of its pixels is dropped on an ordered pattern, so two
+// versions of the same thing can hand over gradually without either
+// needing blending or sorting.
+uniform float     itemFade;
+// The two sides of a handover must drop OPPOSITE pixels: with the same
+// pattern on both, each keeps the same half and the other half of the
+// screen shows whatever is behind them.
+uniform float     itemFadeInvert;
 uniform vec4      matTintA;         // mask ~1.00
 uniform vec4      matTintB;         // mask ~0.50
 uniform vec4      matTintC;         // mask ~0.25
@@ -91,6 +100,22 @@ void main() {
   // requested colour is anything the caller marked unlit -- debug
   // layers, wireframe overlays, light sources -- which reaches here as
   // lightingOn = 0.
+  // Ordered dither, evaluated before anything else is computed: a
+  // dropped pixel costs nothing further. A 4x4 Bayer matrix spreads the
+  // holes evenly, which reads as a fade rather than as noise.
+  if (itemFade < 0.999) {
+    ivec2 dp = ivec2(gl_FragCoord.xy) & 3;
+    int   bi = dp.y * 4 + dp.x;
+    float bayer[16] = float[16](0.0,     8.0/16.0, 2.0/16.0, 10.0/16.0,
+                                12.0/16.0, 4.0/16.0, 14.0/16.0, 6.0/16.0,
+                                3.0/16.0, 11.0/16.0, 1.0/16.0, 9.0/16.0,
+                                15.0/16.0, 7.0/16.0, 13.0/16.0, 5.0/16.0);
+    float pattern = itemFadeInvert > 0.5 ? 1.0 - bayer[bi] : bayer[bi];
+    if (itemFade <= pattern) {
+      discard;
+    }
+  }
+
   vec4 color;
   if (hasTexture) {
     vec4 texel = texture(texture0, TexCoord);

@@ -55,6 +55,8 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   additive        = false;
   unlit           = false;
   maskedMaterials = false;
+  fade            = 1.0f;
+  fadeInverted    = false;
   for (int i = 0; i < 3; i++) {
     matTint[i][0] = 1.0f;
     matTint[i][1] = 1.0f;
@@ -505,6 +507,15 @@ void OkItem::drawSelf() {
                                          "maskedMaterials");
     if (maskLoc != -1) {
       glUniform1f(maskLoc, maskedMaterials ? 1.0f : 0.0f);
+    }
+    GLint fadeLoc = glGetUniformLocation(current_program, "itemFade");
+    if (fadeLoc != -1) {
+      glUniform1f(fadeLoc, fade);
+    }
+    GLint fadeInvLoc = glGetUniformLocation(current_program,
+                                            "itemFadeInvert");
+    if (fadeInvLoc != -1) {
+      glUniform1f(fadeInvLoc, fadeInverted ? 1.0f : 0.0f);
     }
     if (maskedMaterials) {
       const char *names[3] = {"matTintA", "matTintB", "matTintC"};
