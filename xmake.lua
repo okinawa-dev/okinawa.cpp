@@ -19,7 +19,12 @@ set_symbols("debug")                -- always emit debug info (-g)
 add_rules("plugin.compile_commands.autoupdate", {outputdir = ".", lsp = "clangd"})
 
 -- Build modes. Debug is the default; `xmake f -m release` for release.
-add_rules("mode.debug", "mode.release")
+-- Three modes, not two. `debug` (-O0) is for stepping through code, and it
+-- is far too slow to judge how the project performs -- unoptimised
+-- vector maths alone halves the frame rate. `releasedbg` is the one to
+-- develop against: optimised like release but with symbols, so a
+-- profiler and a debugger still work.
+add_rules("mode.debug", "mode.releasedbg", "mode.release")
 set_defaultmode("debug")
 
 -- Compile-time toggle for the in-engine MCP server.
