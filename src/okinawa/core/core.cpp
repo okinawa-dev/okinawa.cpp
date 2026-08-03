@@ -13,6 +13,7 @@
 #include "../input/input.hpp"
 #include "../shaders/shaders.hpp"
 #include "../utils/assets.hpp"
+#include "../utils/async_loader.hpp"
 #include "../utils/logger.hpp"
 #include "core/camera.hpp"
 #include "gl_config.hpp"
@@ -103,6 +104,10 @@ bool OkCore::initialize() {
   OkLightClusters::initialize();
   OkShadowMap::initialize();
   OkGuiStats::initialize();
+  OkAsyncLoader::initialize();
+  // How long per frame the main thread may spend turning finished
+  // background work into engine objects.
+  OkConfig::setFloat("render.loadbudget", 3.0f);
   // Beyond this range distance fog has swallowed the world, so drawing
   // is waste; 0 disables the cut. Projects tune it to their fog.
   OkConfig::setFloat("render.drawdistance", 0.0f);
@@ -156,6 +161,7 @@ void OkCore::exit() {
   OkLightClusters::shutdown();
   OkShadowMap::shutdown();
   OkGuiStats::shutdown();
+  OkAsyncLoader::shutdown();
 
   // Delete scene and input handlers first
   delete _sceneHandler;
@@ -317,6 +323,9 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       // Advance the day cycle and refresh the atmosphere values.
       OkLighting::update(dt);
       OkGuiStats::update(dt);
+      // Finished background work becomes engine objects here, on the
+      // thread that owns the rendering context, within a budget.
+      OkAsyncLoader::drain(OkConfig::getFloat("render.loadbudget"));
 
       // Handle camera switching based on input state
       OkInputState state = _input->getState();
