@@ -13,7 +13,7 @@ final full-screen pass composites it to the window applying the enabled
 effects. With `render.post` off the chain vanishes: the engine renders
 directly to the window exactly as before, at zero cost.
 
-The GUI and camera-attached passes draw AFTER the composite, directly to
+The GUI and camera-attached passes draw *after* the composite, directly to
 the window — the interface stays sharp and grain-free. (The design
 leaves room for a later per-stage GUI chain with its own effect
 intensities, e.g. a HUD that motion-blurs less than the world.)
@@ -36,7 +36,7 @@ All in one composite shader, each gated by its config toggle:
   frame rather than on the objects, the cost is the same whether one
   surface glows or ten thousand do, which is what makes it the
   affordable way to sell emissive surfaces as sources of light. A
-  surface that should glow needs to be driven PAST white, so it clears
+  surface that should glow needs to be driven *past* white, so it clears
   the threshold.
 - **Directional motion blur** (`post.motionblur`) — screen-space smear
   along a game-supplied velocity vector:

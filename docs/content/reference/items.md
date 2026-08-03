@@ -41,14 +41,14 @@ Every drawable inherits these:
 
 ### Texture ownership
 
-Both texture setters leave the item holding ONE reference in
+Both texture setters leave the item holding **one** reference in
 `OkTextureHandler`, released when the item is destroyed. `setTexture`
 therefore adds a reference even though the caller already has the
 pointer: a texture shared by many items (a sprite sheet, the font atlas)
 would otherwise be freed by the first item to die, leaving the rest with
 a dangling pointer.
 
-The consequence for callers: code that CREATES a texture and hands it to
+The consequence for callers: code that *creates* a texture and hands it to
 a single item should release its own creation reference straight after,
 so destroying the item frees the texture.
 
@@ -63,7 +63,7 @@ atlas) simply keeps its reference and does nothing extra.
 
 ## OkInstancedItem
 
-One mesh drawn many times in a SINGLE draw call: the base `OkItem` holds
+One mesh drawn many times in a **single** draw call: the base `OkItem` holds
 the shared mesh (uploaded once), and this subclass adds a per-instance
 buffer of world transforms (position, uniform scale, Y rotation) wired
 with an attribute divisor. A thousand copies cost one draw call instead
@@ -74,7 +74,7 @@ Instances are addressable, not anonymous triangles — each one can be
 moved, hidden or removed at runtime, and the buffer is recomposed
 cheaply. The mesh is authored around its own origin
 and each instance places a copy of it. Instances are frustum-culled
-INDIVIDUALLY (the mesh bounding sphere at each instance position), so
+individually (the mesh bounding sphere at each instance position), so
 only what is on screen is uploaded and drawn.
 
 The logical side of an object — state, collision, its light — belongs to
@@ -92,7 +92,7 @@ triangles.
 
 ## OkSpriteSheet
 
-One texture holding many named regions. The image is uploaded ONCE
+One texture holding many named regions. The image is uploaded once
 (through the texture handler, so it is refcounted and shared like any
 other texture) and the regions are metadata: rectangles with a name. A
 region is never a texture of its own — that is the whole point of a
@@ -103,7 +103,7 @@ The description file is read in the **Aseprite / TexturePacker JSON**
 dialect, which is what pixel-art and packing tools emit. An artist can
 redraw or repack the sheet in their tool of choice, export, and the
 application picks it up with no code change. Only the parser speaks that
-vocabulary; the API calls the pieces REGIONS, and reserves the word
+vocabulary; the API calls the pieces *regions*, and reserves the word
 frame for actual animation (each region's duration and the sheet's tags
 are kept for that).
 
@@ -123,8 +123,8 @@ flipped for GL.
 
 ### Material masks
 
-A sheet may carry, in its ALPHA channel, a code saying what each pixel
-IS rather than how opaque it is. With `OkItem::setMaskedMaterials(true)`
+A sheet may carry, in its alpha channel, a code saying what each pixel
+*is* rather than how opaque it is. With `OkItem::setMaskedMaterials(true)`
 the shader gives each code its own tint (`setMaterialTint(slot, r, g,
 b)`), so a single sheet serves many colour variants: the same artwork
 recoloured per object, with pixels below the lowest code discarded.
@@ -182,18 +182,18 @@ at scene root (not attached under a transformed parent).
 
 ### Camera offset (depth bias)
 
-A billboard placed AT a solid object intersects it: the quad is flat,
+A billboard placed *at* a solid object intersects it: the quad is flat,
 the object is not, and the sprite gets sliced along a hard straight
 edge wherever the geometry pokes through. Typical cases are a glow
 sprite centred on the thing that emits it, or a marker pinned to a
 character's head.
 
-`setCameraOffset(metres)` draws the quad a short distance TOWARD THE
-CAMERA along the view ray, recomputed every frame, so it wins the depth
+`setCameraOffset(metres)` draws the quad a short distance toward the
+camera along the view ray, recomputed every frame, so it wins the depth
 test against the object it belongs to.
 
 Because the displacement follows the view ray, a point moved along it
-projects to the SAME pixel: the quad does not shift on screen at all,
+projects to the same pixel: the quad does not shift on screen at all,
 only its depth changes. Orbiting the object keeps the sprite exactly
 where it was from every angle.
 

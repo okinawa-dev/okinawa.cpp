@@ -79,7 +79,7 @@ draw path tries it first. Set it where the project's distance fog has
 already swallowed the world: past that point the draws change nothing on
 screen.
 
-Opaque geometry is also drawn NEAREST FIRST (see `OkScene`), so the
+Opaque geometry is also drawn **nearest first** (see `OkScene`), so the
 depth buffer rejects hidden fragments early — the cheapest defence
 against overdraw in a scene full of occluders. The order is refreshed
 periodically rather than every frame, since it only has to be roughly

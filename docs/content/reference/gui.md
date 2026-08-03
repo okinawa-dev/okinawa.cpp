@@ -65,7 +65,7 @@ within one — without changing this design.
 
 ## OkGuiImage
 
-The first grid-placed element: a textured quad that IS a plain `OkItem`
+The first grid-placed element: a textured quad that is simply an `OkItem`
 (same texture loading, rotation, visibility, wireframe debug). The only
 new surface is grid placement:
 
@@ -135,7 +135,7 @@ OkConsole::registerCommand("ground", "toggle the terrain",
 Engine built-ins: `help` (list every registered command), `clear`,
 `quit`, and `set` / `get` over the whole `OkConfig` key space — `set
 gui.debug.grid true` works out of the box for every config value,
-present or future. `get` also takes a PREFIX: `get gui` lists every
+present or future. `get` also takes a prefix: `get gui` lists every
 `gui.*` key name; `get gui.sc` narrows to a single key and prints its
 value directly.
 
@@ -160,7 +160,7 @@ It reports frames per second and average frame time, the worst recent
 frame, draw calls and triangles submitted, scene objects and how many
 were culled, loaded textures, and the day clock.
 
-The GRAPH is the point: an average hides hitches, a history shows them.
+The graph is the point: an average hides hitches, a history shows them.
 The panel keeps the last few seconds as a strip, one column per frame,
 coloured green inside a 60Hz budget, amber past it and red beyond two
 refreshes, with a reference line at 16.7 ms. Its vertical range adapts

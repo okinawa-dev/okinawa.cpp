@@ -50,7 +50,7 @@ knob that actually controls the hitch.
 
 ## Ordering
 
-Jobs finish in the order they COMPLETE, not the order they were
+Jobs finish in the order they *complete*, not the order they were
 submitted: two jobs of different sizes on different workers will
 overtake each other. When order matters, chain them — queue the next
 step from the previous one's finish half:

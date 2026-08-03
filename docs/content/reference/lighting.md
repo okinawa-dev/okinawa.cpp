@@ -7,7 +7,7 @@ nav_order: 14
 # Lighting
 
 `OkLighting` is the scene's global lighting and atmosphere handler. Its
-first layer is ATMOSPHERE: a day clock driving fog and a global scene
+first layer is **atmosphere**: a day clock driving fog and a global scene
 tint, so the world reads as morning, noon, sunset or night before any
 light source exists.
 
@@ -62,7 +62,7 @@ the last key blends back into the first. What gets interpolated:
 - **Fog colour and density**: exponential distance fog
   (`exp(-density * viewDistance)`). Distance dissolves into a milky
   haze that thickens at night. Until a skybox exists, the frame clear
-  colour IS the fog colour, so the city fades into the sky seamlessly.
+  colour *is* the fog colour, so the scene fades into the sky seamlessly.
 - **Sun colour and direction**: elevation follows a sine over the 6h-21h
   daylight arc, azimuth sweeps east to west, parked below the horizon at
   night. Consumed every frame by the Gouraud sun (below).
@@ -76,7 +76,7 @@ the last key blends back into the first. What gets interpolated:
 
 `OkSkybox` draws a low-poly gradient dome first in the frame (camera-
 centred, depth writes off, so the whole scene paints over it): the
-HORIZON colour is the fog colour — the fogged city always fades into the
+horizon colour is the fog colour — the fogged scene always fades into the
 sky seamlessly — and the top is the curve's zenith colour, from petrol
 blue at night to clear blue at noon. The 1-D gradient texture refreshes
 itself when the cycle's colours drift. The dome reaches slightly below
@@ -91,7 +91,7 @@ shader evaluates a classic Gouraud directional light per vertex:
 `ambient + sunColor * max(dot(normal, -sunDirection), 0) * 0.6`, with the
 lit value interpolated across the triangle. Facades facing the sun warm
 up, opposite faces fall to the ambient floor, and the whole city reads as
-volume instead of flat panels. Only TEXTURED surfaces are sunlit: the
+volume instead of flat panels. Only *textured* surfaces are sunlit: the
 untextured fill/wireframe branch (debug layers, graph lines) keeps its
 exact requested colour. The skybox and the GUI pass run with
 `lightingOn = 0`, which makes the Gouraud stage a neutral 1.
@@ -102,16 +102,16 @@ exact requested colour. The skybox and the GUI pass run with
 directional light and the world pass compares against it: a fragment
 further from the light than what the light could see is in shadow.
 
-The map covers a box that FOLLOWS THE VIEWER — there is no point
+The map covers a box that follows the viewer — there is no point
 spending resolution on ground nobody can see — and its origin is snapped
 to whole texels, without which the sampling grid slides under the
 geometry as the camera moves and every shadow edge shimmers. Filling the
-map culls FRONT faces, which pushes the recorded depth to the back of
+map culls *front* faces, which pushes the recorded depth to the back of
 each caster and removes most of the self-shadowing acne a bias alone
 would have to hide. Sampling uses a small percentage-closer kernel, so
 edges are softened rather than stair-stepped.
 
-Only the DIRECTIONAL contribution is shadowed: the ambient floor and the
+Only the **directional** contribution is shadowed: the ambient floor and the
 point lights still reach a shadowed surface, which is what keeps shadows
 from becoming black holes. Strength follows the light's elevation and
 fades to nothing as it reaches the horizon, where a hard shadow would
@@ -121,7 +121,7 @@ look wrong anyway.
 
 `OkSkybox` also draws the light's visible body: a camera-facing disc
 with a solid core inside a soft corona, placed on the dome along the
-light's OWN direction, so what casts the shadows is what is seen in the
+light's own direction, so what casts the shadows is what is seen in the
 sky. It takes the cycle's sun colour, and fades out as it sinks below
 the horizon.
 
@@ -130,7 +130,7 @@ the horizon.
 `OkLighting` keeps a small registry of point lights (up to 256), in two
 flavours:
 
-- `registerLight(x, y, z, r, g, b, radius)` — an OMNI light radiating
+- `registerLight(x, y, z, r, g, b, radius)` — an **omni** light radiating
   equally in every direction (a bare bulb, a window glow).
 - `registerSpotLight(x, y, z, r, g, b, radius, dirX, dirY, dirZ,
   coneDeg, intensity)` — the same light with a direction, a cone
@@ -142,7 +142,7 @@ flavours:
 is lit by its nearest few lights (budget of 4, the era-friendly model,
 no shadows): the selection is cached per item and refreshed only when
 the registry generation changes, and the lighting itself is evaluated
-PER FRAGMENT with a quadratic falloff inside each light's radius — with
+per fragment with a quadratic falloff inside each light's radius — with
 large triangles, per-vertex point light would smear a single lit vertex
 across the whole face.
 
@@ -158,7 +158,7 @@ culled, fogged with distance, blurred by the depth of field.
 
 ## Clustered forward
 
-Point lights are selected PER PIXEL, not per object. `OkLightClusters`
+Point lights are selected **per pixel**, not per object. `OkLightClusters`
 divides the view frustum into a 3D grid (16 x 9 x 24: screen tiles by
 exponential depth slices) and, every frame on the CPU, assigns each light
 to the clusters its sphere of influence touches; the world fragment
