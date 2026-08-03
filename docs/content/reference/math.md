@@ -65,7 +65,25 @@ camera), and the skybox dome is camera-centred so it always intersects.
 | `void setFromMatrix(const glm::mat4 &projView)` | Extract and normalize the six planes. |
 | `bool containsSphere(float x, float y, float z, float r) const` | Sphere-vs-frustum test (true = at least partially inside). |
 | `static void setActive(const OkFrustum *)` / `static const OkFrustum *getActive()` | The frame's culling frustum (null = no culling). |
+| `static void setViewer(x, y, z, maxDistance)` | Viewer position and draw distance for the frame. |
+| `static bool isBeyondDrawDistance(x, y, z, r)` | Whether a bounding sphere lies entirely out of range. |
 | `static long getCulledCount()` / `static void resetStats()` | Draws skipped since the last reset. |
+| `static long getDrawCalls()` / `static long getTriangles()` | What the frame actually submitted. |
+
+### Draw distance
+
+`render.drawdistance` (world units, `0` disables) skips anything whose
+bounding sphere lies entirely beyond it. It is a single comparison and
+in an open world it rejects far more than the frustum test does, so the
+draw path tries it first. Set it where the project's distance fog has
+already swallowed the world: past that point the draws change nothing on
+screen.
+
+Opaque geometry is also drawn NEAREST FIRST (see `OkScene`), so the
+depth buffer rejects hidden fragments early — the cheapest defence
+against overdraw in a scene full of occluders. The order is refreshed
+periodically rather than every frame, since it only has to be roughly
+right.
 
 ## Example
 
