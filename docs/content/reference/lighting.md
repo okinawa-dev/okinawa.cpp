@@ -63,6 +63,33 @@ the last key blends back into the first. What gets interpolated:
   with altitude (see below). Distance dissolves into a milky haze that
   thickens at night. Until a skybox exists, the frame clear colour *is*
   the fog colour, so the scene fades into the sky seamlessly.
+### What the shadow pass costs
+
+Two things keep the pass from redrawing the world sixty times a second:
+
+- **It is culled against the light's own volume.** The camera frustum
+  is the wrong test (a caster behind the viewer still casts into view),
+  but the orthographic shadow box IS the visible area extruded along
+  the light, so anything outside it cannot land a shadow anywhere the
+  map covers. `shadows.cull` turns this off, which is useful for
+  telling a culling bug from a shadowing one.
+- **It is not rebuilt when the picture would be identical.** Static
+  geometry under a slow sun barely changes between frames. The map is
+  redrawn when the sun has turned enough to move an edge by a texel
+  (`shadows.refresh.turn`), when the box slides to a new texel, or when
+  the scene gains or loses objects — that last one matters with
+  streaming, or a newly arrived building would cast nothing until the
+  sun moved.
+
+Measured on a city scene, the two together took the pass from 15 ms a
+frame to nothing measurable.
+
+A project that can be viewed from height should drive `shadows.distance`
+from how high the viewer is: the reach a pedestrian needs is short, and
+spending the map on it keeps texels small, while from the air a short
+reach means watching shadows arrive. The engine cannot infer it, since
+"height" means height above the ground the project defines.
+
 ### Height fog
 
 Fog density is not uniform: it is the density at `lighting.fog.base`,
@@ -121,14 +148,16 @@ exact requested colour. The skybox and the GUI pass run with
 directional light and the world pass compares against it: a fragment
 further from the light than what the light could see is in shadow.
 
-The map covers a box that follows the viewer — there is no point
-spending resolution on ground nobody can see — and its origin is snapped
-to whole texels, without which the sampling grid slides under the
-geometry as the camera moves and every shadow edge shimmers. Filling the
-map culls *front* faces, which pushes the recorded depth to the back of
-each caster and removes most of the self-shadowing acne a bias alone
-would have to hide. Sampling uses a small percentage-closer kernel, so
-edges are softened rather than stair-stepped.
+The map covers a box fitted to the CAMERA's own volume, clipped to
+`shadows.distance` and sized from that volume's bounding sphere. A box
+centred on the viewer instead spends most of its resolution behind
+them, where nothing casts into view, and ends at a fixed radius — which
+makes shadows sweep in ahead of a moving camera. The bounding sphere
+rather than a tight fit is deliberate: a tight box changes size as the
+camera turns, and with it the world size of a texel, so every shadow
+edge crawls between texels frame to frame. A sphere's radius does not
+change under rotation, so only the centre moves, and that is snapped to
+the texel grid.
 
 Only the **directional** contribution is shadowed: the ambient floor and the
 point lights still reach a shadowed surface, which is what keeps shadows
@@ -226,6 +255,9 @@ never tinted, fogged or sunlit.
 | `lighting.cluster.far` | `350` | Far end; past it point lights stop contributing. |
 | `shadows` | `true` | Directional shadow pass on/off. |
 | `shadows.size` | `2048` | Depth map resolution. |
-| `shadows.extent` | `90` | Half-width of the shadowed area, world units. |
+| `shadows.extent` | `90` | Half-width used when fitting is off (`shadows.distance` 0). |
+| `shadows.distance` | `260` | How far shadows are worth drawing; the box is fitted to the view clipped to this. 0 falls back to `shadows.extent` around the viewer. |
+| `shadows.cull` | `true` | Cull the shadow pass against the light's volume. |
+| `shadows.refresh.turn` | `4e-7` | How far the sun must turn (as 1-cos) before the map is redrawn; 0 redraws every frame. |
 | `shadows.strength` | `0.62` | How dark a fully shadowed surface goes. |
 | `shadows.bias` | `0.00035` | Depth bias against self-shadowing. |
