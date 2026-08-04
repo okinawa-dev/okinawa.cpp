@@ -41,8 +41,11 @@ public:
   // found them. `centre` is the point the map is built around (the
   // camera target). Does nothing when shadows are off or the light is
   // below the horizon.
-  static void render(OkScene *scene, float centreX, float centreY,
-                     float centreZ);
+  // `viewProj` is the CAMERA's projection * view for this frame. The
+  // shadowed area is derived from it, so the map covers what is being
+  // looked at rather than a fixed square around the viewer.
+  static void render(OkScene *scene, const float *viewProj, float centreX,
+                     float centreY, float centreZ);
 
   // Bind the depth texture and set the world shader's uniforms.
   static void bind(GLuint program);
@@ -62,7 +65,7 @@ private:
   // State of the last draw, so an identical one can be skipped.
   static bool      _neverDrawn;
   static float     _lastDir[3];
-  static float     _lastCx, _lastCz;
+  static float     _lastCx, _lastCz, _lastExtent;
   static size_t    _lastObjects;
   static glm::mat4 _lightSpace;
   static float     _strength;

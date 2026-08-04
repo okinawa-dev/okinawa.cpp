@@ -17,6 +17,7 @@ int       OkShadowMap::_size     = 0;
 // What the map was last drawn for, so an identical redraw is skipped.
 bool      OkShadowMap::_neverDrawn  = true;
 float     OkShadowMap::_lastDir[3]  = {0.0f, 0.0f, 0.0f};
+float     OkShadowMap::_lastExtent  = 0.0f;
 float     OkShadowMap::_lastCx      = 0.0f;
 float     OkShadowMap::_lastCz      = 0.0f;
 size_t    OkShadowMap::_lastObjects = 0;
@@ -33,6 +34,14 @@ void OkShadowMap::initialize() {
   // shadow edge by one texel at 100 m, and no more. 0 redraws every
   // frame.
   OkConfig::setFloat("shadows.refresh.turn", 0.0000004f);
+  // How far shadows are worth drawing. The shadowed box is fitted to
+  // the camera's volume clipped to this, so it follows the view instead
+  // of sitting on the viewer. Past it there are no cast shadows.
+  OkConfig::setFloat("shadows.distance", 260.0f);
+  // Cull the shadow pass against the light's volume. On by default;
+  // off draws the whole scene into the map, which is what it did
+  // before and is useful to tell a culling bug from a shadowing one.
+  OkConfig::setBool("shadows.cull", true);
   OkConfig::setFloat("shadows.strength", 0.62f);
   OkConfig::setFloat("shadows.bias", 0.00035f);
   // NOLINTEND(readability-magic-numbers)
@@ -91,8 +100,8 @@ void OkShadowMap::ensureTarget(int size) {
  *        grid slides under the geometry as the camera moves and every
  *        shadow edge shimmers.
  */
-void OkShadowMap::render(OkScene *scene, float centreX, float centreY,
-                         float centreZ) {
+void OkShadowMap::render(OkScene *scene, const float *viewProj,
+                         float centreX, float centreY, float centreZ) {
   _strength = 0.0f;
   if (scene == nullptr || !OkConfig::getBool("shadows")) {
     return;
@@ -113,11 +122,71 @@ void OkShadowMap::render(OkScene *scene, float centreX, float centreY,
 
   ensureTarget(OkConfig::getInt("shadows.size"));
 
-  float extent = OkConfig::getFloat("shadows.extent");
+  // Fit the shadowed area to WHAT IS BEING LOOKED AT, not to a fixed
+  // square around the viewer.
+  //
+  // A box centred on the viewer spends most of its resolution behind
+  // them, where no shadow can be seen, and it ends at a fixed radius --
+  // which is why shadows used to sweep into view ahead of a moving
+  // camera. Taking the camera's own volume instead, clipped to the
+  // distance shadows are worth drawing at, puts the box where the eye
+  // is: ahead at street level, spread out below when flying.
+  //
+  // The box is sized from the BOUNDING SPHERE of that volume rather
+  // than from a tight fit. A tight box changes size as the camera
+  // turns, and with it the world size of a texel, so every shadow edge
+  // crawls between texels frame to frame. A sphere's radius does not
+  // change when the camera rotates, so the box stays put and only its
+  // centre moves -- and that is snapped to the texel grid below.
+  float extent  = OkConfig::getFloat("shadows.extent");
+  float focusX  = centreX;
+  float focusZ  = centreZ;
+  float shadowFar = OkConfig::getFloat("shadows.distance");
+  if (viewProj != nullptr && shadowFar > 1.0f) {
+    glm::mat4 inv = glm::inverse(glm::make_mat4(viewProj));
+    // The eight corners of the clip cube, brought back to world space.
+    glm::vec3 corner[8];
+    int       k = 0;
+    for (int xi = 0; xi < 2; xi++) {
+      for (int yi = 0; yi < 2; yi++) {
+        for (int zi = 0; zi < 2; zi++) {
+          glm::vec4 p = inv * glm::vec4(xi ? 1.0f : -1.0f, yi ? 1.0f : -1.0f,
+                                        zi ? 1.0f : -1.0f, 1.0f);
+          corner[k++] = glm::vec3(p) / p.w;
+        }
+      }
+    }
+    // Pull the far corners in to the shadow distance: the far plane is
+    // kilometres away and shadows are not worth drawing there.
+    glm::vec3 eye(centreX, centreY, centreZ);
+    for (int i = 0; i < 8; i++) {
+      glm::vec3 d = corner[i] - eye;
+      float     l = glm::length(d);
+      if (l > shadowFar) {
+        corner[i] = eye + d * (shadowFar / l);
+      }
+    }
+    glm::vec3 centre(0.0f);
+    for (int i = 0; i < 8; i++) {
+      centre += corner[i];
+    }
+    centre /= 8.0f;
+    float radius = 0.0f;
+    for (int i = 0; i < 8; i++) {
+      float d = glm::length(corner[i] - centre);
+      if (d > radius) {
+        radius = d;
+      }
+    }
+    focusX = centre.x;
+    focusZ = centre.z;
+    extent = radius;
+  }
+
   float texel  = (2.0f * extent) / (float)_size;
   // Snap the centre to the texel grid (see the note above).
-  float cx = std::floor(centreX / texel) * texel;
-  float cz = std::floor(centreZ / texel) * texel;
+  float cx = std::floor(focusX / texel) * texel;
+  float cz = std::floor(focusZ / texel) * texel;
 
   // Redraw the map only when the picture in it would actually differ.
   //
@@ -138,7 +207,7 @@ void OkShadowMap::render(OkScene *scene, float centreX, float centreY,
     if (turn > turnMax) {
       dirty = true;
     }
-    if (cx != _lastCx || cz != _lastCz) {
+    if (cx != _lastCx || cz != _lastCz || extent != _lastExtent) {
       dirty = true;
     }
     size_t objects = scene->getObjectCount();
@@ -154,6 +223,7 @@ void OkShadowMap::render(OkScene *scene, float centreX, float centreY,
     _lastDir[2]  = dir[2];
     _lastCx      = cx;
     _lastCz      = cz;
+    _lastExtent  = extent;
     _lastObjects = objects;
   }
 
@@ -199,7 +269,8 @@ void OkShadowMap::render(OkScene *scene, float centreX, float centreY,
   OkFrustum        lightFrustum;
   lightFrustum.setFromMatrix(_lightSpace);
   const OkFrustum *saved = OkFrustum::getActive();
-  OkFrustum::setActive(&lightFrustum);
+  OkFrustum::setActive(OkConfig::getBool("shadows.cull") ? &lightFrustum
+                                                         : nullptr);
   scene->draw();
   OkFrustum::setActive(saved);
   glDisable(GL_POLYGON_OFFSET_FILL);
@@ -241,8 +312,7 @@ void OkShadowMap::bind(GLuint program) {
   // the remaining acne without moving the shadow along the ground.
   loc = glGetUniformLocation(program, "shadowTexelWorld");
   if (loc != -1) {
-    float extent = OkConfig::getFloat("shadows.extent");
-    glUniform1f(loc, (2.0f * extent) / (float)_size);
+    glUniform1f(loc, (2.0f * _lastExtent) / (float)_size);
   }
 }
 

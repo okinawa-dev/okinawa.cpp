@@ -384,7 +384,15 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
         if (av != nullptr && av->getControlledObject() != nullptr) {
           focus = av->getControlledObject()->getPosition();
         }
-        OkShadowMap::render(currentScene, focus.x(), focus.y(), focus.z());
+        // The map is fitted to the camera's own volume, so it needs the
+        // matrix that defines it.
+        glm::mat4 camView =
+            glm::make_mat4(_cameras[_currentCamera]->getViewPtr());
+        glm::mat4 camProj =
+            glm::make_mat4(_cameras[_currentCamera]->getProjectionPtr());
+        glm::mat4 camViewProj = camProj * camView;
+        OkShadowMap::render(currentScene, glm::value_ptr(camViewProj),
+                            focus.x(), focus.y(), focus.z());
       }
 
       // Post-process: with render.post on, the whole world pass renders
