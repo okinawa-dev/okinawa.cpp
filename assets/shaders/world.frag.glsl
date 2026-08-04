@@ -217,30 +217,47 @@ void main() {
     // Pick the nearest band that reaches this fragment. Bands are
     // ordered near to far, so the first one that contains it is also
     // the finest one available for it.
-    int cascade = shadowCascades - 1;
+    int first = shadowCascades - 1;
     for (int c = 0; c < MAX_SHADOW_CASCADES; c++) {
       if (c >= shadowCascades) {
         break;
       }
       if (ViewDepth <= shadowSplit[c]) {
-        cascade = c;
+        first = c;
         break;
       }
     }
 
-    // Normal offset: sample from slightly OFF the surface, more so the
-    // more it faces away from the light. This cures acne by moving the
-    // sample rather than the shadow, so contact stays tight. It scales
-    // with the chosen cascade's texel, which is what sets how coarse
-    // the comparison is there.
+    // ...and fall through to the coarser ones if it does not actually
+    // land inside that map.
+    //
+    // Depth chooses the band, but coverage is a question of AREA: each
+    // cascade is a box fitted to its slice of the view, and a fragment
+    // at the right depth can still fall outside it -- off to the side,
+    // or nudged out by the texel snapping. Taking the first band and
+    // giving up leaves those fragments unshadowed, which shows up as
+    // lit wedges cut out of a shadow. The next band always covers more
+    // ground, so it can answer where the finer one cannot.
     vec3  sn    = normalize(WorldN);
     float slope = 1.0 - abs(dot(sn, normalize(sunDirection)));
-    vec3  sp    = WorldPos +
-                  sn * (shadowTexelWorld[cascade] * (0.6 + slope * 2.2));
-    vec4 lp = lightSpace[cascade] * vec4(sp, 1.0);
-    vec3 pc = lp.xyz / lp.w * 0.5 + 0.5;
-    if (pc.z <= 1.0 && pc.x > 0.0 && pc.x < 1.0 && pc.y > 0.0 &&
-        pc.y < 1.0) {
+    for (int c = 0; c < MAX_SHADOW_CASCADES; c++) {
+      int cascade = first + c;
+      if (cascade >= shadowCascades) {
+        break;
+      }
+      // Normal offset: sample from slightly OFF the surface, more so
+      // the more it faces away from the light. This cures acne by
+      // moving the sample rather than the shadow, so contact stays
+      // tight. It scales with this cascade's texel, which is what sets
+      // how coarse the comparison is here.
+      vec3 sp = WorldPos +
+                sn * (shadowTexelWorld[cascade] * (0.6 + slope * 2.2));
+      vec4 lp = lightSpace[cascade] * vec4(sp, 1.0);
+      vec3 pc = lp.xyz / lp.w * 0.5 + 0.5;
+      if (pc.z > 1.0 || pc.x <= 0.0 || pc.x >= 1.0 || pc.y <= 0.0 ||
+          pc.y >= 1.0) {
+        continue;   // not in this one; try the next, coarser band
+      }
       float lit = 0.0;
       for (int oy = -1; oy <= 1; oy++) {
         for (int ox = -1; ox <= 1; ox++) {
@@ -250,6 +267,7 @@ void main() {
         }
       }
       shade = mix(1.0, lit / 9.0, shadowStrength);
+      break;
     }
   }
   color.rgb *= (SunLight * shade + AmbientLight +
