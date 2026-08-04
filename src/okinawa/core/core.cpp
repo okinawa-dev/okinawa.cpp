@@ -223,6 +223,20 @@ bool OkCore::initializeOpenGL(int width, int height) {
 
   glfwMakeContextCurrent(_window);
 
+  // Vsync. With it on and double buffering, a frame that misses the
+  // refresh by a hair waits for the whole next one, so the cost jumps
+  // straight from one interval to two -- 60 fps to 30 with nothing in
+  // between. That is correct for playing (no tearing, steady pacing)
+  // and useless for measuring, because it hides what a change actually
+  // cost: everything reads as 16.7 or 33.3 ms.
+  //
+  // `render.vsync` 0 asks for it to be off, and the frame times then
+  // show the real work rather than the next multiple of the refresh
+  // interval. Note that a compositor may enforce vsync regardless --
+  // macOS does -- so on those platforms the request is a no-op and
+  // frame times stay quantised whatever this says.
+  glfwSwapInterval(OkConfig::getInt("render.vsync"));
+
   // Initialize the OpenGL function loader (no-op on Apple, glewInit elsewhere).
   if (!okInitGlLoader()) {
     OkLogger::error("Core", "Failed to initialize the OpenGL loader");

@@ -51,6 +51,11 @@ void OkConfig::setDefaults() {
   // the clock runs (30 = a full day in 48 real minutes; 0 freezes it).
   floatValues["lighting.time"]      = 12.0f;
   floatValues["lighting.timescale"] = 30.0f;
+  // Swap interval: 1 waits for the display refresh (steady, no tearing),
+  // 0 runs free. Turn it off to MEASURE: with vsync on, frame times can
+  // only land on multiples of the refresh, so a change that costs 2 ms
+  // shows up as either nothing at all or a drop to half the frame rate.
+  intValues["render.vsync"] = 1;
   boolValues["lighting.fog"]        = true;
   // Fog thins with altitude: the atmosphere curve's density applies at
   // "base", and every "height" metres above it the air is e times

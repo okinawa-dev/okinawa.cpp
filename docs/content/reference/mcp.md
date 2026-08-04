@@ -46,6 +46,13 @@ Two things worth knowing when reading the result:
   cost will drop it a whole step to 50 ms. Read `min` alongside the
   median to see where the real work sits.
 
+  This also explains a frame rate that seems to halve for no reason:
+  near the boundary, a couple of milliseconds either way moves the
+  whole frame between one refresh and two. `render.vsync 0` asks for
+  vsync off so the times show the real work instead — but a compositor
+  can enforce it anyway (macOS does), in which case the readings stay
+  quantised and only `samples_ms` tells the full story.
+
 ## Enabling it
 
 From application code, enable the server after `OkCore::initialize()`:
