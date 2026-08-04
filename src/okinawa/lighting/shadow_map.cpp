@@ -14,6 +14,12 @@ GLuint    OkShadowMap::_fbo      = 0;
 GLuint    OkShadowMap::_depthTex = 0;
 GLuint    OkShadowMap::_program  = 0;
 int       OkShadowMap::_size     = 0;
+// What the map was last drawn for, so an identical redraw is skipped.
+bool      OkShadowMap::_neverDrawn  = true;
+float     OkShadowMap::_lastDir[3]  = {0.0f, 0.0f, 0.0f};
+float     OkShadowMap::_lastCx      = 0.0f;
+float     OkShadowMap::_lastCz      = 0.0f;
+size_t    OkShadowMap::_lastObjects = 0;
 glm::mat4 OkShadowMap::_lightSpace = glm::mat4(1.0f);
 float     OkShadowMap::_strength   = 0.0f;
 
@@ -22,6 +28,11 @@ void OkShadowMap::initialize() {
   OkConfig::setBool("shadows", true);
   OkConfig::setInt("shadows.size", 2048);      // depth map resolution
   OkConfig::setFloat("shadows.extent", 90.0f); // metres covered, half-width
+  // How far the sun must turn before the depth map is redrawn, as
+  // 1 - cos(angle). The default is about 0.05 degrees: enough to move a
+  // shadow edge by one texel at 100 m, and no more. 0 redraws every
+  // frame.
+  OkConfig::setFloat("shadows.refresh.turn", 0.0000004f);
   OkConfig::setFloat("shadows.strength", 0.62f);
   OkConfig::setFloat("shadows.bias", 0.00035f);
   // NOLINTEND(readability-magic-numbers)
@@ -108,6 +119,44 @@ void OkShadowMap::render(OkScene *scene, float centreX, float centreY,
   float cx = std::floor(centreX / texel) * texel;
   float cz = std::floor(centreZ / texel) * texel;
 
+  // Redraw the map only when the picture in it would actually differ.
+  //
+  // A depth map of static geometry under a slow sun is very nearly the
+  // same from one frame to the next: with a day lasting 48 real
+  // minutes the sun turns about 0.002 degrees per frame, far below what
+  // moves a shadow edge by even one texel. Rebuilding it 60 times a
+  // second is redrawing the same picture.
+  //
+  // Three things do change it: the sun turning far enough, the box
+  // sliding to a new texel, and the scene itself gaining or losing
+  // objects (a streamed cell arriving with new casters).
+  {
+    bool  dirty  = _neverDrawn;
+    float turn   = 1.0f - (dir[0] * _lastDir[0] + dir[1] * _lastDir[1] +
+                         dir[2] * _lastDir[2]);
+    float turnMax = OkConfig::getFloat("shadows.refresh.turn");
+    if (turn > turnMax) {
+      dirty = true;
+    }
+    if (cx != _lastCx || cz != _lastCz) {
+      dirty = true;
+    }
+    size_t objects = scene->getObjectCount();
+    if (objects != _lastObjects) {
+      dirty = true;
+    }
+    if (!dirty) {
+      return;   // the map and its matrix from last time still stand
+    }
+    _neverDrawn  = false;
+    _lastDir[0]  = dir[0];
+    _lastDir[1]  = dir[1];
+    _lastDir[2]  = dir[2];
+    _lastCx      = cx;
+    _lastCz      = cz;
+    _lastObjects = objects;
+  }
+
   float     depth = extent * 4.0f;
   glm::vec3 lightDir(dir[0], dir[1], dir[2]);
   glm::vec3 target(cx, centreY, cz);
@@ -140,10 +189,17 @@ void OkShadowMap::render(OkScene *scene, float centreX, float centreY,
   glEnable(GL_POLYGON_OFFSET_FILL);
   glPolygonOffset(2.2f, 3.5f);
   glDisable(GL_CULL_FACE);
-  // The camera's frustum means nothing here: everything the light sees
-  // must be drawn, including casters behind the viewer.
+  // The camera's frustum is the wrong test here -- a caster behind the
+  // viewer still casts into view -- but "no test at all" was worse: the
+  // whole city was drawn to fill a box a couple of hundred metres
+  // across. The right test is the LIGHT's own volume, which this
+  // orthographic box already is: it is the visible area extruded along
+  // the sun's direction, so anything outside it cannot put a shadow
+  // anywhere the box covers.
+  OkFrustum        lightFrustum;
+  lightFrustum.setFromMatrix(_lightSpace);
   const OkFrustum *saved = OkFrustum::getActive();
-  OkFrustum::setActive(nullptr);
+  OkFrustum::setActive(&lightFrustum);
   scene->draw();
   OkFrustum::setActive(saved);
   glDisable(GL_POLYGON_OFFSET_FILL);

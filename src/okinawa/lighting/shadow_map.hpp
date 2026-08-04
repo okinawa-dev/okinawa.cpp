@@ -1,6 +1,8 @@
 #ifndef OK_SHADOW_MAP_HPP
 #define OK_SHADOW_MAP_HPP
 
+#include <cstddef>
+
 #include "../core/gl_config.hpp"
 #include <glm/ext/matrix_float4x4.hpp>
 
@@ -57,6 +59,11 @@ private:
   static GLuint    _depthTex;
   static GLuint    _program;   // depth-only pass
   static int       _size;
+  // State of the last draw, so an identical one can be skipped.
+  static bool      _neverDrawn;
+  static float     _lastDir[3];
+  static float     _lastCx, _lastCz;
+  static size_t    _lastObjects;
   static glm::mat4 _lightSpace;
   static float     _strength;
 };
