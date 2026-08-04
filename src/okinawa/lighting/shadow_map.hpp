@@ -17,10 +17,19 @@ class OkScene;
  *        fragment further away than what the light could see is in
  *        shadow.
  *
- *        The map covers a box that FOLLOWS THE VIEWER (there is no
- *        point spending resolution on ground the player cannot see),
- *        snapped to texel increments so the shadow edges do not crawl
- *        as the camera moves -- the classic artefact of a moving
+ *        Detail is split into CASCADES: the view distance is divided
+ *        into bands, and each band gets its own map at the same
+ *        resolution but covering a much smaller or larger area. One map
+ *        cannot serve both ends -- cover 200 m and shadows stop at
+ *        200 m; cover 2 km and a texel is a metre wide, so the shadow
+ *        of a kerb becomes a staircase. Splitting the range means the
+ *        near band gets centimetres per texel where it is looked at
+ *        closely, and the far band metres per texel where nobody can
+ *        tell.
+ *
+ *        Each cascade covers a box fitted to that band of the camera's
+ *        volume, snapped to texel increments so the shadow edges do not
+ *        crawl as the camera moves -- the classic artefact of a moving
  *        shadow frustum.
  *
  *        Sampling uses a small percentage-closer filter kernel, which
@@ -47,6 +56,10 @@ public:
   static void render(OkScene *scene, const float *viewProj, float centreX,
                      float centreY, float centreZ);
 
+  // Cascades are capped here; `shadows.cascades` picks how many are
+  // used. Three covers a walkable city comfortably.
+  static const int MAX_CASCADES = 4;
+
   // Bind the depth texture and set the world shader's uniforms.
   static void bind(GLuint program);
 
@@ -56,18 +69,25 @@ public:
   static float getStrength();
 
 private:
-  static void ensureTarget(int size);
+  static void ensureTarget(int size, int layers);
 
   static GLuint    _fbo;
-  static GLuint    _depthTex;
-  static GLuint    _program;   // depth-only pass
+  static GLuint    _depthTex;   // GL_TEXTURE_2D_ARRAY, one layer per cascade
+  static GLuint    _program;    // depth-only pass
   static int       _size;
-  // State of the last draw, so an identical one can be skipped.
+  static int       _layers;     // layers the array was built with
+  // State of the last draw, per cascade, so an identical one is skipped.
   static bool      _neverDrawn;
   static float     _lastDir[3];
-  static float     _lastCx, _lastCz, _lastExtent;
+  static float     _lastCx[MAX_CASCADES];
+  static float     _lastCz[MAX_CASCADES];
+  static float     _lastExtent[MAX_CASCADES];
   static size_t    _lastObjects;
-  static glm::mat4 _lightSpace;
+  static glm::mat4 _lightSpace[MAX_CASCADES];
+  // Where each cascade stops, as a view-space distance. The world pass
+  // picks a cascade by comparing the fragment's depth against these.
+  static float     _splitFar[MAX_CASCADES];
+  static int       _count;      // cascades actually in use
   static float     _strength;
 };
 

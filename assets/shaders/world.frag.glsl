@@ -32,12 +32,19 @@ uniform float      pointLightLevel;  // 0 day .. 1 night (dusk ramp)
 // space and its depth compared with what the light could see. A small
 // PCF kernel softens the comparison; shadowStrength is 0 when shadows
 // are off or the source is below the horizon.
-uniform sampler2D  shadowMap;
-uniform mat4       lightSpace;
+uniform sampler2DArray shadowMap;   // one layer per cascade
 uniform float      shadowStrength;
 uniform float      shadowTexel;
 uniform float      shadowBias;
-uniform float      shadowTexelWorld;  // world size of one shadow texel
+// Cascades: the shadow distance is split into bands, each with its own
+// map and its own matrix. A near band covers little ground and so
+// resolves finely; a far one covers kilometres coarsely. Which one a
+// fragment uses is decided by how far away it is.
+const int MAX_SHADOW_CASCADES = 4;
+uniform int        shadowCascades;
+uniform mat4       lightSpace[MAX_SHADOW_CASCADES];
+uniform float      shadowSplit[MAX_SHADOW_CASCADES];       // band ends
+uniform float      shadowTexelWorld[MAX_SHADOW_CASCADES];  // metres per texel
 uniform vec3       sunDirection;      // for the shadow normal offset
 
 // Clustered forward: the frustum is split into a 3D cluster grid;
@@ -207,10 +214,30 @@ void main() {
     // Normal offset: sample from slightly OFF the surface, more so the
     // more it faces away from the light. This cures acne by moving the
     // sample rather than the shadow, so contact stays tight.
+    // Pick the nearest band that reaches this fragment. Bands are
+    // ordered near to far, so the first one that contains it is also
+    // the finest one available for it.
+    int cascade = shadowCascades - 1;
+    for (int c = 0; c < MAX_SHADOW_CASCADES; c++) {
+      if (c >= shadowCascades) {
+        break;
+      }
+      if (ViewDepth <= shadowSplit[c]) {
+        cascade = c;
+        break;
+      }
+    }
+
+    // Normal offset: sample from slightly OFF the surface, more so the
+    // more it faces away from the light. This cures acne by moving the
+    // sample rather than the shadow, so contact stays tight. It scales
+    // with the chosen cascade's texel, which is what sets how coarse
+    // the comparison is there.
     vec3  sn    = normalize(WorldN);
     float slope = 1.0 - abs(dot(sn, normalize(sunDirection)));
-    vec3  sp    = WorldPos + sn * (shadowTexelWorld * (0.6 + slope * 2.2));
-    vec4 lp = lightSpace * vec4(sp, 1.0);
+    vec3  sp    = WorldPos +
+                  sn * (shadowTexelWorld[cascade] * (0.6 + slope * 2.2));
+    vec4 lp = lightSpace[cascade] * vec4(sp, 1.0);
     vec3 pc = lp.xyz / lp.w * 0.5 + 0.5;
     if (pc.z <= 1.0 && pc.x > 0.0 && pc.x < 1.0 && pc.y > 0.0 &&
         pc.y < 1.0) {
@@ -218,7 +245,7 @@ void main() {
       for (int oy = -1; oy <= 1; oy++) {
         for (int ox = -1; ox <= 1; ox++) {
           vec2  o = vec2(float(ox), float(oy)) * shadowTexel;
-          float d = texture(shadowMap, pc.xy + o).r;
+          float d = texture(shadowMap, vec3(pc.xy + o, float(cascade))).r;
           lit += (pc.z - shadowBias > d) ? 0.0 : 1.0;
         }
       }

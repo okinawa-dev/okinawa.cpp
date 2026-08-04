@@ -148,16 +148,36 @@ exact requested colour. The skybox and the GUI pass run with
 directional light and the world pass compares against it: a fragment
 further from the light than what the light could see is in shadow.
 
-The map covers a box fitted to the CAMERA's own volume, clipped to
-`shadows.distance` and sized from that volume's bounding sphere. A box
-centred on the viewer instead spends most of its resolution behind
-them, where nothing casts into view, and ends at a fixed radius — which
-makes shadows sweep in ahead of a moving camera. The bounding sphere
-rather than a tight fit is deliberate: a tight box changes size as the
-camera turns, and with it the world size of a texel, so every shadow
-edge crawls between texels frame to frame. A sphere's radius does not
-change under rotation, so only the centre moves, and that is snapped to
-the texel grid.
+### Cascades
+
+The shadow distance is split into bands, each with its own map at the
+same resolution. One map cannot serve both ends of a city: cover 200 m
+and shadows stop at 200 m; cover 2 km and a texel is a metre across, so
+a kerb's shadow becomes a staircase. Split the range and the near band
+gets centimetres per texel where it is looked at closely, the far band
+metres per texel where nobody can tell.
+
+`shadows.cascades` picks how many (3 by default, 4 maximum), and
+`shadows.cascades.blend` how the splits are spaced: 0 spreads them
+evenly, 1 spaces them logarithmically. Even spacing wastes the near
+cascade on ground that is already close; purely logarithmic makes the
+far one enormous. The default sits most of the way towards logarithmic.
+
+Each cascade covers a box fitted to ITS band of the camera's volume,
+sized from that band's bounding sphere. A box centred on the viewer
+instead spends most of its resolution behind them, where nothing casts
+into view, and ends at a fixed radius — which makes shadows sweep in
+ahead of a moving camera. The bounding sphere rather than a tight fit
+is deliberate: a tight box changes size as the camera turns, and with
+it the world size of a texel, so every shadow edge crawls between
+texels frame to frame. A sphere's radius does not change under
+rotation, so only the centre moves, and that is snapped to the texel
+grid.
+
+The maps live in one array texture, a layer per cascade, so the world
+pass needs a single sampler however many there are. Each fragment picks
+the nearest band that reaches it — the finest one available for that
+distance.
 
 Only the **directional** contribution is shadowed: the ambient floor and the
 point lights still reach a shadowed surface, which is what keeps shadows
@@ -256,7 +276,9 @@ never tinted, fogged or sunlit.
 | `shadows` | `true` | Directional shadow pass on/off. |
 | `shadows.size` | `2048` | Depth map resolution. |
 | `shadows.extent` | `90` | Half-width used when fitting is off (`shadows.distance` 0). |
-| `shadows.distance` | `260` | How far shadows are worth drawing; the box is fitted to the view clipped to this. 0 falls back to `shadows.extent` around the viewer. |
+| `shadows.distance` | `260` | How far shadows are worth drawing, split across the cascades. 0 falls back to a fixed `shadows.extent` box on the viewer. |
+| `shadows.cascades` | `3` | Bands the distance is split into (max 4). |
+| `shadows.cascades.blend` | `0.75` | Split spacing: 0 even, 1 logarithmic. |
 | `shadows.cull` | `true` | Cull the shadow pass against the light's volume. |
 | `shadows.refresh.turn` | `4e-7` | How far the sun must turn (as 1-cos) before the map is redrawn; 0 redraws every frame. |
 | `shadows.strength` | `0.62` | How dark a fully shadowed surface goes. |
