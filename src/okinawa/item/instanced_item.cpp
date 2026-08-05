@@ -184,6 +184,21 @@ void OkInstancedItem::drawSelf() {
     glUniform4f(tintLoc, tintColor[0], tintColor[1], tintColor[2],
                 tintColor[3]);
   }
+  // The cross-fade uniform has to be written even when this item is not
+  // fading. It is program state, not object state: leaving it alone
+  // means inheriting whatever the last object drawn happened to set,
+  // so a solid object drawn after a dissolving one comes out dithered.
+  {
+    GLint fadeLoc = glGetUniformLocation(currentProgram, "itemFade");
+    if (fadeLoc != -1) {
+      glUniform1f(fadeLoc, fade);
+    }
+    GLint fadeInvLoc = glGetUniformLocation(currentProgram,
+                                            "itemFadeInvert");
+    if (fadeInvLoc != -1) {
+      glUniform1f(fadeInvLoc, fadeInverted ? 1.0f : 0.0f);
+    }
+  }
   if (drawTexture) {
     glActiveTexture(GL_TEXTURE0);
     texture->bind();
