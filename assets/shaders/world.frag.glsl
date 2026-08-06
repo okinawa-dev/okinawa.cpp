@@ -41,6 +41,10 @@ uniform float      shadowBias;
 // resolves finely; a far one covers kilometres coarsely. Which one a
 // fragment uses is decided by how far away it is.
 const int MAX_SHADOW_CASCADES = 4;
+// How much of a cascade's depth range is spent fading into the next
+// one. Wide enough that the handover is never a visible line, narrow
+// enough that most fragments still sample a single map.
+const float SHADOW_BLEND = 0.25;
 uniform int        shadowCascades;
 uniform mat4       lightSpace[MAX_SHADOW_CASCADES];
 uniform float      shadowSplit[MAX_SHADOW_CASCADES];       // band ends
@@ -211,9 +215,6 @@ void main() {
   // keeps shadows from turning into black holes.
   float shade = 1.0;
   if (shadowStrength > 0.0 && lightingOn > 0.5) {
-    // Normal offset: sample from slightly OFF the surface, more so the
-    // more it faces away from the light. This cures acne by moving the
-    // sample rather than the shadow, so contact stays tight.
     // Pick the nearest band that reaches this fragment. Bands are
     // ordered near to far, so the first one that contains it is also
     // the finest one available for it.
@@ -228,18 +229,32 @@ void main() {
       }
     }
 
-    // ...and fall through to the coarser ones if it does not actually
-    // land inside that map.
+    // Blend across the split.
     //
-    // Depth chooses the band, but coverage is a question of AREA: each
-    // cascade is a box fitted to its slice of the view, and a fragment
-    // at the right depth can still fall outside it -- off to the side,
-    // or nudged out by the texel snapping. Taking the first band and
-    // giving up leaves those fragments unshadowed, which shows up as
-    // lit wedges cut out of a shadow. The next band always covers more
-    // ground, so it can answer where the finer one cannot.
+    // The band is chosen by distance to the CAMERA, and two bands do
+    // not agree: they have different texel sizes, so different
+    // penumbra, and their grids are snapped independently. A hard
+    // switch therefore redraws the shadow along the split line -- and
+    // with a third-person camera the player crosses that line without
+    // moving at all, just by scrolling the wheel: the ground ahead
+    // gains view depth, falls into the next band and the shadow in
+    // front of them visibly changes.
+    //
+    // So the last stretch of each band is faded into the next, and the
+    // change is spread over metres instead of happening on a line.
+    float split = shadowSplit[first];
+    float blend = 0.0;
+    if (first + 1 < shadowCascades && split > 0.0) {
+      float bandStart = (first == 0) ? 0.0 : shadowSplit[first - 1];
+      float width     = max((split - bandStart) * SHADOW_BLEND, 0.001);
+      blend           = clamp((ViewDepth - (split - width)) / width,
+                              0.0, 1.0);
+    }
+
     vec3  sn    = normalize(WorldN);
     float slope = 1.0 - abs(dot(sn, normalize(sunDirection)));
+    float shadeA = -1.0;
+    float shadeB = -1.0;
     for (int c = 0; c < MAX_SHADOW_CASCADES; c++) {
       int cascade = first + c;
       if (cascade >= shadowCascades) {
@@ -266,8 +281,22 @@ void main() {
           lit += (pc.z - shadowBias > d) ? 0.0 : 1.0;
         }
       }
-      shade = mix(1.0, lit / 9.0, shadowStrength);
-      break;
+      // The first band that answers is this fragment's own; the next
+      // one that answers is what it is fading into. Beyond that there
+      // is nothing left to blend with, so stop.
+      if (shadeA < 0.0) {
+        shadeA = lit / 9.0;
+        if (blend <= 0.0) {
+          break;
+        }
+      } else {
+        shadeB = lit / 9.0;
+        break;
+      }
+    }
+    if (shadeA >= 0.0) {
+      float s = (shadeB >= 0.0) ? mix(shadeA, shadeB, blend) : shadeA;
+      shade   = mix(1.0, s, shadowStrength);
     }
   }
   color.rgb *= (SunLight * shade + AmbientLight +
