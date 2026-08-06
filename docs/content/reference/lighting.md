@@ -163,21 +163,32 @@ evenly, 1 spaces them logarithmically. Even spacing wastes the near
 cascade on ground that is already close; purely logarithmic makes the
 far one enormous. The default sits most of the way towards logarithmic.
 
-Each cascade covers a box fitted to ITS band of the camera's volume,
-sized from that band's bounding sphere. A box centred on the viewer
-instead spends most of its resolution behind them, where nothing casts
-into view, and ends at a fixed radius — which makes shadows sweep in
-ahead of a moving camera. The bounding sphere rather than a tight fit
-is deliberate: a tight box changes size as the camera turns, and with
-it the world size of a texel, so every shadow edge crawls between
-texels frame to frame. A sphere's radius does not change under
-rotation, so only the centre moves, and that is snapped to the texel
-grid.
+Each cascade is a square **centred on the viewer**, sized by its own
+split — concentric, so the finest box sits inside the next. The centre
+is snapped to the texel grid, or the sampling pattern would slide under
+the geometry as the viewer walks and every shadow edge would shimmer.
+
+Fitting each box to the camera's own slice of the view instead is the
+more common arrangement, and it spends the resolution where the eye is
+actually looking. It is not used here, for a reason worth stating: it
+makes a **sun shadow depend on where the camera is**. What each box
+covers follows the cone of vision, so a wall moves from the fine box to
+a coarse one when the player merely turns or scrolls the wheel — and a
+coarser box means a bigger normal offset on the receiving side, big
+enough to lift the sample clear of the shadow the wall is standing in.
+The shadow then switches off. Seen from the street that is a building's
+shadow ending in mid-air and walking along the wall as the player
+moves, which no amount of tuning makes acceptable: the sun does not
+care where the camera is.
+
+Centring on the viewer costs the half of each box that falls behind
+them. It buys a shadow that changes only when the player moves.
 
 The maps live in one array texture, a layer per cascade, so the world
-pass needs a single sampler however many there are. Each fragment picks
-the nearest band that reaches it — the finest one available for that
-distance.
+pass needs a single sampler however many there are. Each fragment
+starts at the finest cascade and takes the first that actually covers
+it — which, with concentric boxes, is the sharpest one available. Note
+that this is a question of coverage, not of distance to the camera.
 
 Only the **directional** contribution is shadowed: the ambient floor and the
 point lights still reach a shadowed surface, which is what keeps shadows
@@ -279,6 +290,9 @@ never tinted, fogged or sunlit.
 | `shadows.distance` | `260` | How far shadows are worth drawing, split across the cascades. 0 falls back to a fixed `shadows.extent` box on the viewer. |
 | `shadows.cascades` | `3` | Bands the distance is split into (max 4). |
 | `shadows.cascades.blend` | `0.75` | Split spacing: 0 even, 1 logarithmic. |
+| `shadows.normaloffset` | `1.0` | Scale on the receiver's normal offset (the sample is taken slightly off the surface, to cure acne by moving the sample rather than the shadow). |
+| `shadows.normaloffset.max` | `0.06` | Its ceiling, in metres. Past a few centimetres the offset stops curing acne and starts lifting the sample out of the shadow the surface stands in. |
+| `shadows.debug` | `false` | Paint every fragment by the cascade that shadowed it — red, green, blue, yellow for 0..3, magenta where none could. A shadow artefact seen while moving cannot be read off a still: a cascade handover, a hole in a cascade's coverage and a bias washout all look like an edge going soft, and they have nothing to do with each other. Here they are three colours. |
 | `shadows.cull` | `true` | Cull the shadow pass against the light's volume. |
 | `shadows.refresh.turn` | `4e-7` | How far the sun must turn (as 1-cos) before the map is redrawn; 0 redraws every frame. |
 | `shadows.strength` | `0.62` | How dark a fully shadowed surface goes. |

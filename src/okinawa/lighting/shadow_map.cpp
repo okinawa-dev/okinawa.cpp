@@ -188,11 +188,6 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
   glm::vec3 lightDir(dir[0], dir[1], dir[2]);
   glm::vec3 up = std::fabs(lightDir.y) > 0.98f ? glm::vec3(0.0f, 0.0f, 1.0f)
                                                : glm::vec3(0.0f, 1.0f, 0.0f);
-  glm::mat4 invViewProj(1.0f);
-  if (shadowFar > 0.0f) {
-    invViewProj = glm::inverse(glm::make_mat4(viewProj));
-  }
-
   GLint previousFbo = 0;
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousFbo);
   bool bound = false;
@@ -203,61 +198,30 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
   float  turnMax = OkConfig::getFloat("shadows.refresh.turn");
 
   for (int c = 0; c < count; c++) {
-    // Fit this cascade to ITS band of the camera's volume.
+    // Each cascade is a square centred on the VIEWER, sized by its own
+    // band -- concentric, so the finest box sits inside the next.
     //
-    // The box is sized from the band's BOUNDING SPHERE rather than a
-    // tight fit: a tight box changes size as the camera turns, and with
-    // it the world size of a texel, so every shadow edge crawls between
-    // texels frame to frame. A sphere's radius is the same from any
-    // angle, so only its centre moves -- and that is snapped below.
+    // It used to be fitted to the camera's slice of the view instead,
+    // which spends the resolution where the eye is looking and is the
+    // usual arrangement. It was also wrong here, and visibly so: what
+    // each box covered depended on where the camera pointed, so a wall
+    // moved from the fine box to a coarse one as the player merely
+    // turned or zoomed. Coarser box means a bigger offset on the
+    // receiver's side (see the normal offset in the world shader) --
+    // big enough, on a coarse cascade, to lift the sample clear of the
+    // shadow the wall was standing in, so the shadow switched off. The
+    // shadow of a building would end in mid-air and walk down the
+    // street as the player did.
+    //
+    // A sun shadow may not depend on where the camera is. Centring on
+    // the viewer costs the half of each box that falls behind them, and
+    // buys a shadow that only ever changes when the player moves.
     float extent = OkConfig::getFloat("shadows.extent");
     float focusX = centreX;
     float focusZ = centreZ;
     if (shadowFar > 0.0f) {
-      float bandNear = (c == 0) ? NEAR_START : _splitFar[c - 1];
-      float bandFar  = _splitFar[c];
-      glm::vec3 corner[8];
-      int       k = 0;
-      for (int xi = 0; xi < 2; xi++) {
-        for (int yi = 0; yi < 2; yi++) {
-          for (int zi = 0; zi < 2; zi++) {
-            glm::vec4 p = invViewProj * glm::vec4(xi ? 1.0f : -1.0f,
-                                                  yi ? 1.0f : -1.0f,
-                                                  zi ? 1.0f : -1.0f, 1.0f);
-            corner[k++] = glm::vec3(p) / p.w;
-          }
-        }
-      }
-      // Rescale each corner ray to this band's near and far.
-      glm::vec3 eyeP(centreX, centreY, centreZ);
-      glm::vec3 banded[8];
-      for (int i = 0; i < 4; i++) {
-        // corners come in near/far pairs along z (zi is the inner loop)
-        glm::vec3 nearC = corner[i * 2];
-        glm::vec3 farC  = corner[i * 2 + 1];
-        glm::vec3 ray   = glm::normalize(farC - nearC);
-        glm::vec3 base  = nearC;
-        banded[i]     = base + ray * bandNear;
-        banded[i + 4] = base + ray * bandFar;
-      }
-      glm::vec3 centre(0.0f);
-      for (int i = 0; i < 8; i++) {
-        centre += banded[i];
-      }
-      centre /= 8.0f;
-      float radius = 0.0f;
-      for (int i = 0; i < 8; i++) {
-        float d = glm::length(banded[i] - centre);
-        if (d > radius) {
-          radius = d;
-        }
-      }
-      focusX = centre.x;
-      focusZ = centre.z;
-      extent = radius;
-      (void)eyeP;
+      extent = _splitFar[c];
     }
-
     float texel = (2.0f * extent) / (float)_size;
     float cx    = std::floor(focusX / texel) * texel;
     float cz    = std::floor(focusZ / texel) * texel;

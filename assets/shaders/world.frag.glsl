@@ -221,19 +221,16 @@ void main() {
     // Normal offset: sample from slightly OFF the surface, more so the
     // more it faces away from the light. This cures acne by moving the
     // sample rather than the shadow, so contact stays tight.
-    // Pick the nearest band that reaches this fragment. Bands are
-    // ordered near to far, so the first one that contains it is also
-    // the finest one available for it.
-    int first = shadowCascades - 1;
-    for (int c = 0; c < MAX_SHADOW_CASCADES; c++) {
-      if (c >= shadowCascades) {
-        break;
-      }
-      if (ViewDepth <= shadowSplit[c]) {
-        first = c;
-        break;
-      }
-    }
+    // Start at the finest cascade and take the first that actually
+    // covers this fragment. The boxes are concentric on the viewer, so
+    // the first one to contain it is the sharpest available.
+    //
+    // The band used to be chosen by ViewDepth -- distance to the CAMERA
+    // -- which made a sun shadow depend on where the camera was: pull
+    // back on the wheel and a wall changed band without moving. Where
+    // it lands is a question of the box, not of the eye, so the
+    // coverage test below answers it on its own.
+    int first = 0;
 
     // ...and fall through to the coarser ones if it does not actually
     // land inside that map.
