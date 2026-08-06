@@ -21,6 +21,10 @@ OkGuiImage::OkGuiImage(const std::string &name)
   _gridW  = 1.0f;
   _gridH  = 1.0f;
   _anchor = OK_GUI_ANCHOR_CENTER;
+  // The interface is drawn over the scene, not part of it: the global
+  // wireframe switch is a way of reading the world's geometry and has
+  // nothing to say about a GUI quad.
+  setWireframeGlobal(false);
 }
 
 /**

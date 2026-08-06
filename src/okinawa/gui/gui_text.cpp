@@ -133,6 +133,7 @@ void OkGuiText::rebuildMesh() {
 
   _mesh = new OkItem(getName() + "_mesh", verts.data(), (long)verts.size(),
                      idx.data(), (long)idx.size());
+  _mesh->setWireframeGlobal(false);   // text is interface, not scene
   _mesh->setTexture("okfont_atlas", OkFont::atlas());
   _mesh->setTintColor(_color[0], _color[1], _color[2], _color[3]);
   attach(_mesh);

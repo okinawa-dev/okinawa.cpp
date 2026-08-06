@@ -225,6 +225,35 @@ void OkInstancedItem::drawSelf() {
   glDrawElementsInstanced(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT,
                           nullptr, (GLsizei)_drawnCount);
   OkFrustum::addDraw((numIndices / 3) * _drawnCount);
+
+  // Wireframe overlay, on the same instanced draw. One pass covers
+  // every instance: without it a whole class of objects -- the ones
+  // drawn in bulk, which is where a mesh problem is most likely to
+  // repeat -- silently stays solid while the rest of the scene shows
+  // its triangles. Unlit, like the plain item's overlay.
+  bool wire = drawWireframe ||
+              (wireframeGlobal && OkConfig::getBool("graphics.wireframe"));
+  if (wire) {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    GLint wLitLoc = glGetUniformLocation(currentProgram, "lightingOn");
+    if (wLitLoc != -1) {
+      glUniform1f(wLitLoc, 0.0f);
+    }
+    if (hasTexLoc != -1) {
+      glUniform1i(hasTexLoc, 0);
+    }
+    GLint colorLoc = glGetUniformLocation(currentProgram, "wireframeColor");
+    if (colorLoc != -1) {
+      glUniform4f(colorLoc, wireframeColor[0], wireframeColor[1],
+                  wireframeColor[2], 1.0f);
+    }
+    glDrawElementsInstanced(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT,
+                            nullptr, (GLsizei)_drawnCount);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (wLitLoc != -1) {
+      glUniform1f(wLitLoc, 1.0f);
+    }
+  }
   glBindVertexArray(0);
 
   if (texture) {

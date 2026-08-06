@@ -29,7 +29,8 @@ Every drawable inherits these:
 | Method | Purpose |
 | --- | --- |
 | `OkItem(name, vertexData, vertexCount, indexData, indexCount, stride = 5)` | Construct from interleaved vertex data and indices. Stride 5 (`x,y,z,u,v`) computes vertex normals from the triangle list — de-indexed meshes get exact flat face normals, indexed meshes get smoothed ones; stride 8 (`x,y,z,u,v,nx,ny,nz`) takes caller normals verbatim. Internally vertices are always stored with stride 8. |
-| `void setWireframe(bool)` | Draw as wireframe. |
+| `void setWireframe(bool)` | Draw this item as wireframe. |
+| `void setWireframeGlobal(bool)` | Whether the scene-wide `graphics.wireframe` switch reaches this item (default yes; see below). |
 | `void setVisible(bool)` | Show or hide the item. |
 | `void setFade(float)` | Cross-fade amount, 1 solid and 0 gone (see below). |
 | `void setFadeInverted(bool)` | Use the opposite half of the dither pattern. |
@@ -40,6 +41,23 @@ Every drawable inherits these:
 | `void setTintColor(float r, float g, float b, float a)` | Multiplied over the texture in the fill pass (white = untouched); how GUI text is coloured. |
 | `void updateVertexData(float *data, long count)` | Replace the vertex data in place (stride-5 contract; normals recomputed against the item's indices). |
 | `float getRadius() const` | The mesh's maximum dimension. |
+
+### Wireframe
+
+An item draws as wireframe when its own `setWireframe(true)` is set, or when
+the `graphics.wireframe` config key is on. The key is a scene-wide switch — a
+way of reading how the world is triangulated, which no amount of looking at
+the shaded result can tell you — and it reaches everything drawn afterwards,
+including meshes that are created later.
+
+Items that are *interface* rather than *scene* opt out with
+`setWireframeGlobal(false)`. The GUI classes already do: a wireframed font
+atlas is a screenful of empty boxes, and the console that turns the switch back
+off would be the first thing to become unreadable. Their own `setWireframe`
+still works either way.
+
+`OkInstancedItem` honours both, drawing its overlay as a second instanced pass,
+so objects drawn in bulk show their triangles like everything else.
 
 ### Cross-fading between two versions
 

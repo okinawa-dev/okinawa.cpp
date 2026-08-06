@@ -18,6 +18,12 @@ protected:
   // with an instanced one.
   bool   visible;
   bool   drawWireframe;  // Flag to control wireframe rendering
+  // Whether the global `graphics.wireframe` switch reaches this item.
+  // It is a way of looking at the SCENE, so the interface drawn over
+  // the scene stays out of it: a wireframed font atlas is a screenful
+  // of empty boxes, and the console that turns the switch back off is
+  // the first thing to become unreadable.
+  bool   wireframeGlobal;
   GLenum drawMode;       // GL_TRIANGLES, GL_LINES, etc.
 
   // Flat fill colour when untextured, and wireframe line colour (RGB, white).
@@ -103,6 +109,10 @@ public:
   // Flags
   void   setWireframe(bool wireframe) { drawWireframe = wireframe; }
   bool   getWireframe() const { return drawWireframe; }
+  // Opt this item out of (or back into) the global wireframe switch.
+  // Its own setWireframe still applies either way.
+  void   setWireframeGlobal(bool on) { wireframeGlobal = on; }
+  bool   getWireframeGlobal() const { return wireframeGlobal; }
   void   setWireframeColor(float r, float g, float b) {
     wireframeColor[0] = r;
     wireframeColor[1] = g;

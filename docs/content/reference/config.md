@@ -23,6 +23,11 @@ nav_order: 11
 | `static bool hasKey(const std::string &key)` | Whether the key exists in any typed map. |
 | `static std::string getValueAsString(const std::string &key)` | The value formatted as a string, whatever its type (`"<unset>"` when missing). |
 
+The graphics keys include `graphics.wireframe`, the scene-wide wireframe
+switch described in the [items reference](items.html#wireframe), and
+`graphics.textures`, which turns texturing off and leaves every item on its
+flat fill colour.
+
 Keys are plain strings, so applications can store their own settings alongside the engine's (for example a `"viewer.debug-gizmos-visible"` flag). `reset()` is mainly useful to isolate global state between tests. The GUI keys (`gui.grid.size`, `gui.scale`, `gui.fov`, `gui.debug.grid`) are documented in the [GUI reference](gui.html#configuration-keys); every key is also reachable at runtime through the console's `set`/`get`.
 
 ## Example

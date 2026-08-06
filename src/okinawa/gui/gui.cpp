@@ -327,6 +327,7 @@ void OkGui::updateDebugGrid(float logicalW, float logicalH) {
     _gridMinor = new OkItem("gui_grid_minor", minorVerts.data(),
                             (long)minorVerts.size(), minorIdx.data(),
                             (long)minorIdx.size());
+    _gridMinor->setWireframeGlobal(false);   // interface, not scene
     _gridMinor->setDrawMode(GL_LINES);
     _gridMinor->setFillColor(GRID_MINOR_COLOR[0], GRID_MINOR_COLOR[1],
                              GRID_MINOR_COLOR[2]);
@@ -335,6 +336,7 @@ void OkGui::updateDebugGrid(float logicalW, float logicalH) {
     _gridMajor = new OkItem("gui_grid_major", majorVerts.data(),
                             (long)majorVerts.size(), majorIdx.data(),
                             (long)majorIdx.size());
+    _gridMajor->setWireframeGlobal(false);   // interface, not scene
     _gridMajor->setDrawMode(GL_LINES);
     _gridMajor->setFillColor(GRID_MAJOR_COLOR[0], GRID_MAJOR_COLOR[1],
                              GRID_MAJOR_COLOR[2]);
@@ -343,6 +345,7 @@ void OkGui::updateDebugGrid(float logicalW, float logicalH) {
     _gridAxes = new OkItem("gui_grid_axes", axesVerts.data(),
                            (long)axesVerts.size(), axesIdx.data(),
                            (long)axesIdx.size());
+    _gridAxes->setWireframeGlobal(false);   // interface, not scene
     _gridAxes->setDrawMode(GL_LINES);
     _gridAxes->setFillColor(GRID_AXES_COLOR[0], GRID_AXES_COLOR[1],
                             GRID_AXES_COLOR[2]);

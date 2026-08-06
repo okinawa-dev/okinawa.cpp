@@ -33,6 +33,7 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
 
   visible           = true;
   drawWireframe     = false;
+  wireframeGlobal   = true;
   drawMode          = GL_TRIANGLES;  // Default drawing mode
   fillColor[0]      = 1.0f;
   fillColor[1]      = 1.0f;
@@ -395,7 +396,8 @@ void OkItem::drawSelf() {
   }
 
   bool drawWireframe =
-      OkConfig::getBool("graphics.wireframe") || this->drawWireframe;
+      (this->wireframeGlobal && OkConfig::getBool("graphics.wireframe")) ||
+      this->drawWireframe;
   bool drawTexture =
       OkConfig::getBool("graphics.textures") && texture && texture->isLoaded();
 
