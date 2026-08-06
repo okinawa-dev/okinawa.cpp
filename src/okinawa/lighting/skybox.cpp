@@ -74,6 +74,8 @@ void OkSkybox::ensure() {
 
   _dome = new OkItem("ok_skybox", verts.data(), (long)verts.size(),
                      idx.data(), (long)idx.size());
+  // The sky is not an occluder; it is the light.
+  _dome->setCastsShadow(false);
   refreshGradient();
 }
 
@@ -170,6 +172,7 @@ void OkSkybox::ensureSunDisc() {
                      S,  S,  0.0f, 1.0f, 1.0f, -S, S,  0.0f, 0.0f, 1.0f};
   unsigned int idx[6] = {0, 1, 2, 0, 2, 3};
   _sunDisc = new OkItem("ok_sun_disc", verts, 20, idx, 6);
+  _sunDisc->setCastsShadow(false);
   if (_sunTex != nullptr) {
     _sunDisc->setTexture("ok_sun", _sunTex);
   }

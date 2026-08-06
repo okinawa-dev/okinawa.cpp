@@ -1,4 +1,5 @@
 #include "shadow_map.hpp"
+#include "../item/item.hpp"
 #include "../config/config.hpp"
 #include "../math/frustum.hpp"
 #include "../scene/scene.hpp"
@@ -316,7 +317,9 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
     const OkFrustum *saved = OkFrustum::getActive();
     OkFrustum::setActive(OkConfig::getBool("shadows.cull") ? &lightFrustum
                                                            : nullptr);
+    OkItem::setShadowPass(true);
     scene->draw();
+    OkItem::setShadowPass(false);
     OkFrustum::setActive(saved);
   }
 

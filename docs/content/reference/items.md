@@ -31,6 +31,7 @@ Every drawable inherits these:
 | `OkItem(name, vertexData, vertexCount, indexData, indexCount, stride = 5)` | Construct from interleaved vertex data and indices. Stride 5 (`x,y,z,u,v`) computes vertex normals from the triangle list — de-indexed meshes get exact flat face normals, indexed meshes get smoothed ones; stride 8 (`x,y,z,u,v,nx,ny,nz`) takes caller normals verbatim. Internally vertices are always stored with stride 8. |
 | `void setWireframe(bool)` | Draw this item as wireframe. |
 | `void setWireframeGlobal(bool)` | Whether the scene-wide `graphics.wireframe` switch reaches this item (default yes; see below). |
+| `void setCastsShadow(bool)` | Whether this item is drawn into the shadow maps (default yes). Turn it off for things that are LIGHT rather than matter — a lamp's corona, an emissive pane, the sky — which have geometry but would otherwise be recorded as occluders, so that a glow casts a shadow of its own quad. |
 | `void setVisible(bool)` | Show or hide the item. |
 | `void setFade(float)` | Cross-fade amount, 1 solid and 0 gone (see below). |
 | `void setFadeInverted(bool)` | Use the opposite half of the dither pattern. |

@@ -34,6 +34,7 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   visible           = true;
   drawWireframe     = false;
   wireframeGlobal   = true;
+  castsShadow       = true;
   drawMode          = GL_TRIANGLES;  // Default drawing mode
   fillColor[0]      = 1.0f;
   fillColor[1]      = 1.0f;
@@ -376,6 +377,10 @@ void OkItem::loadTextureFromFile(const std::string &texturePath) {
  *        This method is called every frame to update the item.
  * @param dt The delta time since the last update.
  */
+static bool g_shadowPass = false;
+void OkItem::setShadowPass(bool on) { g_shadowPass = on; }
+bool OkItem::inShadowPass() { return g_shadowPass; }
+
 void OkItem::stepSelf(float dt) {
   // Call parent class step function first
   // OkObject::step(dt);
@@ -400,6 +405,11 @@ void OkItem::updateTransformSelf() {
 void OkItem::drawSelf() {
   if (!this->visible) {
     // If the item is not visible, skip rendering
+    return;
+  }
+  if (g_shadowPass && !castsShadow) {
+    // Light, not matter: it has geometry, but recording it as an
+    // occluder would have a glow cast a shadow.
     return;
   }
 

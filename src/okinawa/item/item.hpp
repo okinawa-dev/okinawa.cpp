@@ -25,6 +25,12 @@ protected:
   // of empty boxes, and the console that turns the switch back off is
   // the first thing to become unreadable.
   bool   wireframeGlobal;
+  // Whether this item is drawn into the shadow maps. Most things are;
+  // the ones that are not are the ones that are LIGHT rather than
+  // matter -- a lamp's corona, an emissive pane, the sky itself. They
+  // have geometry, so without this they are recorded as occluders and
+  // a glow ends up casting a shadow.
+  bool   castsShadow;
   GLenum drawMode;       // GL_TRIANGLES, GL_LINES, etc.
 
   // Flat fill colour when untextured, and wireframe line colour (RGB, white).
@@ -141,6 +147,14 @@ public:
   // Opt this item out of (or back into) the global wireframe switch.
   // Its own setWireframe still applies either way.
   void   setWireframeGlobal(bool on) { wireframeGlobal = on; }
+  // Take this item out of (or back into) the shadow maps. Light does
+  // not cast shadows; matter does.
+  void   setCastsShadow(bool on) { castsShadow = on; }
+  bool   getCastsShadow() const { return castsShadow; }
+  // Set by the shadow map around its own pass, so an item can tell
+  // which pass is drawing it.
+  static void setShadowPass(bool on);
+  static bool inShadowPass();
   bool   getWireframeGlobal() const { return wireframeGlobal; }
   void   setWireframeColor(float r, float g, float b) {
     wireframeColor[0] = r;
