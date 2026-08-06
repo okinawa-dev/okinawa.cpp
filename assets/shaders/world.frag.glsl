@@ -35,6 +35,9 @@ uniform float      pointLightLevel;  // 0 day .. 1 night (dusk ramp)
 uniform sampler2DArray shadowMap;   // one layer per cascade
 uniform float      shadowStrength;
 uniform float      shadowTexel;
+uniform float      shadowDebug;   // 1 = paint fragments by cascade
+uniform float      shadowNormalOffset;      // scale on the normal offset
+uniform float      shadowNormalOffsetMax;   // its ceiling, in metres
 uniform float      shadowBias;
 // Cascades: the shadow distance is split into bands, each with its own
 // map and its own matrix. A near band covers little ground and so
@@ -210,6 +213,10 @@ void main() {
   // and the point lights still reach a shadowed surface, which is what
   // keeps shadows from turning into black holes.
   float shade = 1.0;
+  // Which cascade actually answered for this fragment, or -1 if none
+  // did. Only read by the debug view below, but it has to be recorded
+  // where the answer is known.
+  int usedCascade = -1;
   if (shadowStrength > 0.0 && lightingOn > 0.5) {
     // Normal offset: sample from slightly OFF the surface, more so the
     // more it faces away from the light. This cures acne by moving the
@@ -250,8 +257,17 @@ void main() {
       // moving the sample rather than the shadow, so contact stays
       // tight. It scales with this cascade's texel, which is what sets
       // how coarse the comparison is here.
-      vec3 sp = WorldPos +
-                sn * (shadowTexelWorld[cascade] * (0.6 + slope * 2.2));
+      // The offset scales with this cascade's texel, which is what
+      // sets how coarse the comparison is -- but it is CAPPED, because
+      // past a few centimetres it stops curing acne and starts moving
+      // the sample out of the shadow it is standing in. A wall lit
+      // edge-on by a low sun is the worst case: `slope` goes to 1
+      // there, and on a coarse cascade the uncapped offset threw the
+      // sample clear of the shadow cast by the building opposite, so
+      // the shadow ended wherever the cascade changed.
+      float noff = shadowTexelWorld[cascade] * (0.6 + slope * 2.2) *
+                   shadowNormalOffset;
+      vec3  sp   = WorldPos + sn * min(noff, shadowNormalOffsetMax);
       vec4 lp = lightSpace[cascade] * vec4(sp, 1.0);
       vec3 pc = lp.xyz / lp.w * 0.5 + 0.5;
       if (pc.z > 1.0 || pc.x <= 0.0 || pc.x >= 1.0 || pc.y <= 0.0 ||
@@ -267,12 +283,40 @@ void main() {
         }
       }
       shade = mix(1.0, lit / 9.0, shadowStrength);
+      usedCascade = cascade;
       break;
     }
   }
   color.rgb *= (SunLight * shade + AmbientLight +
                 pointSum * (lightingOn * pointLightLevel));
   color.rgb *= sceneTint;
+
+  // Shadow debug view: paint every fragment by the cascade that
+  // shadowed it -- red, green, blue, yellow for 0..3, and magenta for
+  // one no cascade could answer. Brightness carries how shadowed it
+  // came out, so an edge that fades reads as a gradient in its own
+  // band's colour.
+  //
+  // This exists because a shadow artefact seen while MOVING cannot be
+  // diagnosed from a still: whether a fading edge is a cascade
+  // handover, a coverage hole or a bias problem looks identical in a
+  // screenshot, and the three have nothing to do with each other. Here
+  // the answer is the colour.
+  if (shadowDebug > 0.5 && lightingOn > 0.5) {
+    vec3 band;
+    if (usedCascade == 0) {
+      band = vec3(1.0, 0.25, 0.25);
+    } else if (usedCascade == 1) {
+      band = vec3(0.25, 1.0, 0.25);
+    } else if (usedCascade == 2) {
+      band = vec3(0.35, 0.5, 1.0);
+    } else if (usedCascade == 3) {
+      band = vec3(1.0, 0.95, 0.3);
+    } else {
+      band = vec3(1.0, 0.2, 1.0);
+    }
+    color.rgb = band * (0.25 + 0.75 * shade);
+  }
 
   // Fog thins with altitude, so the amount along a view ray is the
   // integral of the density over it rather than density times length.

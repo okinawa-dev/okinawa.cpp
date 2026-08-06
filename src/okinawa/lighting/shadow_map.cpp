@@ -45,6 +45,21 @@ void OkShadowMap::initialize() {
   // off draws the whole scene into the map, which is what it did
   // before and is useful to tell a culling bug from a shadowing one.
   OkConfig::setBool("shadows.cull", true);
+  // Debug view: paint every fragment by the cascade that shadowed it,
+  // magenta where none could. An artefact that only appears while
+  // MOVING cannot be read off a still -- a cascade handover, a hole in
+  // a cascade's coverage and a bias washout all look like an edge going
+  // soft, and they have nothing to do with each other. In this view
+  // they are three different colours.
+  OkConfig::setBool("shadows.debug", false);
+  // Normal offset: the receiver samples the map from slightly OFF its
+  // own surface, which cures acne by moving the sample rather than the
+  // shadow. It scales with the cascade's texel, since that is what sets
+  // how coarse the comparison is -- and it is CAPPED, in metres,
+  // because past a few centimetres it stops curing anything and starts
+  // pushing the sample out of the shadow the surface is standing in.
+  OkConfig::setFloat("shadows.normaloffset", 1.0f);
+  OkConfig::setFloat("shadows.normaloffset.max", 0.06f);
   // Cascades: how many bands the shadow distance is split into. More
   // bands means each one covers less ground and so resolves finer, at
   // one depth pass each.
@@ -350,6 +365,22 @@ void OkShadowMap::bind(GLuint program) {
   loc = glGetUniformLocation(program, "shadowBias");
   if (loc != -1) {
     glUniform1f(loc, OkConfig::getFloat("shadows.bias"));
+  }
+  // Debug view: paint each fragment by the cascade that shadowed it.
+  // A shadow artefact seen while moving cannot be told apart in a
+  // still -- a cascade handover, a coverage hole and a bias washout all
+  // look like an edge going soft -- so the colour answers instead.
+  loc = glGetUniformLocation(program, "shadowDebug");
+  if (loc != -1) {
+    glUniform1f(loc, OkConfig::getBool("shadows.debug") ? 1.0f : 0.0f);
+  }
+  loc = glGetUniformLocation(program, "shadowNormalOffset");
+  if (loc != -1) {
+    glUniform1f(loc, OkConfig::getFloat("shadows.normaloffset"));
+  }
+  loc = glGetUniformLocation(program, "shadowNormalOffsetMax");
+  if (loc != -1) {
+    glUniform1f(loc, OkConfig::getFloat("shadows.normaloffset.max"));
   }
   // World size of one shadow texel: the sampling point is nudged along
   // the receiving surface's normal by roughly this much, which removes

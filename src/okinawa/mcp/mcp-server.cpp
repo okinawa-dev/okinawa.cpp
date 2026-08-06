@@ -9,6 +9,7 @@
 #include "mcp-server.hpp"
 
 #include "../avatar/avatar.hpp"
+#include "../config/config.hpp"
 #include "../core/core.hpp"  // OkCore + OpenGL / GLFW headers
 #include "../core/object.hpp"
 #include "../gui/stats.hpp"
@@ -358,6 +359,17 @@ struct OkMcpServer::Impl {
     perf["inputSchema"] = {{"type", "object"}, {"properties", {{"samples", {{"type", "boolean"}, {"description", "Include the raw per-frame milliseconds (default false)."}}}}}, {"additionalProperties", false}};
     tools.push_back(perf);
 
+    json config;
+    config["name"]        = "config";
+    config["description"] = "Read or write an engine config key at runtime -- the same keys the console's set/get reach (shadows.*, render.*, city.*, graphics.*). With no `value` it reads; with one it writes, converting to the key's existing type. Pass no `key` at all to list every key matching `prefix`, with its current value. Meant for bisecting a visual problem: flip one setting, capture, flip it back, without typing into the console a character at a time.";
+    config["inputSchema"] = {{"type", "object"},
+                             {"properties",
+                              {{"key", {{"type", "string"}, {"description", "Config key, e.g. shadows.cascades."}}},
+                               {"value", {{"type", "string"}, {"description", "New value; omit to read."}}},
+                               {"prefix", {{"type", "string"}, {"description", "List every key starting with this instead."}}}}},
+                             {"additionalProperties", false}};
+    tools.push_back(config);
+
     json getState;
     getState["name"]        = "get_state";
     getState["description"] = "Return numeric runtime state: active camera pose, fps, scene object count, window size and resident memory.";
@@ -560,6 +572,44 @@ struct OkMcpServer::Impl {
           }
           r["samples_ms"] = arr;
         }
+        return r;
+      });
+      return textResult(out.dump(2));
+    }
+
+    if (name == "config") {
+      std::string key    = args.contains("key") && args["key"].is_string()
+                               ? args["key"].get<std::string>()
+                               : std::string();
+      std::string prefix = args.contains("prefix") && args["prefix"].is_string()
+                               ? args["prefix"].get<std::string>()
+                               : std::string();
+      bool        hasVal = args.contains("value") && args["value"].is_string();
+      std::string val    = hasVal ? args["value"].get<std::string>()
+                                  : std::string();
+      json out = runOnLoop([key, prefix, hasVal, val]() -> json {
+        json r;
+        if (key.empty()) {
+          std::vector<std::string> keys = OkConfig::getKeysWithPrefix(prefix);
+          json                     m    = json::object();
+          for (size_t i = 0; i < keys.size(); i++) {
+            m[keys[i]] = OkConfig::getValueAsString(keys[i]);
+          }
+          r["keys"] = m;
+          return r;
+        }
+        if (!OkConfig::hasKey(key)) {
+          r["error"] = "no such key: " + key;
+          return r;
+        }
+        if (hasVal) {
+          // Respects the key's existing type, exactly as the console's
+          // `set` does: a float key stays a float even when the text
+          // has no decimal point.
+          OkConfig::setFromString(key, val);
+        }
+        r["key"]   = key;
+        r["value"] = OkConfig::getValueAsString(key);
         return r;
       });
       return textResult(out.dump(2));
