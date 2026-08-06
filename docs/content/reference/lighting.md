@@ -174,27 +174,10 @@ texels frame to frame. A sphere's radius does not change under
 rotation, so only the centre moves, and that is snapped to the texel
 grid.
 
-That snap happens **in light space**, not in world coordinates. The
-grid lies in the light's own frame, so rounding the box centre on the
-world axes only lands it on a texel when the sun is straight overhead;
-any other time the grid slides under the ground as the viewer walks and
-every shadow edge travels with them. With a low sun the ground is
-grazed and a texel of slide becomes many centimetres of visible edge.
-
 The maps live in one array texture, a layer per cascade, so the world
 pass needs a single sampler however many there are. Each fragment picks
 the nearest band that reaches it — the finest one available for that
-distance — and the last stretch of each band is **faded into the next**
-rather than switched at a line.
-
-That fade is not cosmetic. Two cascades do not agree: they have
-different texel sizes, so different penumbra, and their grids are
-snapped independently. The band is chosen by distance to the *camera*,
-so with a third-person camera the player crosses a split without moving
-at all — scrolling the wheel pulls the camera back, the ground ahead
-gains view depth, and at a hard switch the shadow in front of them
-visibly redraws. Spreading the handover over the last quarter of each
-band turns that into a gradient nobody notices.
+distance.
 
 Only the **directional** contribution is shadowed: the ambient floor and the
 point lights still reach a shadowed surface, which is what keeps shadows
