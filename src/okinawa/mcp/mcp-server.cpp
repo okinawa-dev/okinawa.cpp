@@ -354,7 +354,7 @@ struct OkMcpServer::Impl {
 
     json perf;
     perf["name"]        = "get_performance";
-    perf["description"] = "Return the recorded frame-time SERIES, not a single reading: count, min/max/mean/median in milliseconds, the equivalent fps, and optionally the raw samples (oldest first). A one-off fps value cannot tell a real change from a lucky frame, so use this to compare builds or viewpoints. Samples are collected whether or not the stats panel is visible.";
+    perf["description"] = "Return the recorded frame-time SERIES, not a single reading: count, min/max/mean/median in milliseconds, the equivalent fps, and optionally the raw samples (oldest first). A one-off fps value cannot tell a real change from a lucky frame, so use this to compare builds or viewpoints. Also returns `draw_ms`, the CPU time spent issuing the frame's draws, measured before the swap -- where the platform enforces vsync (macOS does) every frame with budget to spare reads as exactly one refresh interval, so frame_ms cannot tell whether a change cost anything and draw_ms is the number to compare. Samples are collected whether or not the stats panel is visible.";
     perf["inputSchema"] = {{"type", "object"}, {"properties", {{"samples", {{"type", "boolean"}, {"description", "Include the raw per-frame milliseconds (default false)."}}}}}, {"additionalProperties", false}};
     tools.push_back(perf);
 
@@ -539,6 +539,19 @@ struct OkMcpServer::Impl {
         // The mean sits below the median when long frames are dragging
         // it down, which is what a hitch looks like in a summary.
         r["hitching"] = mean > median * 1.15f;
+        // CPU time spent issuing the draws, measured before the swap.
+        // Where the platform enforces vsync every frame with budget to
+        // spare reads as one refresh interval, so frame_ms cannot say
+        // whether a change cost anything; this can.
+        int   dc = 0;
+        float dlo = 0.0f, dhi = 0.0f, dmean = 0.0f, dmedian = 0.0f;
+        OkGuiStats::getDrawSummary(dc, dlo, dhi, dmean, dmedian);
+        if (dc > 0) {
+          r["draw_ms"] = {{"min", dlo},
+                          {"max", dhi},
+                          {"mean", dmean},
+                          {"median", dmedian}};
+        }
         if (wantSamples) {
           const std::vector<float> &h = OkGuiStats::getHistory();
           json                      arr = json::array();

@@ -156,11 +156,30 @@ any project would use — a layer, text elements and an image — and reads
 what the engine already tracks, so it adds nothing to the frame it is
 measuring beyond its own handful of quads.
 
-It reports frames per second and average frame time, the worst recent
-frame, draw calls and triangles submitted, scene objects and how many
-were culled, loaded textures, and the day clock.
+It reports frames per second and average frame time, the CPU time spent
+issuing the frame's draws, the worst recent frame, draw calls and
+triangles submitted, scene objects and how many were culled, loaded
+textures, and the day clock.
 
 The graph is the point: an average hides hitches, a history shows them.
+
+### Draw time, and why it is separate from frame time
+
+`DRAW` is measured around the scene traversal, before the buffers are
+swapped, and kept as its own history alongside the frame times.
+
+It exists because **frame time cannot answer "did that change cost
+anything?" wherever vsync is enforced**. macOS enforces it whatever
+`render.vsync` asks for, and a compositor may do the same elsewhere: a
+frame with budget to spare then reads as exactly one refresh interval,
+so a change that halves the work and a change that does nothing both
+measure 16.67 ms. Draw time moves with the work, so it is the number to
+compare between two builds at the same viewpoint.
+
+It is not a substitute for frame time. It measures the CPU issuing the
+frame — culling, uniforms, draw calls — and says nothing about what the
+GPU then takes to finish it. A build that is fill-rate bound will show a
+flat draw time and a rising frame time.
 
 The panel is off by default and toggled with the `stats` console
 command or `OkGuiStats::setVisible`. Frame times are recorded either
@@ -171,7 +190,10 @@ blank — and so a tool can ask for the series at any moment.
 | --- | --- |
 | `static const std::vector<float> &getHistory()` | The recorded frame times, oldest first, milliseconds. |
 | `static void getSummary(int &count, float &min, float &max, float &mean, float &median)` | Summary of that history; `count` is 0 when nothing is recorded yet. |
-| `static void setHistoryLength(int samples)` | How many samples to keep (600 by default, several seconds even at a high frame rate). The graph draws its own shorter window. |
+| `static void setHistoryLength(int samples)` | How many samples to keep (600 by default, several seconds even at a high frame rate). The graph draws its own shorter window. Applies to both histories. |
+| `static void recordDraw(float ms)` | Record this frame's draw time (called by the core). |
+| `static const std::vector<float> &getDrawHistory()` | The recorded draw times, oldest first, milliseconds. |
+| `static void getDrawSummary(int &count, float &min, float &max, float &mean, float &median)` | Summary of the draw-time history. |
 
 The history is deliberately longer than the strip the panel draws: the
 graph is for spotting a hitch at a glance, the history is for answering

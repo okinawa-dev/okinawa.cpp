@@ -25,6 +25,7 @@
 #include "../mcp/mcp-server.hpp"
 #endif
 #include <algorithm>
+#include <chrono>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/trigonometric.hpp>
@@ -546,6 +547,12 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
         OkFrustum::setActive(&frameFrustum);
       }
 
+      // CPU cost of the frame's draws, timed on its own. See
+      // OkGuiStats::recordDraw for why frame time cannot stand in for
+      // it wherever the platform enforces vsync.
+      std::chrono::steady_clock::time_point drawT0 =
+          std::chrono::steady_clock::now();
+
       // Draw current scene
       if (currentScene) {
         currentScene->draw();
@@ -557,6 +564,10 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       }
 
       OkFrustum::setActive(nullptr);
+      OkGuiStats::recordDraw(
+          std::chrono::duration<float, std::milli>(
+              std::chrono::steady_clock::now() - drawT0)
+              .count());
 
       // Composite the offscreen frame to the window (no-op when
       // render.post is off).

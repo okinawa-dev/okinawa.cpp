@@ -24,6 +24,7 @@ OkGuiImage *OkGuiStats::_graph    = nullptr;
 OkTexture  *OkGuiStats::_graphTex = nullptr;
 
 std::vector<float> OkGuiStats::_history;
+std::vector<float> OkGuiStats::_drawHistory;
 float              OkGuiStats::_accum   = 0.0f;
 float              OkGuiStats::_worst   = 0.0f;
 bool               OkGuiStats::_visible = false;
@@ -235,9 +236,24 @@ void OkGuiStats::update(float dtMs) {
   char buf[128];
   const char *text[6];
   char        store[6][128];
+  // Draw time next to frame time on purpose: where vsync is enforced,
+  // FRAME is pinned to the refresh interval and says nothing about the
+  // work, while DRAW moves with it.
+  float drawAvg = 0.0f;
+  if (!_drawHistory.empty()) {
+    size_t dFrom = _drawHistory.size() > (size_t)GRAPH_W
+                       ? _drawHistory.size() - (size_t)GRAPH_W
+                       : 0;
+    float  dSum  = 0.0f;
+    for (size_t i = dFrom; i < _drawHistory.size(); i++) {
+      dSum += _drawHistory[i];
+    }
+    drawAvg = dSum / (float)(_drawHistory.size() - dFrom);
+  }
   std::snprintf(store[0], sizeof(store[0]), "FPS %.1f  FRAME %.2f MS", fps,
                 avg);
-  std::snprintf(store[1], sizeof(store[1]), "WORST %.2f MS", _worst);
+  std::snprintf(store[1], sizeof(store[1]), "DRAW %.2f MS  WORST %.2f MS",
+                drawAvg, _worst);
   std::snprintf(store[2], sizeof(store[2]), "DRAWS %ld  TRIS %ld", draws,
                 tris);
   std::snprintf(store[3], sizeof(store[3]), "OBJECTS %ld  CULLED %ld",
@@ -283,6 +299,35 @@ void OkGuiStats::getSummary(int &count, float &minMs, float &maxMs,
     return;
   }
   std::vector<float> sorted = _history;
+  std::sort(sorted.begin(), sorted.end());
+  float sum = 0.0f;
+  for (size_t i = 0; i < sorted.size(); i++) {
+    sum += sorted[i];
+  }
+  minMs    = sorted.front();
+  maxMs    = sorted.back();
+  meanMs   = sum / (float)sorted.size();
+  medianMs = sorted[sorted.size() / 2];
+}
+
+void OkGuiStats::recordDraw(float ms) {
+  _drawHistory.push_back(ms);
+  while ((int)_drawHistory.size() > _historyMax) {
+    _drawHistory.erase(_drawHistory.begin());
+  }
+}
+
+const std::vector<float> &OkGuiStats::getDrawHistory() {
+  return _drawHistory;
+}
+
+void OkGuiStats::getDrawSummary(int &count, float &minMs, float &maxMs,
+                                float &meanMs, float &medianMs) {
+  count = (int)_drawHistory.size();
+  if (count == 0) {
+    return;
+  }
+  std::vector<float> sorted = _drawHistory;
   std::sort(sorted.begin(), sorted.end());
   float sum = 0.0f;
   for (size_t i = 0; i < sorted.size(); i++) {
