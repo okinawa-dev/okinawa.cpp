@@ -113,9 +113,11 @@ void OkShadowMap::ensureTarget(int size, int layers) {
  *
  *        The projection is orthographic (a directional light has no
  *        perspective) over a box centred on the viewer, and its origin
- *        is snapped to whole texels: without that snap the sampling
- *        grid slides under the geometry as the camera moves and every
- *        shadow edge shimmers.
+ *        is snapped to whole texels IN LIGHT SPACE: without that snap
+ *        the sampling grid slides under the geometry as the camera
+ *        moves and every shadow edge travels with it. Snapping on the
+ *        world axes is not enough -- the grid lies in the light's frame,
+ *        so the two only agree with the sun straight overhead.
  */
 void OkShadowMap::render(OkScene *scene, const float *viewProj,
                          float centreX, float centreY, float centreZ) {
@@ -243,17 +245,44 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
       (void)eyeP;
     }
 
-    float texel = (2.0f * extent) / (float)_size;
-    float cx    = std::floor(focusX / texel) * texel;
-    float cz    = std::floor(focusZ / texel) * texel;
-
+    // Snap the box to whole texels, IN LIGHT SPACE.
+    //
+    // The map's texel grid lies in the light's own frame, not the
+    // world's, so rounding the focus point on the world axes does not
+    // land it on a texel unless the sun happens to be straight
+    // overhead. It used to be rounded on X and Z in world units, and the
+    // viewer's height went in unrounded on top of that, so the sampling
+    // grid slid under the ground as the viewer walked and every shadow
+    // edge crawled with them -- worst with a low sun, where the ground
+    // is grazed and a texel of slide becomes many centimetres of visible
+    // edge.
+    //
+    // So: build the box unsnapped, see where its origin lands on the
+    // map, and translate the projection by the fraction of a texel
+    // needed to put it on a whole one.
     float     depth = extent * 4.0f;
-    glm::vec3 target(cx, centreY, cz);
-    glm::vec3 eye = target - lightDir * (depth * 0.5f);
+    glm::vec3 target(focusX, centreY, focusZ);
+    glm::vec3 eye  = target - lightDir * (depth * 0.5f);
     glm::mat4 view = glm::lookAt(eye, target, up);
     glm::mat4 proj =
         glm::ortho(-extent, extent, -extent, extent, 0.1f, depth * 1.5f);
+
+    glm::vec4 originLs = (proj * view) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    originLs *= (float)_size * 0.5f;
+    glm::vec4 offset =
+        (glm::vec4(std::floor(originLs.x + 0.5f), std::floor(originLs.y + 0.5f),
+                   originLs.z, originLs.w) -
+         originLs) *
+        (2.0f / (float)_size);
+    proj[3][0] += offset.x;
+    proj[3][1] += offset.y;
     _lightSpace[c] = proj * view;
+
+    // What the redraw test compares: the snapped position on the map,
+    // which is what actually decides whether this cascade's picture
+    // would come out any different.
+    float cx = originLs.x + offset.x * (float)_size * 0.5f;
+    float cz = originLs.y + offset.y * (float)_size * 0.5f;
 
     // Redraw this cascade only when its picture would differ: static
     // geometry under a slow sun looks the same from frame to frame.
