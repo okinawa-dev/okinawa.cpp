@@ -43,9 +43,9 @@ protected:
   long          numVertices;
   long          numIndices;
   float         radius;        // bounding-sphere radius (half bbox diagonal)
-  float         sphereCenter[3];  // bounding-sphere centre, LOCAL coords
+  float         sphereCenter[3];  // bounding-sphere centre, local coords
   bool          additive;      // additive blending (light halos)
-  bool          unlit;         // skip Gouraud light AND scene tint
+  bool          unlit;         // skip Gouraud light and the scene tint
   int           nearLights[8];    // cached nearest point-light indices
   int           nearLightCount;
   long          nearLightGen;     // registry generation of the cache
@@ -98,11 +98,11 @@ protected:
 
 public:
   // Constructors.
-  // vertexStride selects the INPUT layout: 5 = x,y,z,u,v (normals are
+  // vertexStride selects the input layout: 5 = x,y,z,u,v (normals are
   // computed here by accumulating face normals per vertex -- de-indexed
   // meshes get exact flat face normals, indexed meshes get smoothed
   // ones); 8 = x,y,z,u,v,nx,ny,nz (caller-provided normals, verbatim).
-  // Internally vertices are ALWAYS stored with stride 8.
+  // Internally vertices are always stored with stride 8.
   OkItem(const std::string &name, float *vertexData, long vertexCount,
          unsigned int *indexData, long indexCount, int vertexStride = 5);
   ~OkItem();
@@ -118,7 +118,7 @@ public:
   // Texture methods
   void loadTextureFromFile(const std::string &texturePath);
   // Adopt a texture the caller already has a pointer to. The item takes
-  // its OWN reference: the destructor releases one, so an item that only
+  // its own reference: the destructor releases one, so an item that only
   // borrowed the pointer would push the count below what the sharers
   // actually hold and free a texture still in use.
   void setTexture(const std::string &name, OkTexture *tex) {
@@ -171,16 +171,16 @@ public:
     fillColor[3] = a;
   }
   // Tint multiplied over the texture in the fill pass (white = untouched).
-  // Additive blending (glows/halos): drawn with src-alpha ONE blending
+  // Additive blending (glows/halos): drawn with src-alpha one blending
   // and no depth writes. World pass only.
   void setAdditive(bool on) { additive = on; }
   bool isBlended() const override { return additive; }
-  // Unlit: this item ignores the Gouraud sun/point lights AND the scene
+  // Unlit: this item ignores the Gouraud sun/point lights and the scene
   // tint (light sources must not be tinted by the atmosphere). World
   // pass only -- the flag restores world-pass uniforms after drawing.
   void setUnlit(bool on) { unlit = on; }
 
-  // Masked materials: when the texture carries a MATERIAL CODE in its
+  // Masked materials: when the texture carries a material code in its
   // alpha channel (instead of opacity), each code takes its own tint,
   // so one texture serves many colour variants. Codes are read as
   // ~1.00, ~0.50 and ~0.25; anything below ~0.12 is discarded.

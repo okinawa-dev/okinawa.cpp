@@ -62,7 +62,7 @@ void OkSkybox::ensure() {
           (unsigned int)(r * SKY_SEGMENTS + (s + 1) % SKY_SEGMENTS);
       unsigned int b0 = a0 + (unsigned int)SKY_SEGMENTS;
       unsigned int b1 = a1 + (unsigned int)SKY_SEGMENTS;
-      // Faces point INWARD (the camera lives inside the dome).
+      // Faces point inward (the camera lives inside the dome).
       idx.push_back(a0);
       idx.push_back(b0);
       idx.push_back(a1);
@@ -191,7 +191,7 @@ void OkSkybox::drawSun(float camX, float camY, float camZ) {
     return;
   }
   const float *dir = OkLighting::getSunDirection();
-  // The direction points FROM the light toward the scene, so the body
+  // The direction points from the light toward the scene, so the body
   // sits the other way.
   float sx  = -dir[0];
   float sy  = -dir[1];

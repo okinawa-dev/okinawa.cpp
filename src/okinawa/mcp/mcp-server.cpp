@@ -159,7 +159,7 @@ double residentMb() {
   return -1.0;
 }
 
-// Read the active camera's pose. MUST be called on the engine loop thread.
+// Read the active camera's pose. Must be called on the engine loop thread.
 json cameraPoseJson() {
   json      p;
   OkCamera *cam = OkCore::getCamera();
@@ -190,7 +190,7 @@ json viewJson() {
     v["y"]    = p.y();
     v["z"]    = p.z();
   }
-  // Reflect the ACTIVE camera (identified by name): orbit cameras report
+  // Reflect the active camera (identified by name): orbit cameras report
   // yaw/pitch/distance, overhead/fixed ones report their view distance.
   OkCamera *cam = OkCore::getCamera();
   if (cam != nullptr) {
@@ -343,7 +343,7 @@ struct OkMcpServer::Impl {
 
     json view;
     view["name"]        = "view";
-    view["description"] = "THE camera tool -- set the whole viewpoint in one call. Optionally activates a camera BY NAME (`camera`; get_state lists the registered names), then places the avatar at x,y,z and drives the ACTIVE camera: orbit cameras take yaw_deg/pitch_deg/distance (pitch negative looks DOWN; ~-89 = top-down); overhead/fixed cameras take just distance (their height). It never force-switches cameras on its own. All fields optional; an omitted field keeps its current value. Persistent (survives input, so the user takes over in the same view). get_state returns the same values (with the active camera name) under `view` -- reproduce any viewpoint by passing them straight back. Returns the resulting view.";
+    view["description"] = "THE camera tool -- set the whole viewpoint in one call. Optionally activates a camera BY NAME (`camera`; get_state lists the registered names), then places the avatar at x,y,z and drives the active camera: orbit cameras take yaw_deg/pitch_deg/distance (pitch negative looks DOWN; ~-89 = top-down); overhead/fixed cameras take just distance (their height). It never force-switches cameras on its own. All fields optional; an omitted field keeps its current value. Persistent (survives input, so the user takes over in the same view). get_state returns the same values (with the active camera name) under `view` -- reproduce any viewpoint by passing them straight back. Returns the resulting view.";
     view["inputSchema"] = {{"type", "object"}, {"properties", {{"camera", {{"type", "string"}, {"description", "Camera to activate and drive, by registered name (see get_state.cameras). Omitted = keep the active camera."}}}, {"x", {{"type", "number"}}}, {"y", {{"type", "number"}}}, {"z", {{"type", "number"}}}, {"yaw_deg", {{"type", "number"}}}, {"pitch_deg", {{"type", "number"}, {"description", "Tilt; negative looks down, ~-89 is top-down."}}}, {"distance", {{"type", "number"}, {"description", "Camera distance back / height, in metres."}}}}}, {"additionalProperties", false}};
     tools.push_back(view);
 
@@ -452,8 +452,8 @@ struct OkMcpServer::Impl {
 
     if (name == "view") {
       json out = runOnLoop([args]() -> json {
-        // Optional camera selection BY NAME (see get_state.cameras). The
-        // tool then drives the ACTIVE camera -- it no longer force-switches
+        // Optional camera selection by name (see get_state.cameras). The
+        // tool then drives the active camera -- it no longer force-switches
         // to the orbit camera, so an overhead workflow keeps its framing.
         if (args.contains("camera")) {
           std::string camName = args.value("camera", std::string());

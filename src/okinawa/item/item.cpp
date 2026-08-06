@@ -333,7 +333,7 @@ void OkItem::_calculateRadius() {
   float depth  = maxZ - minZ;
   // Calculate radius as half the diagonal of the bounding box
   radius = sqrt(width * width + height * height + depth * depth) * 0.5f;
-  // Bounding-sphere centre in LOCAL coords: city meshes keep their
+  // Bounding-sphere centre in local coords: city meshes keep their
   // vertices in chunk-local space with the item origin at the chunk
   // corner, so the sphere must be centred on the bbox, not the origin.
   sphereCenter[0] = (minX + maxX) * 0.5f;
@@ -547,7 +547,7 @@ void OkItem::drawSelf() {
   }
 
   // Fill pass: textured if we have a texture, otherwise a flat fill colour.
-  // Always runs, so an item can show a flat fill AND a wireframe overlay.
+  // Always runs, so an item can show a flat fill and a wireframe overlay.
   {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     GLint hasTexLoc = glGetUniformLocation(current_program, "hasTexture");
@@ -637,7 +637,7 @@ void OkItem::drawSelf() {
   }
 
   // Wireframe overlay pass (in the wireframe colour, on top of the fill).
-  // Always UNLIT: the overlay is a drawing aid, not a surface.
+  // Always unlit: the overlay is a drawing aid, not a surface.
   if (drawWireframe) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     GLint wLitLoc = glGetUniformLocation(current_program, "lightingOn");

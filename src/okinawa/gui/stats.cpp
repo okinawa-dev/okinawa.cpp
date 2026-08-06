@@ -265,7 +265,7 @@ void OkGuiStats::update(float dtMs) {
   for (int i = 0; i < 6; i++) {
     text[i] = store[i];
     _lines[i]->setText(text[i]);
-    // Text is placed by its CENTRE, so a left-aligned column has to
+    // Text is placed by its centre, so a left-aligned column has to
     // shift each line by half its own width -- which changes as the
     // numbers do.
     _lines[i]->setGridPosition(PANEL_X + _lines[i]->getGridWidth() * 0.5f,

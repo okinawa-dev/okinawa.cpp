@@ -1,11 +1,11 @@
 #version 410
 #pragma shader_stage(fragment)
 
-// The engine's single WORLD-pass fragment shader (the "ubershader" of the
+// The engine's single world-pass fragment shader (the "ubershader" of the
 // classic one-program pipeline). Per fragment it: samples the texture (or
 // the flat fill colour), applies the per-item tint, the day-cycle scene
 // tint, and the exponential distance fog. The GUI pass and the skybox use
-// the SAME program with neutral atmosphere uniforms.
+// the same program with neutral atmosphere uniforms.
 
 out vec4 FragColor;
 in vec2  TexCoord;
@@ -62,8 +62,8 @@ uniform vec3       sunDirection;      // for the shadow normal offset
 
 // Clustered forward: the frustum is split into a 3D cluster grid;
 // each fragment finds its own cluster from gl_FragCoord and its depth,
-// and iterates only the lights assigned to it. Light selection is PER
-// PIXEL, so a sidewalk mesh spanning a whole block gets every lamp along
+// and iterates only the lights assigned to it. Light selection is per
+// pixel, so a sidewalk mesh spanning a whole block gets every lamp along
 // it instead of the four nearest to the item's centre.
 uniform float       clusteredOn;
 uniform samplerBuffer  clusterLights;   // 3 texels per light
@@ -79,8 +79,8 @@ uniform bool      hasTexture;
 uniform vec4      wireframeColor;
 uniform vec4      tintColor;   // multiplies the texture (white = untouched)
 
-// Material mask: some textures carry, in their ALPHA channel, a code
-// saying what each pixel IS rather than how opaque it is. With
+// Material mask: some textures carry, in their alpha channel, a code
+// saying what each pixel is rather than how opaque it is. With
 // maskedMaterials on, each code takes its own tint, so one texture can
 // be recoloured per object -- different joinery colours, different
 // glass or emissive temperatures -- without duplicating the image.
@@ -90,7 +90,7 @@ uniform float     maskedMaterials;  // 0 = alpha is plain opacity
 // versions of the same thing can hand over gradually without either
 // needing blending or sorting.
 uniform float     itemFade;
-// The two sides of a handover must drop OPPOSITE pixels: with the same
+// The two sides of a handover must drop opposite pixels: with the same
 // pattern on both, each keeps the same half and the other half of the
 // screen shows whatever is behind them.
 uniform float     itemFadeInvert;
@@ -98,7 +98,7 @@ uniform vec4      matTintA;         // mask ~1.00
 uniform vec4      matTintB;         // mask ~0.50
 uniform vec4      matTintC;         // mask ~0.25
 // Per-slot: 0 multiplies the tint over the texel (keeping its hue),
-// 1 takes only the texel's LUMINANCE and lets the tint set the hue.
+// 1 takes only the texel's luminance and lets the tint set the hue.
 // The second is what an emissive surface needs: the artwork supplies
 // the shading, the tint supplies the colour of the light.
 uniform vec3      matLuminance;
@@ -114,7 +114,7 @@ uniform float     fogBaseY;    // altitude at which fogDensity applies
 uniform vec3      fogEyePos;   // camera position, world space
 
 void main() {
-  // Lighting applies to WORLD objects, textured or not: a plain-colour
+  // Lighting applies to world objects, textured or not: a plain-colour
   // solid (a lamp post, a bollard, an untextured vehicle) must be
   // modelled by the light like everything else. What stays at its exact
   // requested colour is anything the caller marked unlit -- debug
@@ -173,7 +173,7 @@ void main() {
     ivec2 tile = ivec2(gl_FragCoord.xy / clusterScreen *
                        vec2(clusterDims.xy));
     tile = clamp(tile, ivec2(0), clusterDims.xy - ivec2(1));
-    // MUST match the CPU: slices are cut on view-space depth, not on
+    // Must match the CPU: slices are cut on view-space depth, not on
     // euclidean distance (they differ off-centre, and the error grows
     // as the camera approaches -- lights would vanish in patches).
     float vz = max(ViewDepth, clusterPlanes.x);
@@ -229,11 +229,11 @@ void main() {
   int usedCascade = -1;
   // The first cascade to answer, and how far inside its own edge the
   // fragment sat: 1 well inside, 0 right on the border, which is how
-  // much of the NEXT cascade's answer gets mixed in.
+  // much of the next cascade's answer gets mixed in.
   float shadeA  = -1.0;
   float weightA = 1.0;
   if (shadowStrength > 0.0 && lightingOn > 0.5) {
-    // Normal offset: sample from slightly OFF the surface, more so the
+    // Normal offset: sample from slightly off the surface, more so the
     // more it faces away from the light. This cures acne by moving the
     // sample rather than the shadow, so contact stays tight.
     // Start at the finest cascade and take the first that actually
@@ -250,7 +250,7 @@ void main() {
     // ...and fall through to the coarser ones if it does not actually
     // land inside that map.
     //
-    // Depth chooses the band, but coverage is a question of AREA: each
+    // Depth chooses the band, but coverage is a question of area: each
     // cascade is a box fitted to its slice of the view, and a fragment
     // at the right depth can still fall outside it -- off to the side,
     // or nudged out by the texel snapping. Taking the first band and
@@ -264,13 +264,13 @@ void main() {
       if (cascade >= shadowCascades) {
         break;
       }
-      // Normal offset: sample from slightly OFF the surface, more so
+      // Normal offset: sample from slightly off the surface, more so
       // the more it faces away from the light. This cures acne by
       // moving the sample rather than the shadow, so contact stays
       // tight. It scales with this cascade's texel, which is what sets
       // how coarse the comparison is here.
       // The offset scales with this cascade's texel, which is what
-      // sets how coarse the comparison is -- but it is CAPPED, because
+      // sets how coarse the comparison is -- but it is capped, because
       // past a few centimetres it stops curing acne and starts moving
       // the sample out of the shadow it is standing in. A wall lit
       // edge-on by a low sun is the worst case: `slope` goes to 1
@@ -308,7 +308,7 @@ void main() {
       // The boxes are concentric on the viewer, so where one ends the
       // next takes over -- and the two do not agree. The next one's
       // texels are several times wider, so its blur is wider and its
-      // sampling offset larger, and the changeover draws a SEAM on the
+      // sampling offset larger, and the changeover draws a seam on the
       // ground at a fixed radius from the player. Being fixed to the
       // player, it travels with them: walk five metres and the seam
       // walks five metres, which is not something a sun does.
@@ -345,7 +345,7 @@ void main() {
   // came out, so an edge that fades reads as a gradient in its own
   // band's colour.
   //
-  // This exists because a shadow artefact seen while MOVING cannot be
+  // This exists because a shadow artefact seen while moving cannot be
   // diagnosed from a still: whether a fading edge is a cascade
   // handover, a coverage hole or a bias problem looks identical in a
   // screenshot, and the three have nothing to do with each other. Here

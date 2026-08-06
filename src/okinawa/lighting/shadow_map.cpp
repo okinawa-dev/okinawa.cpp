@@ -54,7 +54,7 @@ void OkShadowMap::initialize() {
   // soft, and they have nothing to do with each other. In this view
   // they are three different colours.
   OkConfig::setBool("shadows.debug", false);
-  // Normal offset: the receiver samples the map from slightly OFF its
+  // Normal offset: the receiver samples the map from slightly off its
   // own surface, which cures acne by moving the sample rather than the
   // shadow. It scales with the cascade's texel, since that is what sets
   // how coarse the comparison is -- and it is capped, in metres,
@@ -279,7 +279,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
     proj[3][1] += dy / half;
     _lightSpace[c] = proj * view;
 
-    // What the redraw test compares: where the box sits ON THE MAP,
+    // What the redraw test compares: where the box sits on the map,
     // which is what decides whether this cascade's picture would come
     // out any different.
     float cx = ox + dx;
@@ -303,7 +303,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
       glUseProgram(_program);
       // Slope-scaled depth offset instead of front-face culling.
       // Culling front faces hides acne but records each caster as
-      // starting at its BACK, so shadows visibly detach from the object
+      // starting at its back, so shadows visibly detach from the object
       // casting them (peter panning). A polygon offset that grows with
       // the surface's slope pushes only the problem cases, leaving
       // contact shadows in place.
@@ -321,7 +321,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
     // The camera's frustum is the wrong test here -- a caster behind
     // the viewer still casts into view -- but "no test at all" was
     // worse: the whole city was drawn to fill a box a couple of hundred
-    // metres across. The right test is the LIGHT's own volume, which
+    // metres across. The right test is the light's own volume, which
     // this orthographic box already is.
     OkFrustum        lightFrustum;
     lightFrustum.setFromMatrix(_lightSpace[c]);
@@ -417,7 +417,7 @@ void OkShadowMap::bind(GLuint program) {
   // few centimetres in the near box and three times that in the next.
   // The shadow then lands in a different place either side of the
   // changeover, and no amount of blending hides two shadows that are
-  // not in the same place. Stated in METRES and divided by each box's
+  // not in the same place. Stated in metres and divided by each box's
   // own depth, every cascade gets the same margin on the ground.
   loc = glGetUniformLocation(program, "shadowBias");
   if (loc != -1) {
@@ -448,8 +448,8 @@ void OkShadowMap::bind(GLuint program) {
   // World size of one shadow texel: the sampling point is nudged along
   // the receiving surface's normal by roughly this much, which removes
   // the remaining acne without moving the shadow along the ground.
-  // World size of one texel PER CASCADE: the far ones are much coarser,
-  // and using the near one's figure for them leaves acne.
+  // World size of one texel, one per cascade: the far ones are much
+  // coarser, and using the near one's figure for them leaves acne.
   loc = glGetUniformLocation(program, "shadowTexelWorld");
   if (loc != -1) {
     float perCascade[MAX_CASCADES];

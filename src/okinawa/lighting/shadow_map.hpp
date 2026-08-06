@@ -46,11 +46,11 @@ public:
   static void initialize();
 
   // Render the scene's depth from the light. Called by the frame loop
-  // BEFORE the world pass; leaves the framebuffer and viewport as it
+  // before the world pass; leaves the framebuffer and viewport as it
   // found them. `centre` is the point the map is built around (the
   // camera target). Does nothing when shadows are off or the light is
   // below the horizon.
-  // `viewProj` is the CAMERA's projection * view for this frame. The
+  // `viewProj` is the camera's projection * view for this frame. The
   // shadowed area is derived from it, so the map covers what is being
   // looked at rather than a fixed square around the viewer.
   static void render(OkScene *scene, const float *viewProj, float centreX,
@@ -82,7 +82,7 @@ private:
   static float     _lastCx[MAX_CASCADES];
   static float     _lastCz[MAX_CASCADES];
   static float     _lastExtent[MAX_CASCADES];
-  // An EMPTY 1x1x1 depth array, kept for the frames when there is no
+  // An empty 1x1x1 depth array, kept for the frames when there is no
   // real map to bind -- with the sun down, say. The world shader
   // declares a sampler2DArray whether or not anything is shadowing, and
   // in the core profile a draw whose declared sampler points at a unit
