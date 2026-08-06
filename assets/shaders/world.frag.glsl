@@ -240,7 +240,7 @@ void main() {
     // covers this fragment. The boxes are concentric on the viewer, so
     // the first one to contain it is the sharpest available.
     //
-    // The band used to be chosen by ViewDepth -- distance to the CAMERA
+    // The band used to be chosen by ViewDepth -- distance to the camera
     // -- which made a sun shadow depend on where the camera was: pull
     // back on the wheel and a wall changed band without moving. Where
     // it lands is a question of the box, not of the eye, so the
@@ -286,7 +286,7 @@ void main() {
           pc.y >= 1.0) {
         continue;   // not in this one; try the next, coarser band
       }
-      // Soften the edge over a fixed width ON THE GROUND, not over a
+      // Soften the edge over a fixed width on the ground, not over a
       // fixed number of texels. The far cascades' texels are several
       // times wider, so a 3x3 kernel there blurs over several times
       // more ground: the same shadow edge arrives soft on one side of a

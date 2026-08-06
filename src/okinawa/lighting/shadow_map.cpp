@@ -49,7 +49,7 @@ void OkShadowMap::initialize() {
   OkConfig::setBool("shadows.cull", true);
   // Debug view: paint every fragment by the cascade that shadowed it,
   // magenta where none could. An artefact that only appears while
-  // MOVING cannot be read off a still -- a cascade handover, a hole in
+  // moving cannot be read off a still -- a cascade handover, a hole in
   // a cascade's coverage and a bias washout all look like an edge going
   // soft, and they have nothing to do with each other. In this view
   // they are three different colours.
@@ -57,7 +57,7 @@ void OkShadowMap::initialize() {
   // Normal offset: the receiver samples the map from slightly OFF its
   // own surface, which cures acne by moving the sample rather than the
   // shadow. It scales with the cascade's texel, since that is what sets
-  // how coarse the comparison is -- and it is CAPPED, in metres,
+  // how coarse the comparison is -- and it is capped, in metres,
   // because past a few centimetres it stops curing anything and starts
   // pushing the sample out of the shadow the surface is standing in.
   OkConfig::setFloat("shadows.normaloffset", 1.0f);
@@ -77,7 +77,7 @@ void OkShadowMap::initialize() {
   // buys neighbours that resemble each other.
   OkConfig::setFloat("shadows.cascades.blend", 0.4f);
   OkConfig::setFloat("shadows.strength", 0.62f);
-  // In METRES: how far a surface has to be behind its own recorded
+  // In metres: how far a surface has to be behind its own recorded
   // depth before it counts as shadowed. Divided per cascade by that
   // box's depth range before it reaches the shader, so every cascade
   // gets the same margin on the ground.
@@ -219,7 +219,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
   float  turnMax = OkConfig::getFloat("shadows.refresh.turn");
 
   for (int c = 0; c < count; c++) {
-    // Each cascade is a square centred on the VIEWER, sized by its own
+    // Each cascade is a square centred on the viewer, sized by its own
     // band -- concentric, so the finest box sits inside the next.
     //
     // It used to be fitted to the camera's slice of the view instead,
@@ -243,8 +243,8 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
     if (shadowFar > 0.0f) {
       extent = _splitFar[c];
     }
-    // The box travels with the viewer, so it has to travel in WHOLE
-    // TEXELS -- otherwise the grid the shadow is drawn on slides under
+    // The box travels with the viewer, so it has to travel in whole
+    // texels -- otherwise the grid the shadow is drawn on slides under
     // the world and every edge creeps as the player walks.
     //
     // The grid lies in the light's frame, not the world's, so the snap
@@ -260,7 +260,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
     //
     // So: build the box unsnapped, see where the world origin lands on
     // the map, and slide the projection by the fraction of a texel that
-    // puts it on a whole one. Anchoring the ORIGIN rather than the
+    // puts it on a whole one. Anchoring the origin rather than the
     // centre is what makes the grid world-fixed.
     float     depth = extent * 4.0f;
     glm::vec3 target(focusX, centreY, focusZ);
@@ -354,8 +354,9 @@ void OkShadowMap::bind(GLuint program) {
     glUniform1f(strengthLoc, _strength);
   }
   if (_strength <= 0.0f || _depthTex == 0) {
-    // Nothing to sample -- but the sampler still has to have something
-    // COMPLETE bound to it. A shader that declares a sampler2DArray and
+    // Nothing to sample -- but the sampler still has to have a
+    // complete texture bound to it. A shader that declares a
+    // sampler2DArray and
     // is drawn with nothing on that unit is an invalid operation in the
     // core profile, and every draw call in the frame fails: at night,
     // with the sun down and the strength at zero, that emptied the
@@ -408,7 +409,7 @@ void OkShadowMap::bind(GLuint program) {
   if (loc != -1) {
     glUniform1f(loc, 1.0f / (float)_size);
   }
-  // Depth bias, PER CASCADE, converted from metres.
+  // Depth bias, one per cascade, converted from metres.
   //
   // The comparison needs a margin, and the margin has to mean the same
   // thing in every cascade. Expressed in the map's own depth units it

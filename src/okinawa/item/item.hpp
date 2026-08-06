@@ -20,13 +20,13 @@ protected:
   bool   visible;
   bool   drawWireframe;  // Flag to control wireframe rendering
   // Whether the global `graphics.wireframe` switch reaches this item.
-  // It is a way of looking at the SCENE, so the interface drawn over
+  // It is a way of looking at the scene, so the interface drawn over
   // the scene stays out of it: a wireframed font atlas is a screenful
   // of empty boxes, and the console that turns the switch back off is
   // the first thing to become unreadable.
   bool   wireframeGlobal;
   // Whether this item is drawn into the shadow maps. Most things are;
-  // the ones that are not are the ones that are LIGHT rather than
+  // the ones that are not are the ones that are light rather than
   // matter -- a lamp's corona, an emissive pane, the sky itself. They
   // have geometry, so without this they are recorded as occluders and
   // a glow ends up casting a shadow.
