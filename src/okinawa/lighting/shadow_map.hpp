@@ -82,6 +82,14 @@ private:
   static float     _lastCx[MAX_CASCADES];
   static float     _lastCz[MAX_CASCADES];
   static float     _lastExtent[MAX_CASCADES];
+  // An EMPTY 1x1x1 depth array, kept for the frames when there is no
+  // real map to bind -- with the sun down, say. The world shader
+  // declares a sampler2DArray whether or not anything is shadowing, and
+  // in the core profile a draw whose declared sampler points at a unit
+  // with no complete texture on it fails, taking the whole frame with
+  // it. This gives the sampler something to point at; nothing ever
+  // reads from it.
+  static GLuint    _emptyShadowTex;
   static size_t    _lastObjects;
   static glm::mat4 _lightSpace[MAX_CASCADES];
   // Where each cascade stops, as a view-space distance. The world pass

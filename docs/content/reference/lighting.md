@@ -223,6 +223,13 @@ On top of that, the last stretch of each cascade dissolves into the one
 behind it, so the changeover is spread over metres rather than falling
 on a line.
 
+Shadowing switches off on its own when the sun is down. The map is not
+drawn then, but the world shader still declares its sampler, so the
+sampler is given a 1×1 stand-in to point at: a shader drawn with nothing
+bound to a declared sampler is an invalid operation in the core profile,
+and *every* draw call in the frame fails with it — which empties the
+screen, interface included.
+
 Only the **directional** contribution is shadowed: the ambient floor and the
 point lights still reach a shadowed surface, which is what keeps shadows
 from becoming black holes. Strength follows the light's elevation and

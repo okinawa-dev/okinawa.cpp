@@ -13,6 +13,7 @@
 
 GLuint    OkShadowMap::_fbo      = 0;
 GLuint    OkShadowMap::_depthTex = 0;
+GLuint    OkShadowMap::_emptyShadowTex = 0;
 GLuint    OkShadowMap::_program  = 0;
 int       OkShadowMap::_size     = 0;
 // What the map was last drawn for, so an identical redraw is skipped.
@@ -200,6 +201,16 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
                                                : glm::vec3(0.0f, 1.0f, 0.0f);
   GLint previousFbo = 0;
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousFbo);
+  // ...and the viewport with it. Drawing the map means resizing the
+  // viewport to the map, and whatever draws next expects the window's.
+  // Leaving it behind renders the whole frame into a 2048x2048 corner
+  // of an 800x600 window: what reaches the screen is one hugely
+  // magnified patch -- a flat colour -- and the interface falls off it
+  // entirely. It went unnoticed because the post-process happens to set
+  // the viewport again on its way in and out, so the damage only shows
+  // when that pass is off or when it runs in the wrong order.
+  GLint previousViewport[4] = {0, 0, 0, 0};
+  glGetIntegerv(GL_VIEWPORT, previousViewport);
   bool bound = false;
 
   size_t objects = scene->getObjectCount();
@@ -327,6 +338,8 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
     glDisable(GL_POLYGON_OFFSET_FILL);
     glEnable(GL_CULL_FACE);
     glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)previousFbo);
+    glViewport(previousViewport[0], previousViewport[1], previousViewport[2],
+               previousViewport[3]);
     _neverDrawn  = false;
     _lastDir[0]  = dir[0];
     _lastDir[1]  = dir[1];
@@ -341,6 +354,33 @@ void OkShadowMap::bind(GLuint program) {
     glUniform1f(strengthLoc, _strength);
   }
   if (_strength <= 0.0f || _depthTex == 0) {
+    // Nothing to sample -- but the sampler still has to have something
+    // COMPLETE bound to it. A shader that declares a sampler2DArray and
+    // is drawn with nothing on that unit is an invalid operation in the
+    // core profile, and every draw call in the frame fails: at night,
+    // with the sun down and the strength at zero, that emptied the
+    // whole screen. The shader skips the lookup anyway once
+    // shadowStrength is 0, so a 1x1x1 stand-in is enough.
+    if (_emptyShadowTex == 0) {
+      glGenTextures(1, &_emptyShadowTex);
+      glBindTexture(GL_TEXTURE_2D_ARRAY, _emptyShadowTex);
+      glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT24, 1, 1, 1, 0,
+                   GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S,
+                      GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T,
+                      GL_CLAMP_TO_EDGE);
+      glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    }
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, _emptyShadowTex);
+    glActiveTexture(GL_TEXTURE0);
+    GLint dloc = glGetUniformLocation(program, "shadowMap");
+    if (dloc != -1) {
+      glUniform1i(dloc, 3);
+    }
     return;
   }
   glActiveTexture(GL_TEXTURE3);
