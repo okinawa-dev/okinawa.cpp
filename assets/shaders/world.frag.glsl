@@ -38,12 +38,22 @@ uniform float      shadowTexel;
 uniform float      shadowDebug;   // 1 = paint fragments by cascade
 uniform float      shadowNormalOffset;      // scale on the normal offset
 uniform float      shadowNormalOffsetMax;   // its ceiling, in metres
-uniform float      shadowBias;
 // Cascades: the shadow distance is split into bands, each with its own
 // map and its own matrix. A near band covers little ground and so
 // resolves finely; a far one covers kilometres coarsely. Which one a
 // fragment uses is decided by how far away it is.
 const int MAX_SHADOW_CASCADES = 4;
+// Depth margin for the comparison, one per cascade. Stated in metres by
+// the caller and divided there by each box's own depth range, so the
+// margin means the same thing on the ground whichever cascade answers
+// -- otherwise the shadow lands in a different place either side of a
+// changeover, and no blending can hide two shadows that are not in the
+// same place.
+uniform float      shadowBias[MAX_SHADOW_CASCADES];
+// How much of a cascade's half-width is spent dissolving into the next
+// one, as a fraction of the map. Wide enough that the changeover is
+// never a line, narrow enough that most fragments read one map only.
+const float SHADOW_EDGE_FADE = 0.25;
 uniform int        shadowCascades;
 uniform mat4       lightSpace[MAX_SHADOW_CASCADES];
 uniform float      shadowSplit[MAX_SHADOW_CASCADES];       // band ends
@@ -217,6 +227,11 @@ void main() {
   // did. Only read by the debug view below, but it has to be recorded
   // where the answer is known.
   int usedCascade = -1;
+  // The first cascade to answer, and how far inside its own edge the
+  // fragment sat: 1 well inside, 0 right on the border, which is how
+  // much of the NEXT cascade's answer gets mixed in.
+  float shadeA  = -1.0;
+  float weightA = 1.0;
   if (shadowStrength > 0.0 && lightingOn > 0.5) {
     // Normal offset: sample from slightly OFF the surface, more so the
     // more it faces away from the light. This cures acne by moving the
@@ -271,17 +286,53 @@ void main() {
           pc.y >= 1.0) {
         continue;   // not in this one; try the next, coarser band
       }
-      float lit = 0.0;
+      // Soften the edge over a fixed width ON THE GROUND, not over a
+      // fixed number of texels. The far cascades' texels are several
+      // times wider, so a 3x3 kernel there blurs over several times
+      // more ground: the same shadow edge arrives soft on one side of a
+      // changeover and sharp on the other, which reads as a smudged
+      // patch travelling with the player. Measuring the kernel in
+      // metres -- taking the finest cascade's texel as the unit -- puts
+      // every cascade's penumbra at the same width.
+      float step = shadowTexelWorld[0] / shadowTexelWorld[cascade];
+      float lit  = 0.0;
       for (int oy = -1; oy <= 1; oy++) {
         for (int ox = -1; ox <= 1; ox++) {
-          vec2  o = vec2(float(ox), float(oy)) * shadowTexel;
+          vec2  o = vec2(float(ox), float(oy)) * shadowTexel * step;
           float d = texture(shadowMap, vec3(pc.xy + o, float(cascade))).r;
-          lit += (pc.z - shadowBias > d) ? 0.0 : 1.0;
+          lit += (pc.z - shadowBias[cascade] > d) ? 0.0 : 1.0;
         }
       }
-      shade = mix(1.0, lit / 9.0, shadowStrength);
-      usedCascade = cascade;
+      // Fade out towards this cascade's own edge.
+      //
+      // The boxes are concentric on the viewer, so where one ends the
+      // next takes over -- and the two do not agree. The next one's
+      // texels are several times wider, so its blur is wider and its
+      // sampling offset larger, and the changeover draws a SEAM on the
+      // ground at a fixed radius from the player. Being fixed to the
+      // player, it travels with them: walk five metres and the seam
+      // walks five metres, which is not something a sun does.
+      //
+      // So the last stretch of each box dissolves into the one behind
+      // it. The changeover still happens at the same radius, but spread
+      // over metres it stops being a line anyone can see.
+      float edge = min(min(pc.x, 1.0 - pc.x), min(pc.y, 1.0 - pc.y));
+      float w    = clamp(edge / SHADOW_EDGE_FADE, 0.0, 1.0);
+      float s    = lit / 9.0;
+      if (shadeA < 0.0) {
+        shadeA      = s;
+        weightA     = w;
+        usedCascade = cascade;
+        if (w >= 1.0) {
+          break;      // well inside this one; nothing to blend with
+        }
+        continue;     // near its edge: ask the next one too
+      }
+      shadeA = mix(s, shadeA, weightA);
       break;
+    }
+    if (shadeA >= 0.0) {
+      shade = mix(1.0, shadeA, shadowStrength);
     }
   }
   color.rgb *= (SunLight * shade + AmbientLight +

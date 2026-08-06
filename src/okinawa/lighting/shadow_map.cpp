@@ -64,13 +64,22 @@ void OkShadowMap::initialize() {
   // bands means each one covers less ground and so resolves finer, at
   // one depth pass each.
   OkConfig::setInt("shadows.cascades", 3);
-  // How the splits are spaced, 0 even and 1 logarithmic. Even spacing
-  // wastes the near cascade on ground that is already close; purely
-  // logarithmic makes the far cascade enormous. The usual answer is
-  // most of the way towards logarithmic.
-  OkConfig::setFloat("shadows.cascades.blend", 0.75f);
+  // How the splits are spaced, 0 even and 1 logarithmic. The usual
+  // answer is most of the way towards logarithmic, which packs
+  // resolution into the first few metres -- and puts the first
+  // changeover about twenty metres from the player, in the middle of
+  // the street they are walking down, with a threefold jump in texel
+  // size across it. Two neighbouring cascades that differ that much
+  // cannot be made to agree, and the seam rides along with the player.
+  // Backing off towards even spacing costs some sharpness underfoot and
+  // buys neighbours that resemble each other.
+  OkConfig::setFloat("shadows.cascades.blend", 0.4f);
   OkConfig::setFloat("shadows.strength", 0.62f);
-  OkConfig::setFloat("shadows.bias", 0.00035f);
+  // In METRES: how far a surface has to be behind its own recorded
+  // depth before it counts as shadowed. Divided per cascade by that
+  // box's depth range before it reaches the shader, so every cascade
+  // gets the same margin on the ground.
+  OkConfig::setFloat("shadows.bias", 0.045f);
   // NOLINTEND(readability-magic-numbers)
   OkLogger::info("ShadowMap", "Config defaults registered");
 }
@@ -222,17 +231,47 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
     if (shadowFar > 0.0f) {
       extent = _splitFar[c];
     }
-    float texel = (2.0f * extent) / (float)_size;
-    float cx    = std::floor(focusX / texel) * texel;
-    float cz    = std::floor(focusZ / texel) * texel;
-
+    // The box travels with the viewer, so it has to travel in WHOLE
+    // TEXELS -- otherwise the grid the shadow is drawn on slides under
+    // the world and every edge creeps as the player walks.
+    //
+    // The grid lies in the light's frame, not the world's, so the snap
+    // belongs there too. Rounding the centre on the world axes, which
+    // is what this did, only lands on a texel when the sun is straight
+    // overhead; at any other hour the two frames are rotated with
+    // respect to each other and the rounding achieves nothing. The
+    // error is a function of position, so it does not jitter -- it
+    // drifts, steadily, in the direction of travel. With the sun near
+    // the horizon a fraction of a texel on the map becomes a long
+    // stride on the ground, and the shadow visibly walks away from a
+    // player walking towards it.
+    //
+    // So: build the box unsnapped, see where the world origin lands on
+    // the map, and slide the projection by the fraction of a texel that
+    // puts it on a whole one. Anchoring the ORIGIN rather than the
+    // centre is what makes the grid world-fixed.
     float     depth = extent * 4.0f;
-    glm::vec3 target(cx, centreY, cz);
-    glm::vec3 eye = target - lightDir * (depth * 0.5f);
+    glm::vec3 target(focusX, centreY, focusZ);
+    glm::vec3 eye  = target - lightDir * (depth * 0.5f);
     glm::mat4 view = glm::lookAt(eye, target, up);
     glm::mat4 proj =
         glm::ortho(-extent, extent, -extent, extent, 0.1f, depth * 1.5f);
+
+    glm::vec4 originLs = (proj * view) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    float     half     = (float)_size * 0.5f;
+    float     ox       = originLs.x * half;
+    float     oy       = originLs.y * half;
+    float     dx       = std::floor(ox + 0.5f) - ox;
+    float     dy       = std::floor(oy + 0.5f) - oy;
+    proj[3][0] += dx / half;
+    proj[3][1] += dy / half;
     _lightSpace[c] = proj * view;
+
+    // What the redraw test compares: where the box sits ON THE MAP,
+    // which is what decides whether this cascade's picture would come
+    // out any different.
+    float cx = ox + dx;
+    float cz = oy + dy;
 
     // Redraw this cascade only when its picture would differ: static
     // geometry under a slow sun looks the same from frame to frame.
@@ -326,9 +365,25 @@ void OkShadowMap::bind(GLuint program) {
   if (loc != -1) {
     glUniform1f(loc, 1.0f / (float)_size);
   }
+  // Depth bias, PER CASCADE, converted from metres.
+  //
+  // The comparison needs a margin, and the margin has to mean the same
+  // thing in every cascade. Expressed in the map's own depth units it
+  // does not: each cascade spans a different depth, so one number is a
+  // few centimetres in the near box and three times that in the next.
+  // The shadow then lands in a different place either side of the
+  // changeover, and no amount of blending hides two shadows that are
+  // not in the same place. Stated in METRES and divided by each box's
+  // own depth, every cascade gets the same margin on the ground.
   loc = glGetUniformLocation(program, "shadowBias");
   if (loc != -1) {
-    glUniform1f(loc, OkConfig::getFloat("shadows.bias"));
+    float worldBias = OkConfig::getFloat("shadows.bias");
+    float perCascade[MAX_CASCADES];
+    for (int c = 0; c < _count; c++) {
+      float range   = _lastExtent[c] * 6.0f;   // ortho far, see render()
+      perCascade[c] = range > 0.0f ? worldBias / range : 0.0f;
+    }
+    glUniform1fv(loc, _count, perCascade);
   }
   // Debug view: paint each fragment by the cascade that shadowed it.
   // A shadow artefact seen while moving cannot be told apart in a

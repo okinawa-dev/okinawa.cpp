@@ -190,6 +190,39 @@ starts at the finest cascade and takes the first that actually covers
 it — which, with concentric boxes, is the sharpest one available. Note
 that this is a question of coverage, not of distance to the camera.
 
+### Making neighbouring cascades agree
+
+A changeover between two cascades happens at a fixed radius from the
+viewer, so it travels with them. Nothing can be done about that; what
+can be done is to leave nothing to see when it passes. Two cascades
+that disagree draw a seam on the ground that walks along with the
+player, and a player walking towards it watches it retreat — which is
+not something a sun does.
+
+Three things have to match, and each was wrong in its own way before:
+
+- **Where the shadow lands.** The depth comparison needs a margin, and
+  `shadows.bias` states it in **metres**. Stated in the map's own depth
+  units it would mean different distances in different cascades, since
+  each spans a different depth — a few centimetres in the near box and
+  three times that in the next — so the shadow would sit in a different
+  place either side of the changeover. No amount of blending hides two
+  shadows that are not in the same place.
+- **How wide the edge is.** The filter kernel is measured in metres
+  too, taking the finest cascade's texel as the unit. A fixed 3×3 of
+  texels blurs over several times more ground in a coarse cascade, so
+  the same edge arrived soft on one side and sharp on the other.
+- **How far apart the cascades are.** `shadows.cascades.blend` near 1
+  packs resolution into the first few metres and puts the first
+  changeover about twenty metres out, with a threefold jump in texel
+  size across it. Neighbours that different cannot be reconciled. The
+  default backs off towards even spacing: less sharpness underfoot,
+  neighbours that resemble each other.
+
+On top of that, the last stretch of each cascade dissolves into the one
+behind it, so the changeover is spread over metres rather than falling
+on a line.
+
 Only the **directional** contribution is shadowed: the ambient floor and the
 point lights still reach a shadowed surface, which is what keeps shadows
 from becoming black holes. Strength follows the light's elevation and
@@ -289,11 +322,11 @@ never tinted, fogged or sunlit.
 | `shadows.extent` | `90` | Half-width used when fitting is off (`shadows.distance` 0). |
 | `shadows.distance` | `260` | How far shadows are worth drawing, split across the cascades. 0 falls back to a fixed `shadows.extent` box on the viewer. |
 | `shadows.cascades` | `3` | Bands the distance is split into (max 4). |
-| `shadows.cascades.blend` | `0.75` | Split spacing: 0 even, 1 logarithmic. |
+| `shadows.cascades.blend` | `0.4` | Split spacing: 0 even, 1 logarithmic. Nearer 1 packs resolution underfoot but makes neighbouring cascades differ sharply, which is what a travelling seam is made of. |
 | `shadows.normaloffset` | `1.0` | Scale on the receiver's normal offset (the sample is taken slightly off the surface, to cure acne by moving the sample rather than the shadow). |
 | `shadows.normaloffset.max` | `0.06` | Its ceiling, in metres. Past a few centimetres the offset stops curing acne and starts lifting the sample out of the shadow the surface stands in. |
 | `shadows.debug` | `false` | Paint every fragment by the cascade that shadowed it — red, green, blue, yellow for 0..3, magenta where none could. A shadow artefact seen while moving cannot be read off a still: a cascade handover, a hole in a cascade's coverage and a bias washout all look like an edge going soft, and they have nothing to do with each other. Here they are three colours. |
 | `shadows.cull` | `true` | Cull the shadow pass against the light's volume. |
 | `shadows.refresh.turn` | `4e-7` | How far the sun must turn (as 1-cos) before the map is redrawn; 0 redraws every frame. |
 | `shadows.strength` | `0.62` | How dark a fully shadowed surface goes. |
-| `shadows.bias` | `0.00035` | Depth bias against self-shadowing. |
+| `shadows.bias` | `0.045` | Depth margin for the comparison, in **metres**. Divided per cascade by that box's depth range, so the margin means the same thing on the ground whichever cascade answers. |
