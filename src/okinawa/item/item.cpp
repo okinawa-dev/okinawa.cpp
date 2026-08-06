@@ -177,6 +177,50 @@ OkItem::~OkItem() {
   if (texture && !textureName.empty()) {
     OkTextureHandler::getInstance()->removeReference(textureName);
   }
+  for (size_t i = 0; i < materials.size(); i++) {
+    if (materials[i].texture && !materials[i].textureName.empty()) {
+      OkTextureHandler::getInstance()->removeReference(
+          materials[i].textureName);
+    }
+  }
+}
+
+/**
+ * @brief Add a material slot over a range of the index buffer.
+ */
+void OkItem::addMaterialFromFile(long firstIndex, long indexCount,
+                                 const std::string &path) {
+  if (indexCount <= 0 || firstIndex < 0 ||
+      firstIndex + indexCount > numIndices) {
+    OkLogger::error("Item", "Material range out of bounds for item: " + name);
+    return;
+  }
+  MaterialRange mr;
+  mr.first   = firstIndex;
+  mr.count   = indexCount;
+  mr.texture = nullptr;
+  if (!path.empty()) {
+    // Same contract as loadTextureFromFile: the slot holds its own
+    // reference, so the texture outlives whatever else drops it.
+    mr.texture = OkTextureHandler::getInstance()->createTextureFromFile(path);
+    if (mr.texture) {
+      mr.textureName = path;
+    }
+  }
+  materials.push_back(mr);
+}
+
+/**
+ * @brief Drop every material slot (and its texture reference).
+ */
+void OkItem::clearMaterials() {
+  for (size_t i = 0; i < materials.size(); i++) {
+    if (materials[i].texture && !materials[i].textureName.empty()) {
+      OkTextureHandler::getInstance()->removeReference(
+          materials[i].textureName);
+    }
+  }
+  materials.clear();
 }
 
 /**
@@ -398,9 +442,6 @@ void OkItem::drawSelf() {
   bool drawWireframe =
       (this->wireframeGlobal && OkConfig::getBool("graphics.wireframe")) ||
       this->drawWireframe;
-  bool drawTexture =
-      OkConfig::getBool("graphics.textures") && texture && texture->isLoaded();
-
   // Verify we have a valid shader program
   GLint current_program;
   glGetIntegerv(GL_CURRENT_PROGRAM, &current_program);
@@ -546,28 +587,43 @@ void OkItem::drawSelf() {
         glUniform3f(lumaLoc, matLuma[0], matLuma[1], matLuma[2]);
       }
     }
-    if (drawTexture) {
-      glActiveTexture(GL_TEXTURE0);
-      texture->bind();
-      GLint texLoc = glGetUniformLocation(current_program, "texture0");
-      if (texLoc != -1) {
-        glUniform1i(texLoc, 0);
+    GLint texLoc   = glGetUniformLocation(current_program, "texture0");
+    GLint colorLoc = glGetUniformLocation(current_program, "wireframeColor");
+    bool  texturesOn = OkConfig::getBool("graphics.textures");
+
+    // One pass per material slot, over the same buffers: the transform,
+    // the culling and every uniform above are done once for the whole
+    // item, and only the texture changes between ranges. An item with
+    // no slots draws its whole index buffer with its own texture, which
+    // is the common case.
+    size_t passes = materials.empty() ? 1 : materials.size();
+    for (size_t mi = 0; mi < passes; mi++) {
+      OkTexture *tex   = materials.empty() ? texture : materials[mi].texture;
+      long       first = materials.empty() ? 0 : materials[mi].first;
+      long       count = materials.empty() ? numIndices : materials[mi].count;
+      bool       useTex = texturesOn && tex && tex->isLoaded();
+      if (useTex) {
+        glActiveTexture(GL_TEXTURE0);
+        tex->bind();
+        if (texLoc != -1) {
+          glUniform1i(texLoc, 0);
+        }
+        if (hasTexLoc != -1) {
+          glUniform1i(hasTexLoc, 1);
+        }
+      } else {
+        if (hasTexLoc != -1) {
+          glUniform1i(hasTexLoc, 0);
+        }
+        if (colorLoc != -1) {
+          glUniform4f(colorLoc, fillColor[0], fillColor[1], fillColor[2],
+                      fillColor[3]);
+        }
       }
-      if (hasTexLoc != -1) {
-        glUniform1i(hasTexLoc, 1);
-      }
-    } else {
-      if (hasTexLoc != -1) {
-        glUniform1i(hasTexLoc, 0);
-      }
-      GLint colorLoc = glGetUniformLocation(current_program, "wireframeColor");
-      if (colorLoc != -1) {
-        glUniform4f(colorLoc, fillColor[0], fillColor[1], fillColor[2],
-                    fillColor[3]);
-      }
+      glDrawElements(drawMode, (GLsizei)count, GL_UNSIGNED_INT,
+                     (const void *)(first * (long)sizeof(unsigned int)));
+      OkFrustum::addDraw(count / 3);
     }
-    glDrawElements(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT, nullptr);
-    OkFrustum::addDraw(numIndices / 3);
   }
 
   // Wireframe overlay pass (in the wireframe colour, on top of the fill).

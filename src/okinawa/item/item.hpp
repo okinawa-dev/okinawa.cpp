@@ -6,6 +6,7 @@
 #include "../handlers/textures.hpp"
 #include "../item/texture.hpp"
 #include <string>
+#include <vector>
 
 class OkItem : public OkObject {
 private:
@@ -48,6 +49,25 @@ protected:
 
   // Texture
   std::string textureName;  // Name/path of the texture for reference counting
+
+  // Material slots. A mesh often wants more than one material -- a crate
+  // with a metal lid, a wall and its roof, a body and its glass -- and
+  // splitting it into separate items to get them is the wrong trade:
+  // it doubles
+  // the objects, the transforms and the culling tests for what is one
+  // surface. Instead the index buffer is carved into ranges, each with
+  // its own texture, drawn back to back from the same buffers. This is
+  // the usual arrangement (submeshes, material slots, glTF primitives).
+  //
+  // Empty means the whole mesh wears `texture`, which is the common
+  // case and costs nothing.
+  struct MaterialRange {
+    long        first;    // first index into the element buffer
+    long        count;    // how many indices
+    OkTexture  *texture;  // null draws the range in the fill colour
+    std::string textureName;
+  };
+  std::vector<MaterialRange> materials;
   OkTexture  *texture;
 
   // Multiplies the texture in the fill pass.
@@ -107,6 +127,15 @@ public:
   }
 
   // Flags
+  // Add a material slot covering [firstIndex, firstIndex + indexCount)
+  // of the index buffer, textured from `path`. Ranges are drawn in the
+  // order added and should cover the buffer without overlapping; adding
+  // none leaves the item single-material.
+  void   addMaterialFromFile(long firstIndex, long indexCount,
+                             const std::string &path);
+  void   clearMaterials();
+  size_t getMaterialCount() const { return materials.size(); }
+
   void   setWireframe(bool wireframe) { drawWireframe = wireframe; }
   bool   getWireframe() const { return drawWireframe; }
   // Opt this item out of (or back into) the global wireframe switch.

@@ -36,6 +36,9 @@ Every drawable inherits these:
 | `void setFadeInverted(bool)` | Use the opposite half of the dither pattern. |
 | `void setDrawMode(GLenum mode)` | Set the GL primitive (`GL_TRIANGLES`, `GL_LINES`, ...). |
 | `void loadTextureFromFile(const std::string &path)` | Load and apply a texture from disk. |
+| `void addMaterialFromFile(long firstIndex, long indexCount, const std::string &path)` | Give a range of the index buffer its own texture (see below). |
+| `void clearMaterials()` | Drop every material slot and its texture reference. |
+| `size_t getMaterialCount() const` | How many material slots the item has (0 = single-material). |
 | `void setTexture(const std::string &name, OkTexture *tex)` | Apply an already-loaded texture. The item takes its own reference (see below). |
 | `void setFillColor(float r, float g, float b, float a = 1)` | Untextured fill colour; the alpha is honoured by blended passes (the GUI). |
 | `void setTintColor(float r, float g, float b, float a)` | Multiplied over the texture in the fill pass (white = untouched); how GUI text is coloured. |
@@ -82,6 +85,48 @@ detailed->setFade(t);                  // 0 -> 1 as it takes over
 standIn->setFade(1.0f - t);
 standIn->setFadeInverted(true);        // opposite half of the pattern
 ```
+
+### Material slots
+
+A mesh often wants more than one material: a crate with a metal lid, a
+wall and its roof, a vehicle body and its glass. Splitting it into
+separate items to get them is the wrong trade — one mesh becomes two
+objects, with two transforms, two bounding spheres and two culling
+tests, and the seam between them has to be kept aligned by hand.
+
+Instead the index buffer is carved into **ranges**, each with its own
+texture, drawn back to back from the same vertex and index buffers. This
+is the usual arrangement elsewhere too: submeshes, material slots, glTF
+primitives.
+
+```cpp
+// faces are laid out [sides ... | lid ...] in the index buffer
+OkItem *crate = new OkItem("crate", verts.data(), (long)verts.size(),
+                           idx.data(), (long)idx.size());
+crate->addMaterialFromFile(0, sidesCount, "assets/wood.png");
+crate->addMaterialFromFile(sidesCount, lidCount, "assets/metal.png");
+```
+
+Rules:
+
+- Ranges are drawn in the order added, and should cover the index buffer
+  without overlapping. Nothing enforces it: a gap simply never draws, an
+  overlap draws twice.
+- Adding **no** slots leaves the item single-material, drawing its whole
+  index buffer with `texture`. That is the common case and costs nothing.
+- Each slot holds its own texture reference, released with the item, on
+  the same terms as [texture ownership](#texture-ownership) below.
+- A slot with an empty path draws its range in the item's fill colour.
+- Everything that is *per item* — the transform, the frustum test, the
+  fade, the lighting uniforms — is done once for the whole mesh,
+  whatever the slot count. Only the texture bind and the draw call
+  repeat.
+
+Because a vertex carries one set of texture coordinates, vertices on the
+seam between two materials usually have to be **split**: same position,
+one copy per material, each with its own UV. That is normal — the same
+reason a cube corner needs three vertices for its three normals — and it
+costs vertices, never triangles.
 
 ### Texture ownership
 
