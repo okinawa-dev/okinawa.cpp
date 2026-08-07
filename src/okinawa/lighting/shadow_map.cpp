@@ -277,7 +277,6 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
     float     dy       = std::floor(oy + 0.5f) - oy;
     proj[3][0] += dx / half;
     proj[3][1] += dy / half;
-    _lightSpace[c] = proj * view;
 
     // What the redraw test compares: where the box sits on the map,
     // which is what decides whether this cascade's picture would come
@@ -291,8 +290,16 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
                  cx != _lastCx[c] || cz != _lastCz[c] ||
                  extent != _lastExtent[c];
     if (!dirty) {
+      // The matrix stays with the picture. It used to be updated every
+      // frame while the map itself was only redrawn once the sun had
+      // turned far enough, so in between the receiver was looking up an
+      // old photograph with new coordinates: the shadow crept a texel
+      // at a time and jumped back on each refresh. Under a moving sun
+      // that reads as a shimmer along every edge.
       continue;
     }
+    // Redrawing, so the matrix and the depth it addresses move together.
+    _lightSpace[c] = proj * view;
     _lastCx[c]     = cx;
     _lastCz[c]     = cz;
     _lastExtent[c] = extent;
