@@ -16,6 +16,7 @@ std::vector<OkConsole::Command>   OkConsole::_commands;
 std::vector<std::string>          OkConsole::_output;
 std::vector<std::string>          OkConsole::_history;
 int                               OkConsole::_historyPos = -1;
+unsigned long                     OkConsole::_printed    = 0;
 std::string                       OkConsole::_input;
 float                             OkConsole::_blinkT  = 0.0f;
 bool                              OkConsole::_uiBuilt = false;
@@ -184,11 +185,30 @@ void OkConsole::execute(const std::string &line) {
 
 void OkConsole::print(const std::string &line) {
   _output.push_back(line);
+  _printed++;
   if ((int)_output.size() > CONSOLE_SCROLLBACK) {
     _output.erase(_output.begin(),
                   _output.begin() +
                       ((long)_output.size() - CONSOLE_SCROLLBACK));
   }
+}
+
+/**
+ * @brief The newest lines still in the scrollback, oldest first.
+ */
+std::vector<std::string> OkConsole::getOutputTail(int maxLines) {
+  std::vector<std::string> tail;
+  if (maxLines <= 0) {
+    return tail;
+  }
+  int start = (int)_output.size() - maxLines;
+  if (start < 0) {
+    start = 0;
+  }
+  for (std::size_t i = (std::size_t)start; i < _output.size(); i++) {
+    tail.push_back(_output[i]);
+  }
+  return tail;
 }
 
 void OkConsole::toggle() {

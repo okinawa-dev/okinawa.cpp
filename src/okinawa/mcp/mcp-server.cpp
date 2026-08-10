@@ -12,6 +12,7 @@
 #include "../config/config.hpp"
 #include "../core/core.hpp"  // OkCore + OpenGL / GLFW headers
 #include "../core/object.hpp"
+#include "../gui/console.hpp"
 #include "../gui/stats.hpp"
 #include "../handlers/scenes.hpp"
 #include "../input/input.hpp"
@@ -370,6 +371,15 @@ struct OkMcpServer::Impl {
                              {"additionalProperties", false}};
     tools.push_back(config);
 
+    json console;
+    console["name"]        = "console";
+    console["description"] = "Run one console command line, exactly as if it had been typed into the drop-down console and submitted, and return what it printed. The console does not need to be open and its open state is left as it was found. This is the way to drive the console from an agent: press_key holds one key per call, so `hide sidewalks` that way is fifteen round trips. Pass no `line` to list the registered command names.";
+    console["inputSchema"] = {{"type", "object"},
+                              {"properties",
+                               {{"line", {{"type", "string"}, {"description", "Command line, e.g. \"hide sidewalks\" or \"set shadows.enabled 0\"."}}}}},
+                              {"additionalProperties", false}};
+    tools.push_back(console);
+
     json getState;
     getState["name"]        = "get_state";
     getState["description"] = "Return numeric runtime state: active camera pose, fps, scene object count, window size and resident memory.";
@@ -411,6 +421,37 @@ struct OkMcpServer::Impl {
       return textResult("wrote " + std::to_string(png->size()) + " bytes (" +
                         std::to_string(w) + "x" + std::to_string(h) +
                         ") to " + path);
+    }
+
+    if (name == "console") {
+      if (!args.contains("line")) {
+        json r = runOnLoop([]() -> json {
+          std::vector<std::string> names = OkConsole::getCommandNames();
+          json                     list  = json::array();
+          for (size_t i = 0; i < names.size(); i++) {
+            list.push_back(names[i]);
+          }
+          return json{{"commands", list}};
+        });
+        return textResult(r.dump(2));
+      }
+      std::string line = args.value("line", std::string());
+      json        r    = runOnLoop([line]() -> json {
+        // The count of lines ever printed brackets the command's own
+        // answer; the scrollback is trimmed, so line indices would not.
+        unsigned long before = OkConsole::getPrintedCount();
+        OkConsole::execute(line);
+        unsigned long produced = OkConsole::getPrintedCount() - before;
+        // The first of those lines is the echoed "> line", not output.
+        std::vector<std::string> tail =
+            OkConsole::getOutputTail((int)produced);
+        json out = json::array();
+        for (size_t i = 1; i < tail.size(); i++) {
+          out.push_back(tail[i]);
+        }
+        return json{{"line", line}, {"output", out}};
+      });
+      return textResult(r.dump(2));
     }
 
     if (name == "press_key" || name == "press_keys") {

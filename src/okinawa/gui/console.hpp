@@ -44,6 +44,15 @@ public:
   // Append a line to the console output buffer.
   static void print(const std::string &line);
 
+  // Read back what commands wrote. The scrollback is trimmed, so the line
+  // count is not the number of lines still held: getPrintedCount returns
+  // how many lines have been printed since the console was created, and
+  // getOutputTail returns the newest lines still in the buffer, oldest
+  // first. Take the count before and after an execute() and the difference
+  // is that command's answer.
+  static unsigned long            getPrintedCount() { return _printed; }
+  static std::vector<std::string> getOutputTail(int maxLines);
+
   // Open state. While open the console owns the keyboard (OkInput is
   // captured) and the game receives no keys.
   static void toggle();
@@ -73,6 +82,7 @@ private:
   static std::vector<std::string> _output;   // scrollback, newest last
   static std::vector<std::string> _history;  // submitted lines
   static int                      _historyPos;
+  static unsigned long            _printed;  // lines printed, ever
   static std::string              _input;    // line being typed
   static float                    _blinkT;   // cursor blink accumulator
   static bool                     _uiBuilt;
