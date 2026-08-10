@@ -10,7 +10,7 @@ class OkTexture;
  *        A low-poly dome (camera-centred, drawn first with depth writes
  *        off, so everything else paints over it) textured with a 1-D
  *        vertical gradient regenerated from OkLighting: the HORIZON colour
- *        is the fog colour — so the fogged city always fades into the sky
+ *        is the fog colour — so the fogged scene always fades into the sky
  *        seamlessly — and the top is the curve's zenith colour. The dome
  *        reaches slightly below the horizon so no gap ever shows.
  *

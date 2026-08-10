@@ -98,7 +98,7 @@ void OkInstancedItem::ensureInstanceBuffer() {
 /**
  * @brief Draw every visible instance in ONE call. Instances are frustum
  *        culled individually (mesh bounding sphere at the instance
- *        position), so a city full of lamps only uploads what is on
+ *        position), so a scene full of lamps only uploads what is on
  *        screen.
  */
 void OkInstancedItem::drawSelf() {

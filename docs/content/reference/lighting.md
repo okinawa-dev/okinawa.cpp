@@ -78,10 +78,10 @@ Two things keep the pass from redrawing the world sixty times a second:
   redrawn when the sun has turned enough to move an edge by a texel
   (`shadows.refresh.turn`), when the box slides to a new texel, or when
   the scene gains or loses objects — that last one matters with
-  streaming, or a newly arrived building would cast nothing until the
+  streaming, or a newly arrived object would cast nothing until the
   sun moved.
 
-Measured on a city scene, the two together took the pass from 15 ms a
+Measured on a dense outdoor scene, the two together took the pass from 15 ms a
 frame to nothing measurable.
 
 A project that can be viewed from height should drive `shadows.distance`
@@ -99,8 +99,8 @@ over the ray rather than density times length, solved in closed form,
 so a ray that climbs passes through steadily thinner air.
 
 This matters as soon as a project can be seen from above. Plain
-distance fog calibrated for the end of a street will swallow an entire
-city viewed from a rooftop or an aircraft, because every pixel of
+distance fog calibrated for ground level will swallow an entire
+landscape viewed from high up, because every pixel of
 ground is then far away. Setting `lighting.fog.height` very large makes
 the air uniform again, which is exactly the distance fog this replaced.
 
@@ -113,7 +113,7 @@ fogs at all.
   daylight arc, azimuth sweeps east to west, parked below the horizon at
   night. Consumed every frame by the Gouraud sun (below).
 - **Ambient light**: the flat floor under the directional sun — higher at
-  night (no sun: the ambient carries the whole city and the tint does the
+  night (no sun: the ambient carries the whole scene and the tint does the
   darkening), lower by day so the sun's modelling reads.
 
 - **Sky zenith colour**: the top of the procedural skybox.
@@ -136,7 +136,7 @@ the caller provides none — see the Items reference), and the world vertex
 shader evaluates a classic Gouraud directional light per vertex:
 `ambient + sunColor * max(dot(normal, -sunDirection), 0) * 0.6`, with the
 lit value interpolated across the triangle. Facades facing the sun warm
-up, opposite faces fall to the ambient floor, and the whole city reads as
+up, opposite faces fall to the ambient floor, and the whole scene reads as
 volume instead of flat panels. Only *textured* surfaces are sunlit: the
 untextured fill/wireframe branch (debug layers, graph lines) keeps its
 exact requested colour. The skybox and the GUI pass run with
@@ -151,9 +151,9 @@ further from the light than what the light could see is in shadow.
 ### Cascades
 
 The shadow distance is split into bands, each with its own map at the
-same resolution. One map cannot serve both ends of a city: cover 200 m
+same resolution. One map cannot serve both near and far: cover 200 m
 and shadows stop at 200 m; cover 2 km and a texel is a metre across, so
-a kerb's shadow becomes a staircase. Split the range and the near band
+the shadow of a small step becomes a staircase. Split the range and the near band
 gets centimetres per texel where it is looked at closely, the far band
 metres per texel where nobody can tell.
 
@@ -164,9 +164,23 @@ cascade on ground that is already close; purely logarithmic makes the
 far one enormous. The default sits most of the way towards logarithmic.
 
 Each cascade is a square **centred on the viewer**, sized by its own
-split — concentric, so the finest box sits inside the next. The centre
-is snapped to the texel grid, or the sampling pattern would slide under
-the geometry as the viewer walks and every shadow edge would shimmer.
+split — concentric, so the finest box sits inside the next.
+
+There is a `shadows.snap` switch to round each box's centre onto the
+texel grid, and it is **off**. That wants explaining, since snapping is
+the usual cure for crawling shadow edges. It cures them when the box
+*translates* with the viewer: the grid stays put in the world while the
+box slides over it. It can do nothing when the light *rotates*, because
+then the grid rotates with it — and it adds an artefact of its own,
+since the correction grows until it rolls over half a texel and the
+whole pattern jumps. Under a moving sun that rollover is continuous, and
+it reads as a shadow trembling its way across the ground.
+
+Measured against the thing it was there to prevent: with 2048 texels
+over a 20 m box a texel is 2 cm, and moving the viewer with the snap
+off shows no crawling at all. So it buys nothing at this resolution and
+costs the tremble. A coarser map, or a much larger box, would want it
+back.
 
 Fitting each box to the camera's own slice of the view instead is the
 more common arrangement, and it spends the resolution where the eye is
@@ -176,10 +190,10 @@ covers follows the cone of vision, so a wall moves from the fine box to
 a coarse one when the player merely turns or scrolls the wheel — and a
 coarser box means a bigger normal offset on the receiving side, big
 enough to lift the sample clear of the shadow the wall is standing in.
-The shadow then switches off. Seen from the street that is a building's
-shadow ending in mid-air and walking along the wall as the player
-moves, which no amount of tuning makes acceptable: the sun does not
-care where the camera is.
+The shadow then switches off. On the ground that is a cast shadow
+ending in mid-air and travelling along the surface as the player moves,
+which no amount of tuning makes acceptable: the sun does not care where
+the camera is.
 
 Centring on the viewer costs the half of each box that falls behind
 them. It buys a shadow that changes only when the player moves.
@@ -284,12 +298,12 @@ to the clusters its sphere of influence touches; the world fragment
 shader finds its own cluster from `gl_FragCoord` and the fragment depth
 and iterates only those lights.
 
-This is what a city of huge meshes needs: a sidewalk item spanning a
-whole block now gets every lamp along it, instead of the four nearest to
+This is what a scene of huge meshes needs: a ground item spanning a
+whole neighbourhood now gets every lamp along it, instead of the four nearest to
 the item's centre. Two details matter:
 
 - **Culling is by sphere of influence, not by visibility** — a lamp
-  around the corner still lights the street it spills into.
+  around the corner still lights the space it spills into.
 - **Lights are sorted by view distance before assignment**, because
   clusters have a per-cluster cap: without the ordering, a dozen distant
   lamps fill the budget and the lamp directly overhead is dropped.
@@ -329,6 +343,8 @@ never tinted, fogged or sunlit.
 | `shadows.extent` | `90` | Half-width used when fitting is off (`shadows.distance` 0). |
 | `shadows.distance` | `260` | How far shadows are worth drawing, split across the cascades. 0 falls back to a fixed `shadows.extent` box on the viewer. |
 | `shadows.cascades` | `3` | Bands the distance is split into (max 4). |
+| `shadows.snap` | `false` | Round each box's centre onto the texel grid. Cures crawling when the box translates; under a rotating sun it only adds its own rollover jump (see above). |
+| `shadows.refresh.turn` | `5e-8` | How far the sun must turn before the map is redrawn, as 1 - cos(angle) — about 0.018°, fine enough that a step moves a long shadow's tip less than a texel. 0 redraws on any movement at all. |
 | `shadows.cascades.blend` | `0.4` | Split spacing: 0 even, 1 logarithmic. Nearer 1 packs resolution underfoot but makes neighbouring cascades differ sharply, which is what a travelling seam is made of. |
 | `shadows.normaloffset` | `1.0` | Scale on the receiver's normal offset (the sample is taken slightly off the surface, to cure acne by moving the sample rather than the shadow). |
 | `shadows.normaloffset.max` | `0.06` | Its ceiling, in metres. Past a few centimetres the offset stops curing acne and starts lifting the sample out of the shadow the surface stands in. |

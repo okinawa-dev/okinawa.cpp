@@ -87,7 +87,7 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
  *        every caller uses) is expanded here: normals are computed by
  *        accumulating the face normal of every triangle onto its three
  *        vertices. De-indexed meshes (each face owns its vertices, the
- *        city loaders' convention) end up with EXACT flat face normals;
+ *        the usual loader convention) end up with exact flat face normals;
  *        indexed meshes with shared vertices (terrain grids) end up with
  *        area-weighted smooth normals. Non-triangle index lists (lines,
  *        points) produce garbage normals, which is fine: the shader only
@@ -333,7 +333,7 @@ void OkItem::_calculateRadius() {
   float depth  = maxZ - minZ;
   // Calculate radius as half the diagonal of the bounding box
   radius = sqrt(width * width + height * height + depth * depth) * 0.5f;
-  // Bounding-sphere centre in local coords: city meshes keep their
+  // Bounding-sphere centre in local coords: baked meshes keep their
   // vertices in chunk-local space with the item origin at the chunk
   // corner, so the sphere must be centred on the bbox, not the origin.
   sphereCenter[0] = (minX + maxX) * 0.5f;

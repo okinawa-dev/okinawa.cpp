@@ -412,7 +412,7 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glEnable(GL_DEPTH_TEST);
       // Back-face culling for the world pass: every mesh is single-sided
-      // with a consistent outward winding (city bake, terrain, avatar).
+      // with a consistent outward winding (most exporters, terrain, avatars).
       // The skybox and the GUI pass disable it locally.
       glEnable(GL_CULL_FACE);
       glUseProgram(_shaderProgram);

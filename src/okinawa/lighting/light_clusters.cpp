@@ -95,7 +95,7 @@ void OkLightClusters::update(const glm::mat4 &view,
   // Order lights by view distance BEFORE assigning them: clusters have a
   // per-cluster cap, and filling it with far lights would starve the
   // near ones that actually model the scene (the lamp overhead losing
-  // to a dozen lamps down the street).
+  // to a dozen lamps in a row).
   int total = OkLighting::getLightCount();
   std::vector<std::pair<float, int> > ordered;
   ordered.reserve((size_t)total);

@@ -22,7 +22,7 @@ class OkScene;
  *        resolution but covering a much smaller or larger area. One map
  *        cannot serve both ends -- cover 200 m and shadows stop at
  *        200 m; cover 2 km and a texel is a metre wide, so the shadow
- *        of a kerb becomes a staircase. Splitting the range means the
+ *        of a small step becomes a staircase. Splitting the range means the
  *        near band gets centimetres per texel where it is looked at
  *        closely, and the far band metres per texel where nobody can
  *        tell.
@@ -57,7 +57,7 @@ public:
                      float centreY, float centreZ);
 
   // Cascades are capped here; `shadows.cascades` picks how many are
-  // used. Three covers a walkable city comfortably.
+  // used. Three covers a walkable outdoor scene comfortably.
   static const int MAX_CASCADES = 4;
 
   // Bind the depth texture and set the world shader's uniforms.

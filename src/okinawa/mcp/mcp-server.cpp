@@ -349,7 +349,7 @@ struct OkMcpServer::Impl {
 
     json setVis;
     setVis["name"]        = "set_item_visible";
-    setVis["description"] = "Show/hide scene items by name, to isolate geometry. If prefix=true it applies to every item whose name STARTS WITH `name` (e.g. 'building_' or 'sidewalk_' to hide all at once, or 'building_blk52_' to show just one block); otherwise it toggles the single item with that exact name. Returns how many items changed.";
+    setVis["description"] = "Show/hide scene items by name, to isolate geometry. If prefix=true it applies to every item whose name starts with `name` (e.g. 'tree_' to hide every tree at once, or 'tree_oak_' to narrow it further); otherwise it toggles the single item with that exact name. Returns how many items changed.";
     setVis["inputSchema"] = {{"type", "object"}, {"properties", {{"name", {{"type", "string"}, {"description", "Item name or, with prefix=true, a name prefix."}}}, {"visible", {{"type", "boolean"}}}, {"prefix", {{"type", "boolean"}, {"description", "Match all names starting with `name` (default false = exact)."}}}}}, {"required", json::array({"name", "visible"})}, {"additionalProperties", false}};
     tools.push_back(setVis);
 
@@ -361,7 +361,7 @@ struct OkMcpServer::Impl {
 
     json config;
     config["name"]        = "config";
-    config["description"] = "Read or write an engine config key at runtime -- the same keys the console's set/get reach (shadows.*, render.*, city.*, graphics.*). With no `value` it reads; with one it writes, converting to the key's existing type. Pass no `key` at all to list every key matching `prefix`, with its current value. Meant for bisecting a visual problem: flip one setting, capture, flip it back, without typing into the console a character at a time.";
+    config["description"] = "Read or write an engine config key at runtime -- the same keys the console's set/get reach (shadows.*, render.*, graphics.*, and any the application registers). With no `value` it reads; with one it writes, converting to the key's existing type. Pass no `key` at all to list every key matching `prefix`, with its current value. Meant for bisecting a visual problem: flip one setting, capture, flip it back, without typing into the console a character at a time.";
     config["inputSchema"] = {{"type", "object"},
                              {"properties",
                               {{"key", {{"type", "string"}, {"description", "Config key, e.g. shadows.cascades."}}},

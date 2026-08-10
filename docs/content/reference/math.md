@@ -53,7 +53,7 @@ The view frustum as six planes, extracted from a combined
 culling. `OkCore` builds one per frame from the current camera and
 activates it for the world pass: `OkItem::drawSelf` skips any item whose
 bounding sphere (bbox centre + half-diagonal radius, transformed by the
-item's matrix) falls fully outside — in the dense city over half the
+item's matrix) falls fully outside — in a dense scene over half the
 scene's items are skipped every frame. The GUI and camera-attached passes
 run with no active frustum (their calibrated cameras are not the world
 camera), and the skybox dome is camera-centred so it always intersects.

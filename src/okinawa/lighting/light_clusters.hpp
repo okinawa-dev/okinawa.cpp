@@ -19,7 +19,7 @@
  *        The world fragment shader then looks up its own cluster from
  *        gl_FragCoord and the fragment depth, and iterates only those
  *        lights. Light selection becomes PER PIXEL instead of per item,
- *        which is what a city of huge ground meshes needs: a sidewalk
+ *        which is what a scene of huge ground meshes needs: a floor
  *        spanning a whole block gets every lamp along it, not the four
  *        nearest to its centre.
  *
@@ -27,7 +27,7 @@
  *        OpenGL 4.1 (no compute shaders); at our light counts this is
  *        cheap, and lights that do not reach the frustum are skipped
  *        entirely -- culling by SPHERE OF INFLUENCE, so a lamp around
- *        the corner still lights the street it spills into.
+ *        the corner still lights the space it spills into.
  */
 class OkLightClusters {
 public:

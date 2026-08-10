@@ -35,10 +35,16 @@ void OkShadowMap::initialize() {
   OkConfig::setInt("shadows.size", 2048);      // depth map resolution
   OkConfig::setFloat("shadows.extent", 90.0f); // metres covered, half-width
   // How far the sun must turn before the depth map is redrawn, as
-  // 1 - cos(angle). The default is about 0.05 degrees: enough to move a
-  // shadow edge by one texel at 100 m, and no more. 0 redraws every
-  // frame.
-  OkConfig::setFloat("shadows.refresh.turn", 0.0000004f);
+  // 1 - cos(angle). 0 redraws whenever the sun moves at all; the skip
+  // still saves the pass when nothing is moving.
+  //
+  // The step has to move a shadow less than a texel or it is seen as
+  // one. What matters is the far end of a long shadow: a 20 m building
+  // with the sun 20 degrees up throws one 55 m long, and keeping its
+  // tip inside a 2 cm texel needs about 0.018 degrees. Coarser than
+  // that -- the 0.05 this used to be -- and the shadow visibly advances
+  // in steps while the light on everything around it moves smoothly.
+  OkConfig::setFloat("shadows.refresh.turn", 0.00000005f);
   // How far shadows are worth drawing. The shadowed box is fitted to
   // the camera's volume clipped to this, so it follows the view instead
   // of sitting on the viewer. Past it there are no cast shadows.
@@ -54,6 +60,23 @@ void OkShadowMap::initialize() {
   // soft, and they have nothing to do with each other. In this view
   // they are three different colours.
   OkConfig::setBool("shadows.debug", false);
+  // Snap each cascade's box to whole texels. Off, which wants
+  // explaining, since snapping is the usual cure for crawling edges.
+  //
+  // It cures them when the box TRANSLATES with the viewer: the grid
+  // stays put in the world while the box slides over it. It can do
+  // nothing when the light ROTATES, because then the grid rotates with
+  // it -- and it adds an artefact of its own, since the correction
+  // grows until it rolls over half a texel and the whole pattern jumps.
+  // Under a moving sun that rollover is continuous, and it reads as a
+  // shadow trembling its way across the ground.
+  //
+  // Measured against the thing it was there to prevent: with 2048
+  // texels over a 20 m box a texel is 2 cm, and moving the viewer with
+  // the snap off shows no crawling at all. So it buys nothing here and
+  // costs the tremble. Kept as a switch rather than deleted -- a
+  // coarser map, or a much larger box, would want it back.
+  OkConfig::setBool("shadows.snap", false);
   // Normal offset: the receiver samples the map from slightly off its
   // own surface, which cures acne by moving the sample rather than the
   // shadow. It scales with the cascade's texel, since that is what sets
@@ -70,7 +93,7 @@ void OkShadowMap::initialize() {
   // answer is most of the way towards logarithmic, which packs
   // resolution into the first few metres -- and puts the first
   // changeover about twenty metres from the player, in the middle of
-  // the street they are walking down, with a threefold jump in texel
+  // the ground they are walking over, with a threefold jump in texel
   // size across it. Two neighbouring cascades that differ that much
   // cannot be made to agree, and the seam rides along with the player.
   // Backing off towards even spacing costs some sharpness underfoot and
@@ -218,6 +241,24 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
                         dir[2] * _lastDir[2]);
   float  turnMax = OkConfig::getFloat("shadows.refresh.turn");
 
+  // The refresh is all or nothing, across every cascade at once.
+  //
+  // Deciding it per cascade lets them freeze at different moments, and
+  // each then holds the sun as it was when its own turn came -- three
+  // maps built from three directions a few degrees apart. Near a
+  // changeover the two answers get mixed, so the shadow swings back and
+  // forth between them as the blend moves: not a shimmer of texels but
+  // a shadow visibly rocking through a few degrees. Whatever the maps
+  // hold, they must all hold the same sun.
+  bool redrawAll = _neverDrawn || turn > turnMax || objects != _lastObjects;
+
+  // Pass one: work out where every cascade's box would sit this frame.
+  // Nothing is committed yet -- the decision to redraw is taken once,
+  // for all of them together, below.
+  glm::mat4 candidate[MAX_CASCADES];
+  float     candCx[MAX_CASCADES];
+  float     candCz[MAX_CASCADES];
+  float     candExtent[MAX_CASCADES];
   for (int c = 0; c < count; c++) {
     // Each cascade is a square centred on the viewer, sized by its own
     // band -- concentric, so the finest box sits inside the next.
@@ -232,7 +273,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
     // big enough, on a coarse cascade, to lift the sample clear of the
     // shadow the wall was standing in, so the shadow switched off. The
     // shadow of a building would end in mid-air and walk down the
-    // street as the player did.
+    // ground as the player did.
     //
     // A sun shadow may not depend on where the camera is. Centring on
     // the viewer costs the half of each box that falls behind them, and
@@ -275,34 +316,45 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
     float     oy       = originLs.y * half;
     float     dx       = std::floor(ox + 0.5f) - ox;
     float     dy       = std::floor(oy + 0.5f) - oy;
+    if (!OkConfig::getBool("shadows.snap")) {
+      // Off, to tell a snapping artefact from anything else. The snap
+      // holds the grid still while the box TRANSLATES with the viewer;
+      // it can do nothing about the grid ROTATING, which is what a
+      // moving sun does to it, and its own rollover past half a texel
+      // is a jump of its own.
+      dx = 0.0f;
+      dy = 0.0f;
+    }
     proj[3][0] += dx / half;
     proj[3][1] += dy / half;
 
     // What the redraw test compares: where the box sits on the map,
     // which is what decides whether this cascade's picture would come
     // out any different.
-    float cx = ox + dx;
-    float cz = oy + dy;
-
-    // Redraw this cascade only when its picture would differ: static
-    // geometry under a slow sun looks the same from frame to frame.
-    bool dirty = _neverDrawn || turn > turnMax || objects != _lastObjects ||
-                 cx != _lastCx[c] || cz != _lastCz[c] ||
-                 extent != _lastExtent[c];
-    if (!dirty) {
-      // The matrix stays with the picture. It used to be updated every
-      // frame while the map itself was only redrawn once the sun had
-      // turned far enough, so in between the receiver was looking up an
-      // old photograph with new coordinates: the shadow crept a texel
-      // at a time and jumped back on each refresh. Under a moving sun
-      // that reads as a shimmer along every edge.
-      continue;
+    candidate[c]  = proj * view;
+    candCx[c]     = ox + dx;
+    candCz[c]     = oy + dy;
+    candExtent[c] = extent;
+    if (candCx[c] != _lastCx[c] || candCz[c] != _lastCz[c] ||
+        candExtent[c] != _lastExtent[c]) {
+      redrawAll = true;   // the viewer moved: every box moves with them
     }
-    // Redrawing, so the matrix and the depth it addresses move together.
-    _lightSpace[c] = proj * view;
-    _lastCx[c]     = cx;
-    _lastCz[c]     = cz;
-    _lastExtent[c] = extent;
+  }
+
+  // The matrix stays with the picture it addresses. Updating it every
+  // frame while the map was only redrawn once the sun had turned far
+  // enough meant looking up an old photograph with new coordinates, and
+  // the shadow crept a texel at a time.
+  if (!redrawAll) {
+    return;
+  }
+
+  // Pass two: commit and draw. All of them, from the same sun.
+  for (int c = 0; c < count; c++) {
+    _lightSpace[c] = candidate[c];
+    _lastCx[c]     = candCx[c];
+    _lastCz[c]     = candCz[c];
+    _lastExtent[c] = candExtent[c];
 
     if (!bound) {
       glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
@@ -327,7 +379,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
 
     // The camera's frustum is the wrong test here -- a caster behind
     // the viewer still casts into view -- but "no test at all" was
-    // worse: the whole city was drawn to fill a box a couple of hundred
+    // worse: the whole scene was drawn to fill a box a couple of hundred
     // metres across. The right test is the light's own volume, which
     // this orthographic box already is.
     OkFrustum        lightFrustum;
