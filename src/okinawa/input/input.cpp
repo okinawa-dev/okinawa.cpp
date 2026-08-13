@@ -8,6 +8,19 @@
 /**
  * @brief Constructor for OkInput class.
  */
+namespace {
+
+  // Number keys 1..9 select a camera; there is no camera 0 and the row
+  // runs out at 9.
+  const int CAMERA_KEYS = 9;
+
+  // Printable ASCII, the only range the text capture accepts: anything
+  // below is a control code and 127 is delete.
+  const unsigned int ASCII_FIRST_PRINTABLE = 32;
+  const unsigned int ASCII_LAST_PRINTABLE  = 126;
+
+}  // namespace
+
 OkInput::OkInput(GLFWwindow *window, MouseCallback callback) {
   if (!window) {
     OkLogger::error("Input", "Window is null");
@@ -21,9 +34,9 @@ OkInput::OkInput(GLFWwindow *window, MouseCallback callback) {
   _prevState    = OkInputState();
 
   // Initialize key arrays
-  std::memset(_currentKeys, 0, sizeof(_currentKeys));
-  std::memset(_prevKeys, 0, sizeof(_prevKeys));
-  std::memset(_injectedUntil, 0, sizeof(_injectedUntil));
+  _currentKeys.fill(false);
+  _prevKeys.fill(false);
+  _injectedUntil.fill(0.0);
   _physicalEnabled = true;
   _textCapture     = false;
   _pendingChars    = "";
@@ -46,7 +59,7 @@ void OkInput::process() {
     return;
 
   // Store previous key states
-  std::memcpy(_prevKeys, _currentKeys, sizeof(_currentKeys));
+  _prevKeys  = _currentKeys;
   _prevState = _currentState;
 
   // Update current key states - convert from GLFW to OkKeys, OR-ing in any
@@ -85,7 +98,7 @@ void OkInput::process() {
 
   // Update camera selection - using OkKeys directly
   _currentState.changeCamera = -1;
-  for (int i = 0; i < 9; i++) {
+  for (int i = 0; i < CAMERA_KEYS; i++) {
     // Convert OK_KEY_1 + i to OkKey
     OkKey okKeyNumber = static_cast<OkKey>(OK_KEY_1 + i);
     if (okKeyNumber < OK_KEY_COUNT && _currentKeys[okKeyNumber]) {
@@ -181,7 +194,7 @@ OkInputState OkInput::getState() const {
  * @brief Queue a typed character from the GLFW char callback (ASCII only).
  */
 void OkInput::onChar(unsigned int codepoint) {
-  if (codepoint >= 32 && codepoint < 127) {
+  if (codepoint >= ASCII_FIRST_PRINTABLE && codepoint <= ASCII_LAST_PRINTABLE) {
     _pendingChars.push_back(static_cast<char>(codepoint));
   }
 }

@@ -3,6 +3,7 @@
 
 #include "../core/gl_config.hpp"  // IWYU pragma: keep
 #include "keys.hpp"
+#include <array>
 #include <string>
 
 /**
@@ -134,15 +135,15 @@ public:
   static constexpr float ROTATION_SPEED = 2.0f;
 
 private:
-  GLFWwindow   *_window;
-  MouseCallback _mouseCallback;
-  OkInputState  _currentState;               // Current frame's input state
-  OkInputState  _prevState;                  // Previous frame's input state
-  bool          _currentKeys[OK_KEY_COUNT];  // Current key states
-  bool          _prevKeys[OK_KEY_COUNT];     // Previous key states
+  GLFWwindow                    *_window;
+  MouseCallback                  _mouseCallback;
+  OkInputState                   _currentState;  // Current frame's input state
+  OkInputState                   _prevState;     // Previous frame's input state
+  std::array<bool, OK_KEY_COUNT> _currentKeys;   // Current key states
+  std::array<bool, OK_KEY_COUNT> _prevKeys;      // Previous key states
   // Per-key "injected until" timestamps (glfwGetTime seconds). A key counts as
   // pressed while glfwGetTime() < _injectedUntil[key].
-  double _injectedUntil[OK_KEY_COUNT];
+  std::array<double, OK_KEY_COUNT> _injectedUntil;
   // When false, physical keyboard/mouse input is ignored (MCP-only control).
   bool _physicalEnabled;
   // Pointer lock state: true while the cursor is captured for mouse-look.

@@ -53,43 +53,76 @@ using nlohmann::json;
 
 namespace {
 
-  const double      kPi              = 3.14159265358979323846;
+  const double kPi          = 3.14159265358979323846;
+  const double kHalfTurnDeg = 180.0;
+  // Bytes per mebibyte, for the resident-memory report.
+  const double kBytesPerMiB = 1024.0 * 1024.0;
+  // How long a request waits for the render loop to pick it up. Long
+  // enough for a stalled frame, short enough that a wedged app answers
+  // instead of hanging the client.
+  const int kLoopWaitSeconds = 5;
+  // Default hold for an injected key, and the milliseconds-per-second
+  // divisor the durations are expressed in.
+  const double kDefaultHoldMs = 120.0;
+  const double kMsPerSecond   = 1000.0;
+  // Slack added to the hold before the pose is read, so the loop has
+  // rendered at least one frame past the release.
+  const long kPoseSettleMs = 40;
+  // Mean this far above the median means long frames are dragging it:
+  // that is what a hitch looks like in a summary.
+  const float kHitchRatio = 1.15f;
+  // JSON-RPC 2.0 error codes and the HTTP status a notification gets.
+  const int kJsonRpcParseError     = -32700;
+  const int kJsonRpcMethodNotFound = -32601;
+  const int kHttpAccepted          = 202;
+  // Frame-rate smoothing: one part of the new reading to nine of the
+  // running value, so a single slow frame does not swing the report.
+  const double      kFpsSmoothing    = 0.9;
   const char *const kProtocolVersion = "2024-11-05";
   const char *const kServerName      = "okinawa";
   const char *const kServerVersion   = "0.1.0";
 
   double radToDeg(double r) {
-    return r * 180.0 / kPi;
+    return r * kHalfTurnDeg / kPi;
   }
 
   // Standard base64 encoder (no external dependency).
   std::string base64Encode(const std::vector<unsigned char> &data) {
-    static const char table[] =
+    static const std::string table =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    std::string out;
+    // Base64 packs three bytes into four six-bit symbols. The shifts pull
+    // each symbol out of the 24-bit group, most significant first.
+    const unsigned int kSixBits    = 0x3F;
+    const unsigned int kShiftByte0 = 16;
+    const unsigned int kShiftByte1 = 8;
+    const unsigned int kShiftSym0  = 18;
+    const unsigned int kShiftSym1  = 12;
+    const unsigned int kShiftSym2  = 6;
+    std::string        out;
     out.reserve(((data.size() + 2) / 3) * 4);
 
     size_t i = 0;
     while (i + 2 < data.size()) {
-      unsigned int n = (data[i] << 16) | (data[i + 1] << 8) | data[i + 2];
-      out.push_back(table[(n >> 18) & 0x3F]);
-      out.push_back(table[(n >> 12) & 0x3F]);
-      out.push_back(table[(n >> 6) & 0x3F]);
-      out.push_back(table[n & 0x3F]);
+      unsigned int n =
+          (data[i] << kShiftByte0) | (data[i + 1] << kShiftByte1) | data[i + 2];
+      out.push_back(table[(n >> kShiftSym0) & kSixBits]);
+      out.push_back(table[(n >> kShiftSym1) & kSixBits]);
+      out.push_back(table[(n >> kShiftSym2) & kSixBits]);
+      out.push_back(table[n & kSixBits]);
       i += 3;
     }
     size_t remaining = data.size() - i;
     if (remaining == 1) {
-      unsigned int n = data[i] << 16;
-      out.push_back(table[(n >> 18) & 0x3F]);
-      out.push_back(table[(n >> 12) & 0x3F]);
+      unsigned int n = data[i] << kShiftByte0;
+      out.push_back(table[(n >> kShiftSym0) & kSixBits]);
+      out.push_back(table[(n >> kShiftSym1) & kSixBits]);
       out.push_back('=');
       out.push_back('=');
     } else if (remaining == 2) {
-      unsigned int n = (data[i] << 16) | (data[i + 1] << 8);
-      out.push_back(table[(n >> 18) & 0x3F]);
-      out.push_back(table[(n >> 12) & 0x3F]);
-      out.push_back(table[(n >> 6) & 0x3F]);
+      unsigned int n = (data[i] << kShiftByte0) | (data[i + 1] << kShiftByte1);
+      out.push_back(table[(n >> kShiftSym0) & kSixBits]);
+      out.push_back(table[(n >> kShiftSym1) & kSixBits]);
+      out.push_back(table[(n >> kShiftSym2) & kSixBits]);
       out.push_back('=');
     }
     return out;
@@ -155,7 +188,7 @@ namespace {
     if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
                   reinterpret_cast<task_info_t>(&info),
                   &count) == KERN_SUCCESS) {
-      return static_cast<double>(info.resident_size) / (1024.0 * 1024.0);
+      return static_cast<double>(info.resident_size) / kBytesPerMiB;
     }
 #endif
     return -1.0;
@@ -264,7 +297,8 @@ struct OkMcpServer::Impl {
         promise->set_value(result);
       });
     }
-    if (future.wait_for(std::chrono::seconds(5)) != std::future_status::ready) {
+    if (future.wait_for(std::chrono::seconds(kLoopWaitSeconds)) !=
+        std::future_status::ready) {
       json r;
       r["error"] = "timed out (is the app rendering?)";
       return r;
@@ -600,8 +634,8 @@ struct OkMcpServer::Impl {
           return errorResult("unknown key: " + names[i]);
         }
       }
-      double durationMs = args.value("duration_ms", 120.0);
-      double seconds    = durationMs / 1000.0;
+      double durationMs = args.value("duration_ms", kDefaultHoldMs);
+      double seconds    = durationMs / kMsPerSecond;
       runOnLoop([keys, seconds]() -> json {
         OkInput *input = OkCore::getInput();
         for (size_t i = 0; i < keys.size(); i++) {
@@ -610,8 +644,8 @@ struct OkMcpServer::Impl {
         return json::object();
       });
       // Let the loop apply the held keys over its frames, then read the pose.
-      std::this_thread::sleep_for(
-          std::chrono::milliseconds(static_cast<long>(durationMs) + 40));
+      std::this_thread::sleep_for(std::chrono::milliseconds(
+          static_cast<long>(durationMs) + kPoseSettleMs));
       json pose = runOnLoop([]() -> json { return cameraPoseJson(); });
       return textResult("held keys for " +
                         std::to_string(static_cast<long>(durationMs)) + "ms\n" +
@@ -720,13 +754,16 @@ struct OkMcpServer::Impl {
         }
         r["frame_ms"] = {
             {"min", lo}, {"max", hi}, {"mean", mean}, {"median", median}};
-        r["fps"] = {{"min", hi > 0.0f ? 1000.0f / hi : 0.0f},
-                    {"max", lo > 0.0f ? 1000.0f / lo : 0.0f},
-                    {"mean", mean > 0.0f ? 1000.0f / mean : 0.0f},
-                    {"median", median > 0.0f ? 1000.0f / median : 0.0f}};
+        r["fps"] = {
+            {"min", hi > 0.0f ? static_cast<float>(kMsPerSecond) / hi : 0.0f},
+            {"max", lo > 0.0f ? static_cast<float>(kMsPerSecond) / lo : 0.0f},
+            {"mean",
+             mean > 0.0f ? static_cast<float>(kMsPerSecond) / mean : 0.0f},
+            {"median",
+             median > 0.0f ? static_cast<float>(kMsPerSecond) / median : 0.0f}};
         // The mean sits below the median when long frames are dragging
         // it down, which is what a hitch looks like in a summary.
-        r["hitching"] = mean > median * 1.15f;
+        r["hitching"] = mean > median * kHitchRatio;
         // CPU time spent issuing the draws, measured before the swap.
         // Where the platform enforces vsync every frame with budget to
         // spare reads as one refresh interval, so frame_ms cannot say
@@ -868,57 +905,59 @@ OkMcpServer::~OkMcpServer() {
 }
 
 void OkMcpServer::start() {
-  _impl->server.Post(
-      "/mcp", [this](const httplib::Request &req, httplib::Response &res) {
-        json request = json::parse(req.body, nullptr, false);
-        if (request.is_discarded() || !request.is_object()) {
-          res.set_content(makeError(nullptr, -32700, "parse error").dump(),
-                          "application/json");
-          return;
-        }
+  _impl->server.Post("/mcp", [this](const httplib::Request &req,
+                                    httplib::Response      &res) {
+    json request = json::parse(req.body, nullptr, false);
+    if (request.is_discarded() || !request.is_object()) {
+      res.set_content(
+          makeError(nullptr, kJsonRpcParseError, "parse error").dump(),
+          "application/json");
+      return;
+    }
 
-        json        id = request.contains("id") ? request["id"] : json(nullptr);
-        std::string method = request.value("method", std::string());
-        json        params =
-            request.contains("params") ? request["params"] : json::object();
-        bool isNotification = !request.contains("id");
+    json        id     = request.contains("id") ? request["id"] : json(nullptr);
+    std::string method = request.value("method", std::string());
+    json        params =
+        request.contains("params") ? request["params"] : json::object();
+    bool isNotification = !request.contains("id");
 
-        if (method == "initialize") {
-          json result;
-          result["protocolVersion"] =
-              params.value("protocolVersion", std::string(kProtocolVersion));
-          result["capabilities"]["tools"] = json::object();
-          result["serverInfo"]["name"]    = kServerName;
-          result["serverInfo"]["version"] = kServerVersion;
-          res.set_header("Mcp-Session-Id", "okinawa-mcp");
-          res.set_content(makeResult(id, result).dump(), "application/json");
-        } else if (method == "ping") {
-          res.set_content(makeResult(id, json::object()).dump(),
-                          "application/json");
-        } else if (method == "tools/list") {
-          json result;
-          result["tools"] = Impl::toolList();
-          res.set_content(makeResult(id, result).dump(), "application/json");
-        } else if (method == "tools/call") {
-          std::string name = params.value("name", std::string());
-          json        args = params.contains("arguments") ? params["arguments"]
-                                                          : json::object();
-          json        result = _impl->callTool(name, args);
-          res.set_content(makeResult(id, result).dump(), "application/json");
-        } else if (isNotification || method.rfind("notifications/", 0) == 0) {
-          // A notification is acknowledged and not answered. Both ways of
-          // spotting one lead here: no id at all, or a method under the
-          // `notifications/` prefix. Testing the prefix later than it used
-          // to be tested changes nothing -- no method under it can also be
-          // `ping` or `tools/list`.
-          res.status = 202;
-          res.set_content("", "application/json");
-        } else {
-          res.set_content(
-              makeError(id, -32601, "method not found: " + method).dump(),
-              "application/json");
-        }
-      });
+    if (method == "initialize") {
+      json result;
+      result["protocolVersion"] =
+          params.value("protocolVersion", std::string(kProtocolVersion));
+      result["capabilities"]["tools"] = json::object();
+      result["serverInfo"]["name"]    = kServerName;
+      result["serverInfo"]["version"] = kServerVersion;
+      res.set_header("Mcp-Session-Id", "okinawa-mcp");
+      res.set_content(makeResult(id, result).dump(), "application/json");
+    } else if (method == "ping") {
+      res.set_content(makeResult(id, json::object()).dump(),
+                      "application/json");
+    } else if (method == "tools/list") {
+      json result;
+      result["tools"] = Impl::toolList();
+      res.set_content(makeResult(id, result).dump(), "application/json");
+    } else if (method == "tools/call") {
+      std::string name = params.value("name", std::string());
+      json        args =
+          params.contains("arguments") ? params["arguments"] : json::object();
+      json result = _impl->callTool(name, args);
+      res.set_content(makeResult(id, result).dump(), "application/json");
+    } else if (isNotification || method.rfind("notifications/", 0) == 0) {
+      // A notification is acknowledged and not answered. Both ways of
+      // spotting one lead here: no id at all, or a method under the
+      // `notifications/` prefix. Testing the prefix later than it used
+      // to be tested changes nothing -- no method under it can also be
+      // `ping` or `tools/list`.
+      res.status = kHttpAccepted;
+      res.set_content("", "application/json");
+    } else {
+      res.set_content(
+          makeError(id, kJsonRpcMethodNotFound, "method not found: " + method)
+              .dump(),
+          "application/json");
+    }
+  });
 
   _impl->thread = std::thread([this]() {
     bool ok = _impl->server.listen("127.0.0.1", _impl->port);
@@ -945,7 +984,8 @@ void OkMcpServer::drainCommands() {
   if (_impl->lastFrameTime > 0.0) {
     double dt = now - _impl->lastFrameTime;
     if (dt > 0.0) {
-      _impl->fps = _impl->fps * 0.9 + (1.0 / dt) * 0.1;
+      _impl->fps =
+          _impl->fps * kFpsSmoothing + (1.0 / dt) * (1.0 - kFpsSmoothing);
     }
   }
   _impl->lastFrameTime = now;
