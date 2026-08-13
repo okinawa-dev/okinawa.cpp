@@ -37,8 +37,8 @@ public:
   // RGBA 0..255; a bg alpha of 0 gives transparent text for the blended
   // GUI pass (use an opaque bg for unblended contexts like billboards).
   static OkTexture *bake(const std::string &name, const std::string &text,
-                         int scale, const unsigned char fg[4],
-                         const unsigned char bg[4]);
+                         int scale, const unsigned char *fg,
+                         const unsigned char *bg);
 
   // The shared glyph atlas (lazy, cached in the texture handler): a
   // 16x6-cell grid holding ASCII 32..126, white on transparent.

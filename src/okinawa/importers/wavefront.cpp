@@ -156,8 +156,8 @@ bool OkWavefrontImporter::parseGeometryWithUV(const std::string &filename,
           size_t t = static_cast<size_t>(face[idx].second);  // texture index
 
           TempVertex vertex;
-          std::copy_n(&mesh.positions[v * 3], 3, vertex.position);
-          std::copy_n(&mesh.texcoords[t * 2], 2, vertex.texcoord);
+          std::copy_n(&mesh.positions[v * 3], 3, vertex.position.begin());
+          std::copy_n(&mesh.texcoords[t * 2], 2, vertex.texcoord.begin());
 
           mesh.vertices.push_back(vertex);
           mesh.indices.push_back(mesh.vertices.size() - 1);

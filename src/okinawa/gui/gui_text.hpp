@@ -3,6 +3,7 @@
 
 #include "../core/object.hpp"
 #include "gui.hpp"
+#include <array>
 #include <string>
 
 class OkItem;
@@ -80,14 +81,14 @@ public:
 private:
   void rebuildMesh();
 
-  std::string _text;
-  bool        _dirty;
-  float       _gridX;
-  float       _gridY;
-  float       _gridH;
-  OkGuiAnchor _anchor;
-  float       _color[4];
-  OkItem     *_mesh;  // owned, recreated on text change
+  std::string          _text;
+  bool                 _dirty;
+  float                _gridX;
+  float                _gridY;
+  float                _gridH;
+  OkGuiAnchor          _anchor;
+  std::array<float, 4> _color;
+  OkItem              *_mesh;  // owned, recreated on text change
 };
 
 #endif

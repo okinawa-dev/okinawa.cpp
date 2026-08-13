@@ -8,6 +8,7 @@
 #include "math/rotation.hpp"
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include <array>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
@@ -133,8 +134,10 @@ void OkCamera::drawSelf() {
       // of `size`, so this scales the whole gizmo proportionally about its
       // centre (the camera position). Configurable via "camera.gizmo-size"
       // (default 0.25 -> ~0.5 m cube body).
-      float size       = OkConfig::getFloat("camera.gizmo-size");
-      float vertices[] = {
+      float size = OkConfig::getFloat("camera.gizmo-size");
+      // 13 vertices, each x, y, z plus texture u, v.
+      const size_t                    GIZMO_FLOATS = 65;
+      std::array<float, GIZMO_FLOATS> vertices     = {
           // Camera body - cube vertices (x, y, z, u, v)
           -size, -size, -size, 0.0f, 0.0f,  // 0
           -size, size, -size, 0.0f, 1.0f,   // 1
@@ -155,16 +158,20 @@ void OkCamera::drawSelf() {
       };
 
       // Rest of indices array unchanged...
-      unsigned int indices[] = {                   // Cube indices
-                                0, 1, 2, 0, 2, 3,  // Front
-                                4, 5, 6, 4, 6, 7,  // Back
-                                0, 4, 7, 0, 7, 3,  // Bottom
-                                1, 5, 6, 1, 6, 2,  // Top
-                                0, 1, 5, 0, 5, 4,  // Left
-                                3, 2, 6, 3, 6, 7,  // Right
-                                                   // Pyramid indices
-                                8, 9, 10,          // Pyramid sides
-                                8, 10, 11, 8, 11, 12, 8, 12, 9};
+      // Six cube faces and four pyramid sides, two triangles each
+      // except the pyramid, which is one per side.
+      const size_t                            GIZMO_INDICES = 48;
+      std::array<unsigned int, GIZMO_INDICES> indices       = {
+          // Cube indices
+          0, 1, 2, 0, 2, 3,  // Front
+          4, 5, 6, 4, 6, 7,  // Back
+          0, 4, 7, 0, 7, 3,  // Bottom
+          1, 5, 6, 1, 6, 2,  // Top
+          0, 1, 5, 0, 5, 4,  // Left
+          3, 2, 6, 3, 6, 7,  // Right
+                             // Pyramid indices
+          8, 9, 10,          // Pyramid sides
+          8, 10, 11, 8, 11, 12, 8, 12, 9};
 
       // Get current shader program
       GLint current_program;
@@ -205,12 +212,16 @@ void OkCamera::drawSelf() {
 
       // Buffer vertex data
       glBindBuffer(GL_ARRAY_BUFFER, VBO);
-      glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+      glBufferData(GL_ARRAY_BUFFER,
+                   static_cast<GLsizeiptr>(vertices.size() * sizeof(float)),
+                   vertices.data(), GL_STATIC_DRAW);
 
       // Buffer index data
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-      glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-                   GL_STATIC_DRAW);
+      glBufferData(
+          GL_ELEMENT_ARRAY_BUFFER,
+          static_cast<GLsizeiptr>(indices.size() * sizeof(unsigned int)),
+          indices.data(), GL_STATIC_DRAW);
 
       // Set up vertex attributes
       // Position attribute
@@ -225,7 +236,7 @@ void OkCamera::drawSelf() {
 
       // Draw in wireframe mode
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-      glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int),
+      glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()),
                      GL_UNSIGNED_INT, nullptr);
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 

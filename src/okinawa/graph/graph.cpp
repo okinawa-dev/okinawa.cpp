@@ -1,4 +1,5 @@
 #include "graph.hpp"
+#include <array>
 
 #include "../core/gl_config.hpp"  // GL enums + glPointSize
 #include "../item/item.hpp"
@@ -184,17 +185,18 @@ void OkGraph::buildPolygons() {
       if (ln < eps) {
         continue;
       }
-      float        nx         = -dz / ln * hw;
-      float        nz         = dx / ln * hw;
-      unsigned int base       = static_cast<unsigned int>(ev.size() / 5);
-      float        quad[4][3] = {{pa.x() + nx, pa.y(), pa.z() + nz},
-                                 {pa.x() - nx, pa.y(), pa.z() - nz},
-                                 {pb.x() - nx, pb.y(), pb.z() - nz},
-                                 {pb.x() + nx, pb.y(), pb.z() + nz}};
+      float        nx   = -dz / ln * hw;
+      float        nz   = dx / ln * hw;
+      unsigned int base = static_cast<unsigned int>(ev.size() / 5);
+      std::array<std::array<float, 3>, 4> quad = {
+          {{pa.x() + nx, pa.y(), pa.z() + nz},
+           {pa.x() - nx, pa.y(), pa.z() - nz},
+           {pb.x() - nx, pb.y(), pb.z() - nz},
+           {pb.x() + nx, pb.y(), pb.z() + nz}}};
       for (int k = 0; k < 4; k++) {
-        ev.push_back(quad[k][0]);
-        ev.push_back(quad[k][1]);
-        ev.push_back(quad[k][2]);
+        ev.push_back(quad[static_cast<size_t>(k)][0]);
+        ev.push_back(quad[static_cast<size_t>(k)][1]);
+        ev.push_back(quad[static_cast<size_t>(k)][2]);
         ev.push_back(0.0f);
         ev.push_back(0.0f);
       }
@@ -225,16 +227,17 @@ void OkGraph::buildPolygons() {
   std::vector<unsigned int> ni;
   float                     hm = _nodeMarker * 0.5f;
   for (std::size_t i = 0; i < _nodes.size(); i++) {
-    const OkPoint &p          = _nodes[i];
-    unsigned int   base       = static_cast<unsigned int>(nv.size() / 5);
-    float          quad[4][3] = {{p.x() - hm, p.y(), p.z() - hm},
-                                 {p.x() + hm, p.y(), p.z() - hm},
-                                 {p.x() + hm, p.y(), p.z() + hm},
-                                 {p.x() - hm, p.y(), p.z() + hm}};
+    const OkPoint &p    = _nodes[i];
+    unsigned int   base = static_cast<unsigned int>(nv.size() / 5);
+    std::array<std::array<float, 3>, 4> quad = {
+        {{p.x() - hm, p.y(), p.z() - hm},
+         {p.x() + hm, p.y(), p.z() - hm},
+         {p.x() + hm, p.y(), p.z() + hm},
+         {p.x() - hm, p.y(), p.z() + hm}}};
     for (int k = 0; k < 4; k++) {
-      nv.push_back(quad[k][0]);
-      nv.push_back(quad[k][1]);
-      nv.push_back(quad[k][2]);
+      nv.push_back(quad[static_cast<size_t>(k)][0]);
+      nv.push_back(quad[static_cast<size_t>(k)][1]);
+      nv.push_back(quad[static_cast<size_t>(k)][2]);
       nv.push_back(0.0f);
       nv.push_back(0.0f);
     }

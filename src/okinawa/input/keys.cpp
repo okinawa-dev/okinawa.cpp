@@ -1,9 +1,11 @@
 #include "keys.hpp"
 
+#include <array>
+
 #include "../core/gl_config.hpp"  // IWYU pragma: keep
 
 // Lookup table for OkKey to GLFW key mapping
-static const int okKeyToGLFWTable[OK_KEY_COUNT] = {
+static const std::array<int, OK_KEY_COUNT> okKeyToGLFWTable = {
     GLFW_KEY_SPACE,          // OK_KEY_SPACE
     GLFW_KEY_APOSTROPHE,     // OK_KEY_APOSTROPHE
     GLFW_KEY_COMMA,          // OK_KEY_COMMA
@@ -112,7 +114,7 @@ static const int okKeyToGLFWTable[OK_KEY_COUNT] = {
 };
 
 // Lookup table for key names
-static const char *keyNameTable[OK_KEY_COUNT] = {
+static const std::array<const char *, OK_KEY_COUNT> keyNameTable = {
     "Space",            // OK_KEY_SPACE
     "Apostrophe",       // OK_KEY_APOSTROPHE
     "Comma",            // OK_KEY_COMMA

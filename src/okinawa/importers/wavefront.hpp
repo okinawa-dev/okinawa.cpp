@@ -2,6 +2,7 @@
 #define OK_WAVEFRONT_HPP
 
 #include "../item/item.hpp"
+#include <array>
 #include <string>
 #include <vector>
 
@@ -18,8 +19,8 @@ private:
    * @brief Temporary vertex structure to hold position and texture coordinates.
    */
   struct TempVertex {
-    float position[3];
-    float texcoord[2];
+    std::array<float, 3> position;
+    std::array<float, 2> texcoord;
   };
 
   /**

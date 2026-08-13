@@ -3,6 +3,7 @@
 
 #include "../core/object.hpp"
 #include "../math/point.hpp"
+#include <array>
 #include <cstdint>
 
 #include <vector>
@@ -87,14 +88,14 @@ private:
   OkItem *_edgesItem;  // owned
   OkItem *_nodesItem;  // owned
 
-  RenderMode _mode;
-  float      _edgeColor[3];
-  float      _nodeColor[3];
-  bool       _showEdges;
-  bool       _showNodes;
-  float      _nodeSize;    // RENDER_LINES point size (pixels)
-  float      _edgeWidth;   // RENDER_POLYGONS ribbon width (metres)
-  float      _nodeMarker;  // RENDER_POLYGONS node quad size (metres)
+  RenderMode           _mode;
+  std::array<float, 3> _edgeColor;
+  std::array<float, 3> _nodeColor;
+  bool                 _showEdges;
+  bool                 _showNodes;
+  float                _nodeSize;    // RENDER_LINES point size (pixels)
+  float                _edgeWidth;   // RENDER_POLYGONS ribbon width (metres)
+  float                _nodeMarker;  // RENDER_POLYGONS node quad size (metres)
 
   void destroyItems();
   void buildLines();

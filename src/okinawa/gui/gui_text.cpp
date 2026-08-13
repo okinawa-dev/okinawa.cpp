@@ -2,6 +2,7 @@
 #include "../item/item.hpp"
 #include "../item/texture.hpp"
 #include "font.hpp"
+#include <array>
 #include <vector>
 
 // NOLINTBEGIN(readability-magic-numbers)
@@ -10,6 +11,16 @@
 // Naming each one yields a constant that repeats the number and
 // explains nothing; the ones that do carry meaning are named and
 // commented where they are used.
+
+namespace {
+
+  // Colour components arrive as 0..1 floats and leave as bytes.
+  const float COLOR_MAX = 255.0f;
+
+  // One glyph quad: four corners, each x, y, z plus texture u, v.
+  const size_t VERTS_PER_QUAD = 20;
+
+}  // namespace
 
 OkGuiText::OkGuiText(const std::string &name) : OkObject(name) {
   _text     = "";
@@ -75,13 +86,15 @@ void OkGuiText::setTextColor(float r, float g, float b, float a) {
  */
 OkTexture *OkGuiText::bakeTexture(const std::string &textureName,
                                   int                scale) const {
-  unsigned char fg[4];
-  fg[0]               = static_cast<unsigned char>(_color[0] * 255.0f);
-  fg[1]               = static_cast<unsigned char>(_color[1] * 255.0f);
-  fg[2]               = static_cast<unsigned char>(_color[2] * 255.0f);
-  fg[3]               = static_cast<unsigned char>(_color[3] * 255.0f);
-  unsigned char bg[4] = {0, 0, 0, 0};
-  return OkFont::bake(textureName, _text, scale, fg, bg);
+  std::array<unsigned char, 4> fg;
+  for (int i = 0; i < 4; i++) {
+    fg[static_cast<size_t>(i)] =
+        static_cast<unsigned char>(_color[static_cast<size_t>(i)] * COLOR_MAX);
+  }
+  // Transparent background: the GUI pass blends, so the glyphs sit on
+  // whatever is already there.
+  std::array<unsigned char, 4> bg = {0, 0, 0, 0};
+  return OkFont::bake(textureName, _text, scale, fg.data(), bg.data());
 }
 
 /**
@@ -123,15 +136,15 @@ void OkGuiText::rebuildMesh() {
         static_cast<float>(i) * static_cast<float>(OkFont::ADVANCE) - halfW;
     float x1 = x0 + static_cast<float>(OkFont::GLYPH_W);
 
-    unsigned int base     = static_cast<unsigned int>(verts.size() / 5);
-    float        quad[20] = {
+    unsigned int base = static_cast<unsigned int>(verts.size() / 5);
+    std::array<float, VERTS_PER_QUAD> quad = {
         x0, -halfH, 0.0f, u0, v0,  // bottom-left
         x1, -halfH, 0.0f, u1, v0,  // bottom-right
         x1, halfH,  0.0f, u1, v1,  // top-right
         x0, halfH,  0.0f, u0, v1,  // top-left
     };
     for (int k = 0; k < 20; k++) {
-      verts.push_back(quad[k]);
+      verts.push_back(quad[static_cast<size_t>(k)]);
     }
     idx.push_back(base);
     idx.push_back(base + 1);

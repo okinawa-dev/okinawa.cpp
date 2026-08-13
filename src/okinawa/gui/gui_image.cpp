@@ -1,5 +1,6 @@
 #include "gui_image.hpp"
 #include "gui.hpp"
+#include <array>
 
 // NOLINTBEGIN(readability-magic-numbers)
 //
@@ -11,16 +12,16 @@
 // Unit quad centred on the origin, on the Z=0 plane. Vertex stride is
 // 5 floats (position + UV); v=0 at the bottom (textures load flipped for
 // GL, so this shows the image upright).
-static float GUI_QUAD_VERTS[20] = {
+static std::array<float, 20> GUI_QUAD_VERTS = {
     -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,  // bottom-left
     0.5f,  -0.5f, 0.0f, 1.0f, 0.0f,  // bottom-right
     0.5f,  0.5f,  0.0f, 1.0f, 1.0f,  // top-right
     -0.5f, 0.5f,  0.0f, 0.0f, 1.0f,  // top-left
 };
-static unsigned int GUI_QUAD_INDICES[6] = {0, 1, 2, 0, 2, 3};
+static std::array<unsigned int, 6> GUI_QUAD_INDICES = {0, 1, 2, 0, 2, 3};
 
 OkGuiImage::OkGuiImage(const std::string &name)
-    : OkItem(name, GUI_QUAD_VERTS, 20, GUI_QUAD_INDICES, 6) {
+    : OkItem(name, GUI_QUAD_VERTS.data(), 20, GUI_QUAD_INDICES.data(), 6) {
   _gridX  = 0.0f;
   _gridY  = 0.0f;
   _gridW  = 1.0f;
