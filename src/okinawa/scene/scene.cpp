@@ -153,7 +153,7 @@ void OkScene::draw() {
       float   dx = p.x() - OkFrustum::getViewerX();
       float   dy = p.y() - OkFrustum::getViewerY();
       float   dz = p.z() - OkFrustum::getViewerZ();
-      _drawOrder.push_back(std::make_pair(dx * dx + dy * dy + dz * dz, o));
+      _drawOrder.emplace_back(dx * dx + dy * dy + dz * dz, o);
     }
     std::sort(_drawOrder.begin(), _drawOrder.end(),
               [](const std::pair<float, OkObject *> &a,

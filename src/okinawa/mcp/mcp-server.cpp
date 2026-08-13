@@ -253,7 +253,7 @@ struct OkMcpServer::Impl {
     std::future<json> future = promise->get_future();
     {
       std::scoped_lock lock(queueMutex);
-      queue.push_back([promise, fn]() {
+      queue.emplace_back([promise, fn]() {
         json result;
         try {
           result = fn();
@@ -707,8 +707,11 @@ struct OkMcpServer::Impl {
                          args["samples"].get<bool>();
       json out         = runOnLoop([wantSamples]() -> json {
         json  r;
-        int   count = 0;
-        float lo = 0.0f, hi = 0.0f, mean = 0.0f, median = 0.0f;
+        int   count  = 0;
+        float lo     = 0.0f;
+        float hi     = 0.0f;
+        float mean   = 0.0f;
+        float median = 0.0f;
         OkGuiStats::getSummary(count, lo, hi, mean, median);
         r["count"] = count;
         if (count == 0) {
@@ -728,8 +731,11 @@ struct OkMcpServer::Impl {
         // Where the platform enforces vsync every frame with budget to
         // spare reads as one refresh interval, so frame_ms cannot say
         // whether a change cost anything; this can.
-        int   dc  = 0;
-        float dlo = 0.0f, dhi = 0.0f, dmean = 0.0f, dmedian = 0.0f;
+        int   dc      = 0;
+        float dlo     = 0.0f;
+        float dhi     = 0.0f;
+        float dmean   = 0.0f;
+        float dmedian = 0.0f;
         OkGuiStats::getDrawSummary(dc, dlo, dhi, dmean, dmedian);
         if (dc > 0) {
           r["draw_ms"] = {

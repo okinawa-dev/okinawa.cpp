@@ -402,7 +402,8 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       // into the offscreen target and end() composites it to the window
       // before the camera-attached and GUI passes (which stay sharp).
       {
-        int fbw = 0, fbh = 0;
+        int fbw = 0;
+        int fbh = 0;
         glfwGetFramebufferSize(_window, &fbw, &fbh);
         OkPostProcess::begin(fbw, fbh);
       }
@@ -507,7 +508,8 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
           OkCamera *cam   = _cameras[_currentCamera];
           glm::mat4 viewM = glm::make_mat4(cam->getViewPtr());
           glm::mat4 projM = glm::make_mat4(cam->getProjectionPtr());
-          int       fbw = 0, fbh = 0;
+          int       fbw   = 0;
+          int       fbh   = 0;
           glfwGetFramebufferSize(_window, &fbw, &fbh);
           OkLightClusters::update(viewM, projM, cam->getNearPlane(),
                                   cam->getFarPlane());

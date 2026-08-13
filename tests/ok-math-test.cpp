@@ -81,7 +81,8 @@ TEST_CASE("OkMath angles to direction vector", "[math]") {
 TEST_CASE("OkMath direction vector to angles", "[math]") {
   SECTION("Direction vector (0,0,-1)") {
     OkPoint direction(0.0f, 0.0f, -1.0f);
-    float   pitch, yaw;
+    float   pitch;
+    float   yaw;
     OkMath::directionVectorToAngles(direction, pitch, yaw);
     REQUIRE_THAT(pitch, WithinAbs(0.0f, 0.0001f));
     REQUIRE_THAT(yaw, WithinAbs(0.0f, 0.0001f));
@@ -89,7 +90,8 @@ TEST_CASE("OkMath direction vector to angles", "[math]") {
 
   SECTION("Direction vector (1,0,0)") {
     OkPoint direction(1.0f, 0.0f, 0.0f);
-    float   pitch, yaw;
+    float   pitch;
+    float   yaw;
     OkMath::directionVectorToAngles(direction, pitch, yaw);
     // Facing world +X needs yaw = -90°: getForwardVector(0, -pi/2) =
     // (-sin(-pi/2), 0, -cos(-pi/2)) = (1, 0, 0).
@@ -99,7 +101,8 @@ TEST_CASE("OkMath direction vector to angles", "[math]") {
 
   SECTION("Direction vector (0,-1,-1)") {
     OkPoint direction(0.0f, -1.0f, -1.0f);
-    float   pitch, yaw;
+    float   pitch;
+    float   yaw;
     OkMath::directionVectorToAngles(direction, pitch, yaw);
     // Expected values for pitch and yaw
     float expectedPitch = -glm::pi<float>() / 4.0f;  // -45 degrees
@@ -110,7 +113,8 @@ TEST_CASE("OkMath direction vector to angles", "[math]") {
 
   SECTION("Direction vector straight up") {
     OkPoint direction(0.0f, 1.0f, 0.0f);  // Looking straight up
-    float   pitch, yaw;
+    float   pitch;
+    float   yaw;
     OkMath::directionVectorToAngles(direction, pitch, yaw);
 
     // Pitch should be +90° when looking straight up
@@ -124,7 +128,8 @@ TEST_CASE("OkMath direction vector to angles", "[math]") {
 
   SECTION("Direction vector straight down") {
     OkPoint direction(0.0f, -1.0f, 0.0f);  // Looking straight down
-    float   pitch, yaw;
+    float   pitch;
+    float   yaw;
     OkMath::directionVectorToAngles(direction, pitch, yaw);
 
     // Pitch should be -90° when looking straight down
@@ -141,7 +146,8 @@ TEST_CASE("OkMath direction vector to angles", "[math]") {
     // This ensures y is not near ±1, so we'll hit the yaw calculation code
     // Using -Z instead of +Z to match our forward direction convention
     OkPoint direction(0.0f, 0.707f, -0.707f);
-    float   pitch, yaw;
+    float   pitch;
+    float   yaw;
     OkMath::directionVectorToAngles(direction, pitch, yaw);
 
     // Expected pitch should be ~45°
@@ -157,7 +163,8 @@ TEST_CASE("OkMath direction vector to angles", "[math]") {
   SECTION("Direction vector nearly vertical") {
     // Using a nearly vertical vector that should trigger first check
     OkPoint direction(0.001f, 0.99999f, 0.001f);
-    float   pitch, yaw;
+    float   pitch;
+    float   yaw;
 
     // Calculate what the normalized y value will be
     // glm::vec3 normalized =
@@ -250,7 +257,8 @@ TEST_CASE("OkMath forward/angle round-trip", "[math]") {
       OkPoint    f = source.getForwardVector();
 
       // directionVectorToAngles -> rebuild forward -> must match.
-      float p, y;
+      float p;
+      float y;
       OkMath::directionVectorToAngles(f, p, y);
       OkPoint rebuilt = OkRotation(p, y, 0.0f).getForwardVector();
       REQUIRE_THAT(rebuilt.x(), WithinAbs(f.x(), 0.001f));

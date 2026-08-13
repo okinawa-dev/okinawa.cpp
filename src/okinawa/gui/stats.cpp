@@ -151,7 +151,9 @@ void OkGuiStats::rebuildGraph() {
     int h   = static_cast<int>(t * (GRAPH_H - 1));
     // Green while comfortably inside a 60Hz budget, amber past it, red
     // once a frame costs more than two refreshes.
-    unsigned char r = 90, g = 200, b = 110;
+    unsigned char r = 90;
+    unsigned char g = 200;
+    unsigned char b = 110;
     if (ms > 16.7f) {
       r = 220;
       g = 190;

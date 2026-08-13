@@ -118,7 +118,14 @@ TEST_CASE("OkFont glyphs", "[gui]") {
     }
   }
   SECTION("Atlas UVs stay in range and differ per glyph") {
-    float au0, av0, au1, av1, bu0, bv0, bu1, bv1;
+    float au0;
+    float av0;
+    float au1;
+    float av1;
+    float bu0;
+    float bv0;
+    float bu1;
+    float bv1;
     OkFont::glyphUV('A', au0, av0, au1, av1);
     OkFont::glyphUV('B', bu0, bv0, bu1, bv1);
     REQUIRE(au0 >= 0.0f);
@@ -192,7 +199,11 @@ TEST_CASE("OkConfig prefix lookup", "[gui]") {
 #include "okinawa/lighting/lighting.hpp"
 
 TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
-  float tint[3], fog[3], density, sun[3], dir[3];
+  float tint[3];
+  float fog[3];
+  float density;
+  float sun[3];
+  float dir[3];
 
   // These assert the MECHANISM, not a particular look: the values in
   // the engine's default curve are a starting point projects replace,
@@ -206,7 +217,11 @@ TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
     REQUIRE(dir[1] > 0.0f);  // parked below the horizon
   }
   SECTION("Night is darker than midday") {
-    float dayTint[3], dayFog[3], dayDensity, daySun[3], dayDir[3];
+    float dayTint[3];
+    float dayFog[3];
+    float dayDensity;
+    float daySun[3];
+    float dayDir[3];
     OkLighting::evaluate(12.0f, dayTint, dayFog, dayDensity, daySun, dayDir);
     OkLighting::evaluate(2.0f, tint, fog, density, sun, dir);
     float dayLum   = dayTint[0] + dayTint[1] + dayTint[2];
@@ -216,14 +231,27 @@ TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
     REQUIRE(sun[0] + sun[1] + sun[2] < daySun[0] + daySun[1] + daySun[2]);
   }
   SECTION("Hours wrap") {
-    float t2[3], f2[3], d2, s2[3], dd2[3];
+    float t2[3];
+    float f2[3];
+    float d2;
+    float s2[3];
+    float dd2[3];
     OkLighting::evaluate(26.0f, tint, fog, density, sun, dir);
     OkLighting::evaluate(2.0f, t2, f2, d2, s2, dd2);
     REQUIRE_THAT(tint[0], WithinAbs(t2[0], 0.0001f));
     REQUIRE_THAT(density, WithinAbs(d2, 0.0001f));
   }
   SECTION("Continuity across midnight") {
-    float a[3], b[3], fa[3], fb[3], da, db, sa[3], sb[3], za[3], zb[3];
+    float a[3];
+    float b[3];
+    float fa[3];
+    float fb[3];
+    float da;
+    float db;
+    float sa[3];
+    float sb[3];
+    float za[3];
+    float zb[3];
     OkLighting::evaluate(23.99f, a, fa, da, sa, za);
     OkLighting::evaluate(0.01f, b, fb, db, sb, zb);
     REQUIRE_THAT(a[0], WithinAbs(b[0], 0.01f));

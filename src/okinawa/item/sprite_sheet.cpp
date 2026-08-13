@@ -103,7 +103,7 @@ bool OkSpriteSheet::load(const std::string &jsonPath,
     std::vector<std::pair<std::string, const json *>> entries;
     if (frames.is_object()) {
       for (json::const_iterator it = frames.begin(); it != frames.end(); ++it) {
-        entries.push_back(std::make_pair(it.key(), &it.value()));
+        entries.emplace_back(it.key(), &it.value());
       }
     } else if (frames.is_array()) {
       for (size_t i = 0; i < frames.size(); i++) {
@@ -111,7 +111,7 @@ bool OkSpriteSheet::load(const std::string &jsonPath,
         if (name.empty()) {
           name = "region_" + std::to_string(i);
         }
-        entries.push_back(std::make_pair(name, &frames[i]));
+        entries.emplace_back(name, &frames[i]);
       }
     }
 

@@ -334,7 +334,8 @@ void OkObject::drawAxis() const {
                           0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f};
 
   // Create temporary VAO and VBO for the axis lines
-  GLuint VAO, VBO;
+  GLuint VAO;
+  GLuint VBO;
   glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &VBO);
 

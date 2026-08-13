@@ -114,7 +114,7 @@ void OkLightClusters::update(const glm::mat4 &view, const glm::mat4 &projection,
     // behind the camera has negative depth and would sort first,
     // filling the near clusters before the lamp overhead gets in.
     float dist = std::sqrt(vp.x * vp.x + vp.y * vp.y + vp.z * vp.z);
-    ordered.push_back(std::make_pair(dist, li));
+    ordered.emplace_back(dist, li);
   }
   std::sort(ordered.begin(), ordered.end());
 
@@ -130,8 +130,11 @@ void OkLightClusters::update(const glm::mat4 &view, const glm::mat4 &projection,
 
     // Screen-space bounds of the sphere: project the centre and the
     // extents of its bounding box. Conservative and cheap.
-    float minX = 1.0f, maxX = -1.0f, minY = 1.0f, maxY = -1.0f;
-    bool  any = false;
+    float minX = 1.0f;
+    float maxX = -1.0f;
+    float minY = 1.0f;
+    float maxY = -1.0f;
+    bool  any  = false;
     for (int c = 0; c < 8; c++) {
       glm::vec4 corner = vp;
       corner.x += ((c & 1) ? lr : -lr);

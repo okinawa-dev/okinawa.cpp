@@ -305,7 +305,7 @@ void OkConsole::refreshUi() {
   for (std::size_t oi = 0; oi < _output.size(); oi++) {
     const std::string &full = _output[oi];
     if (full.empty()) {
-      rows.push_back("");
+      rows.emplace_back("");
       continue;
     }
     for (std::size_t at = 0; at < full.size();

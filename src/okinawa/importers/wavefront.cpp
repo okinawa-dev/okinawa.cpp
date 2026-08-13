@@ -53,7 +53,9 @@ bool OkWavefrontImporter::parseGeometry(const std::string         &filename,
     iss >> type;
 
     if (type == "v") {
-      float x, y, z;
+      float x;
+      float y;
+      float z;
       if (iss >> x >> y >> z) {
         vertices.push_back(x);
         vertices.push_back(y);
@@ -102,14 +104,17 @@ bool OkWavefrontImporter::parseGeometryWithUV(const std::string &filename,
     iss >> type;
 
     if (type == "v") {
-      float x, y, z;
+      float x;
+      float y;
+      float z;
       if (iss >> x >> y >> z) {
         mesh.positions.push_back(x);
         mesh.positions.push_back(y);
         mesh.positions.push_back(z);
       }
     } else if (type == "vt") {
-      float u, v;
+      float u;
+      float v;
       if (iss >> u >> v) {
         mesh.texcoords.push_back(u);
         mesh.texcoords.push_back(v);

@@ -122,12 +122,15 @@ void OkItem::_adoptVertexData(float *vertexData, long vertexCount,
       if (ia >= vcount || ib >= vcount || ic >= vcount) {
         continue;
       }
-      float ax = vertexData[ia * 5], ay = vertexData[ia * 5 + 1],
-            az = vertexData[ia * 5 + 2];
-      float ux = vertexData[ib * 5] - ax, uy = vertexData[ib * 5 + 1] - ay,
-            uz = vertexData[ib * 5 + 2] - az;
-      float wx = vertexData[ic * 5] - ax, wy = vertexData[ic * 5 + 1] - ay,
-            wz = vertexData[ic * 5 + 2] - az;
+      float ax = vertexData[ia * 5];
+      float ay = vertexData[ia * 5 + 1];
+      float az = vertexData[ia * 5 + 2];
+      float ux = vertexData[ib * 5] - ax;
+      float uy = vertexData[ib * 5 + 1] - ay;
+      float uz = vertexData[ib * 5 + 2] - az;
+      float wx = vertexData[ic * 5] - ax;
+      float wy = vertexData[ic * 5 + 1] - ay;
+      float wz = vertexData[ic * 5 + 2] - az;
       // Area-weighted face normal (unnormalized cross product).
       float nx = uy * wz - uz * wy;
       float ny = uz * wx - ux * wz;

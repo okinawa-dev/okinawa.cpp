@@ -65,7 +65,7 @@ void OkAsyncLoader::initialize(int workers) {
   }
   g_running = true;
   for (int i = 0; i < workers; i++) {
-    g_workers.push_back(std::thread(workerLoop));
+    g_workers.emplace_back(workerLoop);
   }
   OkLogger::info("AsyncLoader",
                  "Started with " + std::to_string(workers) + " worker(s)");

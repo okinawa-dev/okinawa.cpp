@@ -214,8 +214,10 @@ void OkSkybox::drawSun(float camX, float camY, float camZ) {
       OkBillboard::facingRotation(pos, OkPoint(camX, camY, camZ)));
 
   const float *col = OkLighting::getSunColor();
-  float        r = col[0], g = col[1], b = col[2];
-  float        m = std::max({r, g, b});
+  float        r   = col[0];
+  float        g   = col[1];
+  float        b   = col[2];
+  float        m   = std::max({r, g, b});
   if (m < 0.35f) {
     // Deep dusk: the curve's colour has gone dark, but the body itself
     // should still read as a light, only a red one.

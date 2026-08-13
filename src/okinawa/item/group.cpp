@@ -44,7 +44,7 @@ void OkItemGroup::addItem(OkItem *item, const std::vector<std::string> &tags) {
     }
   }
 
-  items.push_back(OkTaggedItem(item, tags));
+  items.emplace_back(item, tags);
 
   OkLogger::info("ItemGroup", "Added item to group with " +
                                   std::to_string(tags.size()) + " tags");

@@ -187,7 +187,9 @@ void OkCamera::drawSelf() {
       }
 
       // Create and bind temporary VAO/VBO/EBO
-      GLuint VAO, VBO, EBO;
+      GLuint VAO;
+      GLuint VBO;
+      GLuint EBO;
       glGenVertexArrays(1, &VAO);
       glGenBuffers(1, &VBO);
       glGenBuffers(1, &EBO);

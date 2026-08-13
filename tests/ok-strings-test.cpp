@@ -4,11 +4,11 @@
 
 TEST_CASE("OkStrings trim function", "[strings]") {
   SECTION("Empty string") {
-    REQUIRE(OkStrings::trim("") == "");
+    REQUIRE(OkStrings::trim("").empty());
   }
 
   SECTION("String with only whitespace") {
-    REQUIRE(OkStrings::trim("   \t\n\r\f\v   ") == "");
+    REQUIRE(OkStrings::trim("   \t\n\r\f\v   ").empty());
   }
 
   SECTION("String with leading whitespace") {
@@ -30,7 +30,7 @@ TEST_CASE("OkStrings trim function", "[strings]") {
   SECTION("Edge cases") {
     // Test a string that's all whitespace
     std::string allWhitespace = "\t \n\r\f\v";
-    REQUIRE(OkStrings::trim(allWhitespace) == "");
+    REQUIRE(OkStrings::trim(allWhitespace).empty());
 
     // Test a single non-whitespace character surrounded by whitespace
     std::string singleChar = " \t x \n\r ";
@@ -40,11 +40,11 @@ TEST_CASE("OkStrings trim function", "[strings]") {
 
 TEST_CASE("OkStrings trimRight function", "[strings]") {
   SECTION("Empty string") {
-    REQUIRE(OkStrings::trimRight("") == "");
+    REQUIRE(OkStrings::trimRight("").empty());
   }
 
   SECTION("String with only whitespace") {
-    REQUIRE(OkStrings::trimRight("   \t\n\r\f\v   ") == "");
+    REQUIRE(OkStrings::trimRight("   \t\n\r\f\v   ").empty());
   }
 
   SECTION("String with leading whitespace") {
@@ -66,13 +66,13 @@ TEST_CASE("OkStrings trimRight function", "[strings]") {
 
 TEST_CASE("OkStrings trimFixedString function", "[strings]") {
   SECTION("Empty string") {
-    REQUIRE(OkStrings::trimFixedString("", 5) == "");
-    REQUIRE(OkStrings::trimFixedString("", 0) == "");
+    REQUIRE(OkStrings::trimFixedString("", 5).empty());
+    REQUIRE(OkStrings::trimFixedString("", 0).empty());
   }
 
   SECTION("String with only whitespace") {
-    REQUIRE(OkStrings::trimFixedString("   \t\n\r\f\v   ", 5) == "");
-    REQUIRE(OkStrings::trimFixedString("   ", 1) == "");
+    REQUIRE(OkStrings::trimFixedString("   \t\n\r\f\v   ", 5).empty());
+    REQUIRE(OkStrings::trimFixedString("   ", 1).empty());
   }
 
   SECTION("String shorter than max length") {
@@ -94,7 +94,7 @@ TEST_CASE("OkStrings trimFixedString function", "[strings]") {
   }
 
   SECTION("Edge cases") {
-    REQUIRE(OkStrings::trimFixedString("hello", 0) == "");
+    REQUIRE(OkStrings::trimFixedString("hello", 0).empty());
     REQUIRE(OkStrings::trimFixedString("   hello   ", 8) == "   hello");
     REQUIRE(OkStrings::trimFixedString("hello   world", 8) == "hello");
     REQUIRE(OkStrings::trimFixedString("hello   ", 7) == "hello");
@@ -104,7 +104,7 @@ TEST_CASE("OkStrings trimFixedString function", "[strings]") {
 
 TEST_CASE("OkStrings toUpper function", "[strings]") {
   SECTION("Empty string") {
-    REQUIRE(OkStrings::toUpper("") == "");
+    REQUIRE(OkStrings::toUpper("").empty());
   }
 
   SECTION("Lowercase string") {
@@ -122,7 +122,7 @@ TEST_CASE("OkStrings toUpper function", "[strings]") {
 
 TEST_CASE("OkStrings toLower function", "[strings]") {
   SECTION("Empty string") {
-    REQUIRE(OkStrings::toLower("") == "");
+    REQUIRE(OkStrings::toLower("").empty());
   }
 
   SECTION("Uppercase string") {
