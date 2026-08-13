@@ -30,12 +30,16 @@ namespace {
   int g_visibleLights = 0;
   int g_lightRefs     = 0;
 
-  // View-space depth of a slice boundary. Exponential distribution:
-  // z(k) = near * (far/near)^(k / SLICES).
-  float sliceDepth(int k, float nearPlane, float farPlane) {
-    float t = static_cast<float>(k) / static_cast<float>(OkLightClusters::CLUSTERS_Z);
-    return nearPlane * std::pow(farPlane / nearPlane, t);
-  }
+  // The slices are distributed exponentially in view space, so a slice is
+  // as deep as it is far: near the camera they are thin, far away they are
+  // long, and each covers a similar span of screen depth. The boundary of
+  // slice k sits at
+  //
+  //   z(k) = near * (far / near) ^ (k / CLUSTERS_Z)
+  //
+  // Kept as the formula rather than as a function: the shader computes it
+  // now, and a copy here that nothing calls is a copy that can drift from
+  // the one that matters. The reasoning is what was worth keeping.
 
 }  // namespace
 
@@ -167,8 +171,8 @@ void OkLightClusters::update(const glm::mat4 &view, const glm::mat4 &projection,
     int x1 = static_cast<int>(std::floor((maxX * 0.5f + 0.5f) * CLUSTERS_X));
     int y0 = static_cast<int>(std::floor((minY * 0.5f + 0.5f) * CLUSTERS_Y));
     int y1 = static_cast<int>(std::floor((maxY * 0.5f + 0.5f) * CLUSTERS_Y));
-    x0 = std::max(x0, 0);
-    y0 = std::max(y0, 0);
+    x0     = std::max(x0, 0);
+    y0     = std::max(y0, 0);
     if (x1 >= CLUSTERS_X)
       x1 = CLUSTERS_X - 1;
     if (y1 >= CLUSTERS_Y)
@@ -177,12 +181,14 @@ void OkLightClusters::update(const glm::mat4 &view, const glm::mat4 &projection,
     // Depth slice range from the sphere's z extent.
     float zNear = vz - lr;
     float zFar  = vz + lr;
-    zNear = std::max(zNear, nearPlane);
-    zFar = std::min(zFar, farPlane);
-    int z0 = static_cast<int>(std::floor(std::log(zNear / nearPlane) /
-                             std::log(farPlane / nearPlane) * CLUSTERS_Z));
-    int z1 = static_cast<int>(std::floor(std::log(zFar / nearPlane) /
-                             std::log(farPlane / nearPlane) * CLUSTERS_Z));
+    zNear       = std::max(zNear, nearPlane);
+    zFar        = std::min(zFar, farPlane);
+    int z0      = static_cast<int>(std::floor(std::log(zNear / nearPlane) /
+                                              std::log(farPlane / nearPlane) *
+                                              CLUSTERS_Z));
+    int z1      = static_cast<int>(
+        std::floor(std::log(zFar / nearPlane) / std::log(farPlane / nearPlane) *
+                   CLUSTERS_Z));
     z0 = std::max(z0, 0);
     if (z1 >= CLUSTERS_Z)
       z1 = CLUSTERS_Z - 1;
@@ -207,7 +213,8 @@ void OkLightClusters::update(const glm::mat4 &view, const glm::mat4 &projection,
       for (int y = y0; y <= y1; y++) {
         for (int x = x0; x <= x1; x++) {
           int ci = (z * CLUSTERS_Y + y) * CLUSTERS_X + x;
-          if (static_cast<int>(g_clusterLists[static_cast<size_t>(ci)].size()) < MAX_LIGHTS_PER_CLUSTER) {
+          if (static_cast<int>(g_clusterLists[static_cast<size_t>(ci)].size()) <
+              MAX_LIGHTS_PER_CLUSTER) {
             g_clusterLists[static_cast<size_t>(ci)].push_back(slot);
           }
         }
@@ -252,7 +259,8 @@ void OkLightClusters::update(const glm::mat4 &view, const glm::mat4 &projection,
                static_cast<GLsizeiptr>(g_indexData.size() * sizeof(int)),
                g_indexData.data(), GL_DYNAMIC_DRAW);
   glBindBuffer(GL_TEXTURE_BUFFER, g_gridTbo);
-  glBufferData(GL_TEXTURE_BUFFER, static_cast<GLsizeiptr>(g_gridData.size() * sizeof(int)),
+  glBufferData(GL_TEXTURE_BUFFER,
+               static_cast<GLsizeiptr>(g_gridData.size() * sizeof(int)),
                g_gridData.data(), GL_DYNAMIC_DRAW);
   glBindBuffer(GL_TEXTURE_BUFFER, 0);
 }
@@ -294,7 +302,8 @@ void OkLightClusters::bind(GLuint program, int screenWidth, int screenHeight,
   }
   loc = glGetUniformLocation(program, "clusterScreen");
   if (loc != -1) {
-    glUniform2f(loc, static_cast<float>(screenWidth), static_cast<float>(screenHeight));
+    glUniform2f(loc, static_cast<float>(screenWidth),
+                static_cast<float>(screenHeight));
   }
   loc = glGetUniformLocation(program, "clusterPlanes");
   if (loc != -1) {

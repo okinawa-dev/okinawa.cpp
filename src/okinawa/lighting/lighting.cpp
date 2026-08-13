@@ -150,7 +150,14 @@ void OkLighting::initialize() {
                            std::to_string(OkLighting::getTimeOfDay()));
           return;
         }
-        OkLighting::setTimeOfDay(static_cast<float>(atof(args[0].c_str())));
+        const char *tbeg = args[0].c_str();
+        char       *tend = nullptr;
+        double      tval = strtod(tbeg, &tend);
+        if (tend == tbeg || *tend != '\0') {
+          OkConsole::print("time: not a number");
+          return;
+        }
+        OkLighting::setTimeOfDay(static_cast<float>(tval));
         OkConsole::print("time = " +
                          std::to_string(OkLighting::getTimeOfDay()));
       });
@@ -163,7 +170,14 @@ void OkLighting::initialize() {
                                                 "lighting.timescale")));
           return;
         }
-        OkConfig::setFloat("lighting.timescale", static_cast<float>(atof(args[0].c_str())));
+        const char *sbeg = args[0].c_str();
+        char       *send = nullptr;
+        double      sval = strtod(sbeg, &send);
+        if (send == sbeg || *send != '\0') {
+          OkConsole::print("timescale: not a number");
+          return;
+        }
+        OkConfig::setFloat("lighting.timescale", static_cast<float>(sval));
         OkConsole::print("timescale = " + std::to_string(OkConfig::getFloat(
                                               "lighting.timescale")));
       });
@@ -210,10 +224,10 @@ void OkLighting::update(float dt) {
   // Point-light level: sin(sun elevation) is -_sunDir[1]; ramp 0 -> 1
   // as it falls from +0.05 to -0.05 (through the sunset).
   {
-    float sinElev = -_sunDir[1];
-    float level   = (0.05f - sinElev) / 0.10f;
-    level = std::max(level, 0.0f);
-    level = std::min(level, 1.0f);
+    float sinElev    = -_sunDir[1];
+    float level      = (0.05f - sinElev) / 0.10f;
+    level            = std::max(level, 0.0f);
+    level            = std::min(level, 1.0f);
     _pointLightLevel = level;
   }
 }
@@ -358,7 +372,7 @@ int OkLighting::getNearestLights(float x, float y, float z, int *outIdx,
                                  int maxN) {
   float bestScore[8];
   int   n = 0;
-  maxN = std::min(maxN, 8);
+  maxN    = std::min(maxN, 8);
   for (int i = 0; i < _lightCount; i++) {
     float dx = _lightPos[i][0] - x;
     float dy = _lightPos[i][1] - y;
@@ -427,11 +441,11 @@ OkTexture *OkLighting::getHaloTexture() {
   unsigned char rgba[SIZE * SIZE * 4];
   for (int y = 0; y < SIZE; y++) {
     for (int x = 0; x < SIZE; x++) {
-      float dx = (x + 0.5f) / SIZE - 0.5f;
-      float dy = (y + 0.5f) / SIZE - 0.5f;
-      float d  = std::sqrt(dx * dx + dy * dy) * 2.0f;  // 0 centre, 1 edge
-      float a  = 1.0f - d;
-      a = std::max(a, 0.0f);
+      float dx      = (static_cast<float>(x) + 0.5f) / SIZE - 0.5f;
+      float dy      = (static_cast<float>(y) + 0.5f) / SIZE - 0.5f;
+      float d       = std::sqrt(dx * dx + dy * dy) * 2.0f;  // 0 centre, 1 edge
+      float a       = 1.0f - d;
+      a             = std::max(a, 0.0f);
       a             = a * a;  // quadratic falloff, soft rim
       int off       = (y * SIZE + x) * 4;
       rgba[off]     = 255;

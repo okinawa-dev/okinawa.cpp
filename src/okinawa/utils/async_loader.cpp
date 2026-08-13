@@ -61,7 +61,7 @@ void OkAsyncLoader::initialize(int workers) {
     // this service exists to hide latency, not to saturate the CPU.
     unsigned int hw = std::thread::hardware_concurrency();
     workers         = static_cast<int>(hw > 2 ? hw - 1 : 1);
-    workers = std::min(workers, 4);
+    workers         = std::min(workers, 4);
   }
   g_running = true;
   for (int i = 0; i < workers; i++) {
@@ -119,7 +119,8 @@ void OkAsyncLoader::drain(float budgetMs) {
 
 int OkAsyncLoader::getPendingCount() {
   std::scoped_lock lock(g_mutex);
-  return static_cast<int>(g_queued.size()) + g_inFlight + static_cast<int>(g_ready.size());
+  return static_cast<int>(g_queued.size()) + g_inFlight +
+         static_cast<int>(g_ready.size());
 }
 
 int OkAsyncLoader::getReadyCount() {

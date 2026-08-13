@@ -49,13 +49,13 @@ public:
   [[nodiscard]] float x() const { return v.x; }
   [[nodiscard]] float y() const { return v.y; }
   [[nodiscard]] float z() const { return v.z; }
-  void  setX(float x) { v.x = x; }
-  void  setY(float y) { v.y = y; }
-  void  setZ(float z) { v.z = z; }
+  void                setX(float x) { v.x = x; }
+  void                setY(float y) { v.y = y; }
+  void                setZ(float z) { v.z = z; }
 
   // GLM data access
   [[nodiscard]] const glm::vec3 &data() const { return v; }
-  glm::vec3       &data() { return v; }
+  glm::vec3                     &data() { return v; }
 
   // String representation
   [[nodiscard]] std::string toString() const;

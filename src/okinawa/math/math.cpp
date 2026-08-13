@@ -112,9 +112,9 @@ OkRotation OkMath::lookAt(const OkPoint &eye, const OkPoint &target,
   glm::vec3 forward = glm::normalize(glm::vec3(
       target.x() - eye.x(), target.y() - eye.y(), target.z() - eye.z()));
 
-  float fy = forward.y;
-  fy = std::min(fy, 1.0f);
-  fy = std::max(fy, -1.0f);
+  float fy    = forward.y;
+  fy          = std::min(fy, 1.0f);
+  fy          = std::max(fy, -1.0f);
   float pitch = asin(fy);
 
   const float eps = 1e-4f;

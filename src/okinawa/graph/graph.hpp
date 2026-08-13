@@ -3,6 +3,7 @@
 
 #include "../core/object.hpp"
 #include "../math/point.hpp"
+#include <cstdint>
 
 #include <vector>
 
@@ -22,7 +23,7 @@ public:
   // - RENDER_LINES: edges as GL_LINES, nodes as GL_POINTS (cheap, 1px).
   // - RENDER_POLYGONS: edges as filled ribbons, nodes as filled quads, each in
   //   its colour (thicker / more visible, more geometry).
-  enum RenderMode {
+  enum RenderMode : std::uint8_t {
     RENDER_LINES,
     RENDER_POLYGONS
   };
@@ -51,8 +52,12 @@ public:
   }  // RENDER_POLYGONS
 
   // Queries.
-  [[nodiscard]] int getNodeCount() const { return static_cast<int>(_nodes.size()); }
-  [[nodiscard]] int getEdgeCount() const { return static_cast<int>(_edges.size()); }
+  [[nodiscard]] int getNodeCount() const {
+    return static_cast<int>(_nodes.size());
+  }
+  [[nodiscard]] int getEdgeCount() const {
+    return static_cast<int>(_edges.size());
+  }
   [[nodiscard]] const OkPoint &getNode(int i) const { return _nodes[i]; }
 
   // OkObject hooks. drawSelf only sets GL point size; the child items draw.

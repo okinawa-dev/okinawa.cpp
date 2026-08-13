@@ -48,7 +48,8 @@ void OkSkybox::ensure() {
     float rad  = std::cos(elev) * SKY_RADIUS;
     float v    = static_cast<float>(r) / static_cast<float>(SKY_RING_N - 1);
     for (int s = 0; s < SKY_SEGMENTS; s++) {
-      float a = static_cast<float>(s) / static_cast<float>(SKY_SEGMENTS) * 6.2831853f;
+      float a =
+          static_cast<float>(s) / static_cast<float>(SKY_SEGMENTS) * 6.2831853f;
       verts.push_back(std::cos(a) * rad);
       verts.push_back(y);
       verts.push_back(std::sin(a) * rad);
@@ -73,8 +74,8 @@ void OkSkybox::ensure() {
     }
   }
 
-  _dome = new OkItem("ok_skybox", verts.data(), static_cast<long>(verts.size()), idx.data(),
-                     static_cast<long>(idx.size()));
+  _dome = new OkItem("ok_skybox", verts.data(), static_cast<long>(verts.size()),
+                     idx.data(), static_cast<long>(idx.size()));
   // The sky is not an occluder; it is the light.
   _dome->setCastsShadow(false);
   refreshGradient();
@@ -137,17 +138,17 @@ void OkSkybox::ensureSunDisc() {
   unsigned char rgba[SUN_TEX * SUN_TEX * 4];
   for (int y = 0; y < SUN_TEX; y++) {
     for (int x = 0; x < SUN_TEX; x++) {
-      float dx = (x + 0.5f) / SUN_TEX - 0.5f;
-      float dy = (y + 0.5f) / SUN_TEX - 0.5f;
+      float dx = (static_cast<float>(x) + 0.5f) / SUN_TEX - 0.5f;
+      float dy = (static_cast<float>(y) + 0.5f) / SUN_TEX - 0.5f;
       float d  = std::sqrt(dx * dx + dy * dy) * 2.0f;
       // A solid core inside a wide soft corona, which is how a bright
       // source reads through atmosphere.
-      float core = 1.0f - d / 0.42f;
-      core = std::max(core, 0.0f);
-      float glow = 1.0f - d;
-      glow = std::max(glow, 0.0f);
-      float a = core + glow * glow * 0.55f;
-      a = std::min(a, 1.0f);
+      float core    = 1.0f - d / 0.42f;
+      core          = std::max(core, 0.0f);
+      float glow    = 1.0f - d;
+      glow          = std::max(glow, 0.0f);
+      float a       = core + glow * glow * 0.55f;
+      a             = std::min(a, 1.0f);
       int off       = (y * SUN_TEX + x) * 4;
       rgba[off]     = 255;
       rgba[off + 1] = 255;
@@ -204,7 +205,7 @@ void OkSkybox::drawSun(float camX, float camY, float camZ) {
     return;  // below the horizon: nothing to draw
   }
   float fade = horizon / 0.20f;
-  fade = std::min(fade, 1.0f);
+  fade       = std::min(fade, 1.0f);
 
   const float DIST = 820.0f;  // inside the dome
   OkPoint     pos(camX + sx * DIST, camY + sy * DIST, camZ + sz * DIST);
@@ -214,7 +215,7 @@ void OkSkybox::drawSun(float camX, float camY, float camZ) {
 
   const float *col = OkLighting::getSunColor();
   float        r = col[0], g = col[1], b = col[2];
-  float        m = r > g ? (r > b ? r : b) : (g > b ? g : b);
+  float        m = std::max({r, g, b});
   if (m < 0.35f) {
     // Deep dusk: the curve's colour has gone dark, but the body itself
     // should still read as a light, only a red one.

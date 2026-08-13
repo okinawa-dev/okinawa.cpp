@@ -174,10 +174,41 @@ void OkConfig::setFloat(const std::string &key, float value) {
   getConfig().floatValues[key] = value;
 }
 
+// Text to number, refusing to invent one.
+//
+// `atof` and `atoi` answer 0 for anything they cannot read, so a typo in a
+// config file or a console line silently sets the value to zero and the
+// only clue is behaviour. These say whether the text WAS a number, and the
+// caller decides what to do when it was not.
+static bool parseFloat(const std::string &text, float *out) {
+  const char *begin = text.c_str();
+  char       *end   = nullptr;
+  double      v     = strtod(begin, &end);
+  if (end == begin || *end != '\0') {
+    return false;
+  }
+  *out = static_cast<float>(v);
+  return true;
+}
+
+static bool parseInt(const std::string &text, int *out) {
+  const char *begin = text.c_str();
+  char       *end   = nullptr;
+  long        v     = strtol(begin, &end, 10);
+  if (end == begin || *end != '\0') {
+    return false;
+  }
+  *out = static_cast<int>(v);
+  return true;
+}
+
 void OkConfig::setFromString(const std::string &key, const std::string &val) {
   OkConfig &cfg = getConfig();
   if (cfg.floatValues.find(key) != cfg.floatValues.end()) {
-    setFloat(key, static_cast<float>(atof(val.c_str())));
+    float f = 0.0f;
+    if (parseFloat(val, &f)) {
+      setFloat(key, f);
+    }
     return;
   }
   if (cfg.boolValues.find(key) != cfg.boolValues.end()) {
@@ -185,7 +216,10 @@ void OkConfig::setFromString(const std::string &key, const std::string &val) {
     return;
   }
   if (cfg.intValues.find(key) != cfg.intValues.end()) {
-    setInt(key, atoi(val.c_str()));
+    int i = 0;
+    if (parseInt(val, &i)) {
+      setInt(key, i);
+    }
     return;
   }
   if (cfg.stringValues.find(key) != cfg.stringValues.end()) {
@@ -196,10 +230,20 @@ void OkConfig::setFromString(const std::string &key, const std::string &val) {
   if (val == "true" || val == "false") {
     setBool(key, val == "true");
   } else if (val.find('.') != std::string::npos) {
-    setFloat(key, static_cast<float>(atof(val.c_str())));
+    float f = 0.0f;
+    if (parseFloat(val, &f)) {
+      setFloat(key, f);
+    } else {
+      setString(key, val);
+    }
   } else if (!val.empty() &&
              (isdigit(static_cast<unsigned char>(val[0])) || val[0] == '-')) {
-    setInt(key, atoi(val.c_str()));
+    int i = 0;
+    if (parseInt(val, &i)) {
+      setInt(key, i);
+    } else {
+      setString(key, val);
+    }
   } else {
     setString(key, val);
   }

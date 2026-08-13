@@ -62,8 +62,10 @@ public:
   // Getters for matrices
   [[nodiscard]] const glm::mat4 &getView() const { return view; }
   [[nodiscard]] const glm::mat4 &getProjection() const { return projection; }
-  [[nodiscard]] const float     *getViewPtr() const { return glm::value_ptr(view); }
-  [[nodiscard]] const float *getProjectionPtr() const { return glm::value_ptr(projection); }
+  [[nodiscard]] const float *getViewPtr() const { return glm::value_ptr(view); }
+  [[nodiscard]] const float *getProjectionPtr() const {
+    return glm::value_ptr(projection);
+  }
 
   // Update and render
   void stepSelf(float dt) override;

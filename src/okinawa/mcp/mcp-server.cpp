@@ -274,7 +274,7 @@ struct OkMcpServer::Impl {
 
   // Capture the current framebuffer into a PNG byte buffer (on the loop
   // thread). Returns true on success and fills width/height.
-  bool capturePng(const std::shared_ptr<std::vector<unsigned char>>& outPng,
+  bool capturePng(const std::shared_ptr<std::vector<unsigned char>> &outPng,
                   int &widthOut, int &heightOut) {
     std::shared_ptr<std::pair<int, int>> wh =
         std::make_shared<std::pair<int, int>>(0, 0);
@@ -570,8 +570,9 @@ struct OkMcpServer::Impl {
         OkConsole::execute(line);
         unsigned long produced = OkConsole::getPrintedCount() - before;
         // The first of those lines is the echoed "> line", not output.
-        std::vector<std::string> tail = OkConsole::getOutputTail(static_cast<int>(produced));
-        json                     out  = json::array();
+        std::vector<std::string> tail =
+            OkConsole::getOutputTail(static_cast<int>(produced));
+        json out = json::array();
         for (size_t i = 1; i < tail.size(); i++) {
           out.push_back(tail[i]);
         }
@@ -618,6 +619,11 @@ struct OkMcpServer::Impl {
     }
 
     if (name == "view") {
+      // runOnLoop wraps whatever it is given in a try/catch and turns a
+      // throw into an error reply, so nothing escapes to the loop thread.
+      // The check cannot see that from here, because the lambda reaches it
+      // through a std::function.
+      // NOLINTBEGIN(bugprone-exception-escape)
       json out = runOnLoop([args]() -> json {
         // Optional camera selection by name (see get_state.cameras). The
         // tool then drives the active camera -- it no longer force-switches
@@ -666,6 +672,7 @@ struct OkMcpServer::Impl {
       }
       return textResult(out.dump(2));
     }
+    // NOLINTEND(bugprone-exception-escape)
 
     if (name == "set_item_visible") {
       std::string itemName = args.value("name", std::string());
@@ -879,15 +886,12 @@ void OkMcpServer::start() {
           result["serverInfo"]["version"] = kServerVersion;
           res.set_header("Mcp-Session-Id", "okinawa-mcp");
           res.set_content(makeResult(id, result).dump(), "application/json");
-        } else if (method.rfind("notifications/", 0) == 0) {
-          res.status = 202;
-          res.set_content("", "application/json");
         } else if (method == "ping") {
           res.set_content(makeResult(id, json::object()).dump(),
                           "application/json");
         } else if (method == "tools/list") {
           json result;
-          result["tools"] = _impl->toolList();
+          result["tools"] = Impl::toolList();
           res.set_content(makeResult(id, result).dump(), "application/json");
         } else if (method == "tools/call") {
           std::string name = params.value("name", std::string());
@@ -895,7 +899,12 @@ void OkMcpServer::start() {
                                                           : json::object();
           json        result = _impl->callTool(name, args);
           res.set_content(makeResult(id, result).dump(), "application/json");
-        } else if (isNotification) {
+        } else if (isNotification || method.rfind("notifications/", 0) == 0) {
+          // A notification is acknowledged and not answered. Both ways of
+          // spotting one lead here: no id at all, or a method under the
+          // `notifications/` prefix. Testing the prefix later than it used
+          // to be tested changes nothing -- no method under it can also be
+          // `ping` or `tools/list`.
           res.status = 202;
           res.set_content("", "application/json");
         } else {

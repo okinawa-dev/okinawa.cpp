@@ -2,6 +2,7 @@
 #define OK_THIRD_PERSON_CAMERA_HPP
 
 #include "../core/camera.hpp"
+#include <algorithm>
 
 class OkObject;
 
@@ -24,14 +25,14 @@ public:
 
   // Orbit interface (driven by the MCP `view` tool): absolute
   // yaw/pitch/distance.
-  [[nodiscard]] bool  isOrbit() const override { return true; }
-  void  setOrbit(float yawDeg, float pitchDeg, float distance) override;
+  [[nodiscard]] bool isOrbit() const override { return true; }
+  void setOrbit(float yawDeg, float pitchDeg, float distance) override;
   [[nodiscard]] float orbitYawDeg() const override;
   [[nodiscard]] float orbitPitchDeg() const override;
   [[nodiscard]] float orbitDistance() const override { return _distance; }
   [[nodiscard]] float viewDistance() const override { return _distance; }
-  void  setViewDistance(float d) override {
-    _distance = d < 1.0f ? 1.0f : (d > 2000.0f ? 2000.0f : d);
+  void                setViewDistance(float d) override {
+    _distance = std::min(std::max(d, 1.0f), 2000.0f);
   }
 
 private:

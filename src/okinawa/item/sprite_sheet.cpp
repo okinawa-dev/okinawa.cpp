@@ -134,12 +134,12 @@ bool OkSpriteSheet::load(const std::string &jsonPath,
       }
       // Textures load flipped for GL, so the region's TOP pixel row maps
       // to the higher v. v0 is the bottom of the region.
-      float fw              = static_cast<float>(_width);
-      float fh              = static_cast<float>(_height);
-      region.u0             = static_cast<float>(region.x) / fw;
-      region.u1             = static_cast<float>(region.x + region.w) / fw;
-      region.v1             = 1.0f - static_cast<float>(region.y) / fh;
-      region.v0             = 1.0f - static_cast<float>(region.y + region.h) / fh;
+      float fw  = static_cast<float>(_width);
+      float fh  = static_cast<float>(_height);
+      region.u0 = static_cast<float>(region.x) / fw;
+      region.u1 = static_cast<float>(region.x + region.w) / fw;
+      region.v1 = 1.0f - static_cast<float>(region.y) / fh;
+      region.v0 = 1.0f - static_cast<float>(region.y + region.h) / fh;
       _regions[region.name] = region;
       _order.push_back(region.name);
     }

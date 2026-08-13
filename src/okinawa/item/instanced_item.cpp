@@ -87,7 +87,7 @@ void OkInstancedItem::ensureInstanceBuffer() {
   // vec4: cos(yaw), sin(yaw), spare, spare
   glVertexAttribPointer(OK_INST_ATTR_ORIENT, 4, GL_FLOAT, GL_FALSE,
                         OK_INST_FLOATS * sizeof(float),
-                        (GLvoid *)(4 * sizeof(float)));
+                        reinterpret_cast<GLvoid *>(4 * sizeof(float)));
   glEnableVertexAttribArray(OK_INST_ATTR_ORIENT);
   glVertexAttribDivisor(OK_INST_ATTR_ORIENT, 1);
 
@@ -220,8 +220,9 @@ void OkInstancedItem::drawSelf() {
 
   glBindVertexArray(VAO);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glDrawElementsInstanced(drawMode, static_cast<GLsizei>(numIndices), GL_UNSIGNED_INT,
-                          nullptr, static_cast<GLsizei>(_drawnCount));
+  glDrawElementsInstanced(drawMode, static_cast<GLsizei>(numIndices),
+                          GL_UNSIGNED_INT, nullptr,
+                          static_cast<GLsizei>(_drawnCount));
   OkFrustum::addDraw((numIndices / 3) * _drawnCount);
 
   // Wireframe overlay, on the same instanced draw. One pass covers
@@ -245,8 +246,9 @@ void OkInstancedItem::drawSelf() {
       glUniform4f(colorLoc, wireframeColor[0], wireframeColor[1],
                   wireframeColor[2], 1.0f);
     }
-    glDrawElementsInstanced(drawMode, static_cast<GLsizei>(numIndices), GL_UNSIGNED_INT,
-                            nullptr, static_cast<GLsizei>(_drawnCount));
+    glDrawElementsInstanced(drawMode, static_cast<GLsizei>(numIndices),
+                            GL_UNSIGNED_INT, nullptr,
+                            static_cast<GLsizei>(_drawnCount));
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     if (wLitLoc != -1) {
       glUniform1f(wLitLoc, 1.0f);

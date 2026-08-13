@@ -32,9 +32,11 @@ public:
   // Move the controlled object from input, then reposition the rig cameras.
   void update(float dt, const OkInputState &input);
 
-  [[nodiscard]] OkObject           *getControlledObject() const { return _controlled; }
-  [[nodiscard]] OkAvatarController *getController() const { return _controller; }
-  void                setController(OkAvatarController *controller);
+  [[nodiscard]] OkObject *getControlledObject() const { return _controlled; }
+  [[nodiscard]] OkAvatarController *getController() const {
+    return _controller;
+  }
+  void setController(OkAvatarController *controller);
 
   // Camera rig: cameras that observe this avatar, repositioned every frame so
   // they track it (and their gizmos show) even when not rendered. Not owned.

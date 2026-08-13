@@ -18,14 +18,14 @@ GLuint OkShadowMap::_emptyShadowTex = 0;
 GLuint OkShadowMap::_program        = 0;
 int    OkShadowMap::_size           = 0;
 // What the map was last drawn for, so an identical redraw is skipped.
-bool      OkShadowMap::_neverDrawn = true;
-float     OkShadowMap::_lastDir[3] = {0.0f, 0.0f, 0.0f};
-float     OkShadowMap::_lastExtent[OkShadowMap::MAX_CASCADES] = {0.0f};
-float     OkShadowMap::_lastCx[OkShadowMap::MAX_CASCADES]     = {0.0f};
-float     OkShadowMap::_lastCz[OkShadowMap::MAX_CASCADES]     = {0.0f};
-size_t    OkShadowMap::_lastObjects                           = 0;
-int       OkShadowMap::_layers                                = 0;
-int       OkShadowMap::_count                                 = 1;
+bool   OkShadowMap::_neverDrawn                            = true;
+float  OkShadowMap::_lastDir[3]                            = {0.0f, 0.0f, 0.0f};
+float  OkShadowMap::_lastExtent[OkShadowMap::MAX_CASCADES] = {0.0f};
+float  OkShadowMap::_lastCx[OkShadowMap::MAX_CASCADES]     = {0.0f};
+float  OkShadowMap::_lastCz[OkShadowMap::MAX_CASCADES]     = {0.0f};
+size_t OkShadowMap::_lastObjects                           = 0;
+int    OkShadowMap::_layers                                = 0;
+int    OkShadowMap::_count                                 = 1;
 // Out of line, because std::min binds its arguments by reference and so
 // takes the constant's address. Declared inside the class it has a value
 // but no storage, and the link fails only where something wants a
@@ -187,13 +187,13 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
   // Fade the shadows in as the light climbs: a source at the horizon
   // throws shadows too long and too hard to be believable.
   float fade = (elev - 0.02f) / 0.18f;
-  fade = std::min(fade, 1.0f);
-  _strength = OkConfig::getFloat("shadows.strength") * fade;
+  fade       = std::min(fade, 1.0f);
+  _strength  = OkConfig::getFloat("shadows.strength") * fade;
 
   int count = OkConfig::getInt("shadows.cascades");
-  count = std::max(count, 1);
-  count = std::min(count, MAX_CASCADES);
-  _count = count;
+  count     = std::max(count, 1);
+  count     = std::min(count, MAX_CASCADES);
+  _count    = count;
   ensureTarget(OkConfig::getInt("shadows.size"), count);
 
   float shadowFar = OkConfig::getFloat("shadows.distance");

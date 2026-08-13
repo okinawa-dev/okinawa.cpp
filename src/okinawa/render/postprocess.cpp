@@ -1,10 +1,10 @@
 #include "postprocess.hpp"
 
-#include <algorithm>
 #include "../config/config.hpp"
 #include "../shaders/shaders.hpp"
 #include "../utils/assets.hpp"
 #include "../utils/logger.hpp"
+#include <algorithm>
 
 GLuint OkPostProcess::_fbo           = 0;
 GLuint OkPostProcess::_colorTex      = 0;
@@ -245,10 +245,10 @@ void OkPostProcess::updateAutoFocus(float nearPlane, float farPlane) {
         float linear = 2.0f * nearPlane * farPlane /
                        (farPlane + nearPlane - z * (farPlane - nearPlane));
         float target = OkConfig::getFloat("post.dof.autofocus.max");
-        target = std::min(linear, target);
-        float ease = OkConfig::getFloat("post.dof.autofocus.ease");
-        ease = std::max(ease, 0.0f);
-        ease = std::min(ease, 1.0f);
+        target       = std::min(linear, target);
+        float ease   = OkConfig::getFloat("post.dof.autofocus.ease");
+        ease         = std::max(ease, 0.0f);
+        ease         = std::min(ease, 1.0f);
         _focusMetres += (target - _focusMetres) * ease;
       }
     }
@@ -256,7 +256,8 @@ void OkPostProcess::updateAutoFocus(float nearPlane, float farPlane) {
 
   // Queue the next read from the frame just rendered.
   glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo);
-  glReadPixels(_width / 2, _height / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+  glReadPixels(_width / 2, _height / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT,
+               nullptr);
   glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
   glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
   _focusPending = true;
@@ -293,7 +294,8 @@ void OkPostProcess::end(float nearPlane, float farPlane, float dt) {
   glUniform1i(glGetUniformLocation(_program, "bloomTex"), 2);
   glUniform1f(glGetUniformLocation(_program, "bloomStrength"),
               bloom ? OkConfig::getFloat("post.bloom.strength") : 0.0f);
-  glUniform2f(glGetUniformLocation(_program, "texelSize"), 1.0f / static_cast<float>(_width),
+  glUniform2f(glGetUniformLocation(_program, "texelSize"),
+              1.0f / static_cast<float>(_width),
               1.0f / static_cast<float>(_height));
   glUniform2f(glGetUniformLocation(_program, "planes"), nearPlane, farPlane);
   glUniform1f(glGetUniformLocation(_program, "timeSec"), _time);

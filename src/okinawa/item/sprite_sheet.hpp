@@ -54,11 +54,13 @@ public:
 
   // The shared GPU texture. Hand it to items with setTexture().
   [[nodiscard]] OkTexture         *getTexture() const { return _texture; }
-  [[nodiscard]] const std::string &getTextureName() const { return _textureName; }
+  [[nodiscard]] const std::string &getTextureName() const {
+    return _textureName;
+  }
 
   // Region lookup by name; null when missing.
-  [[nodiscard]] const OkSpriteRegion    *getRegion(const std::string &name) const;
-  [[nodiscard]] bool                     hasRegion(const std::string &name) const;
+  [[nodiscard]] const OkSpriteRegion *getRegion(const std::string &name) const;
+  [[nodiscard]] bool                  hasRegion(const std::string &name) const;
   [[nodiscard]] std::vector<std::string> getRegionNames() const;
   [[nodiscard]] int                      getRegionCount() const;
 

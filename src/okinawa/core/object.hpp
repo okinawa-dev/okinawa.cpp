@@ -46,28 +46,28 @@ public:
 
   // Position
   [[nodiscard]] OkPoint getPosition() const;
-  void    setPosition(float x, float y, float z);
-  void    setPosition(const OkPoint &newPosition);
-  void    move(float dx, float dy, float dz);
+  void                  setPosition(float x, float y, float z);
+  void                  setPosition(const OkPoint &newPosition);
+  void                  move(float dx, float dy, float dz);
 
   void setDrawOriginAxis(bool drawAxis) { drawOriginAxis = drawAxis; }
   [[nodiscard]] bool getDrawOriginAxis() const { return drawOriginAxis; }
-  void drawAxis() const;
+  void               drawAxis() const;
 
   // Rotation
   [[nodiscard]] OkRotation getRotation() const;
-  void       setRotation(float x, float y, float z);
-  void       setRotation(const OkRotation &newRotation);
-  void       rotate(float dx, float dy, float dz);
+  void                     setRotation(float x, float y, float z);
+  void                     setRotation(const OkRotation &newRotation);
+  void                     rotate(float dx, float dy, float dz);
 
   // Scale
   [[nodiscard]] OkPoint getScaling() const { return scaling; }
-  void    setScaling(float x, float y, float z) { scaling = OkPoint(x, y, z); }
+  void setScaling(float x, float y, float z) { scaling = OkPoint(x, y, z); }
 
   // Physics
   [[nodiscard]] OkPoint getSpeed() const { return speed; }
-  void    setSpeed(float x, float y, float z) { speed = OkPoint(x, y, z); }
-  [[nodiscard]] float   getSpeedMagnitude() const { return speed.magnitude(); }
+  void setSpeed(float x, float y, float z) { speed = OkPoint(x, y, z); }
+  [[nodiscard]] float getSpeedMagnitude() const { return speed.magnitude(); }
 
   void setMaxVelocity(float maxVelocity) { maxVel = maxVelocity; }
   void setAcceleration(float acceleration) { accel = acceleration; }
@@ -76,10 +76,10 @@ public:
   [[nodiscard]] const std::string &getName() const { return name; }
 
   // Hierarchy
-  void      attach(OkObject *object);
-  void      attachTo(OkObject *parent);
-  void      detachFromParent();
-  void      detachAllChildren();
+  void                    attach(OkObject *object);
+  void                    attachTo(OkObject *parent);
+  void                    detachFromParent();
+  void                    detachAllChildren();
   [[nodiscard]] OkObject *getNextSibling() const { return _nextSibling; }
   [[nodiscard]] OkObject *getFirstChild() const { return _firstChild; }
   [[nodiscard]] OkObject *getParent() const { return _parent; }

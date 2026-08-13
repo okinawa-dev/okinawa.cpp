@@ -5,6 +5,7 @@
 #include "../core/object.hpp"
 #include "../handlers/textures.hpp"
 #include "../item/texture.hpp"
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -113,7 +114,7 @@ public:
 
   // Geometry
   [[nodiscard]] float getRadius() const { return radius; }
-  void  updateVertexData(float *newVertexData, long newVertexCount);
+  void updateVertexData(float *newVertexData, long newVertexCount);
 
   // Texture methods
   void loadTextureFromFile(const std::string &texturePath);
@@ -137,26 +138,26 @@ public:
   // of the index buffer, textured from `path`. Ranges are drawn in the
   // order added and should cover the buffer without overlapping; adding
   // none leaves the item single-material.
-  void   addMaterialFromFile(long firstIndex, long indexCount,
-                             const std::string &path);
-  void   clearMaterials();
+  void                 addMaterialFromFile(long firstIndex, long indexCount,
+                                           const std::string &path);
+  void                 clearMaterials();
   [[nodiscard]] size_t getMaterialCount() const { return materials.size(); }
 
-  void setWireframe(bool wireframe) { drawWireframe = wireframe; }
+  void               setWireframe(bool wireframe) { drawWireframe = wireframe; }
   [[nodiscard]] bool getWireframe() const { return drawWireframe; }
   // Opt this item out of (or back into) the global wireframe switch.
   // Its own setWireframe still applies either way.
   void setWireframeGlobal(bool on) { wireframeGlobal = on; }
   // Take this item out of (or back into) the shadow maps. Light does
   // not cast shadows; matter does.
-  void setCastsShadow(bool on) { castsShadow = on; }
+  void               setCastsShadow(bool on) { castsShadow = on; }
   [[nodiscard]] bool getCastsShadow() const { return castsShadow; }
   // Set by the shadow map around its own pass, so an item can tell
   // which pass is drawing it.
-  static void setShadowPass(bool on);
-  static bool inShadowPass();
-  [[nodiscard]] bool        getWireframeGlobal() const { return wireframeGlobal; }
-  void        setWireframeColor(float r, float g, float b) {
+  static void        setShadowPass(bool on);
+  static bool        inShadowPass();
+  [[nodiscard]] bool getWireframeGlobal() const { return wireframeGlobal; }
+  void               setWireframeColor(float r, float g, float b) {
     wireframeColor[0] = r;
     wireframeColor[1] = g;
     wireframeColor[2] = b;
@@ -171,7 +172,7 @@ public:
   // Tint multiplied over the texture in the fill pass (white = untouched).
   // Additive blending (glows/halos): drawn with src-alpha one blending
   // and no depth writes. World pass only.
-  void setAdditive(bool on) { additive = on; }
+  void               setAdditive(bool on) { additive = on; }
   [[nodiscard]] bool isBlended() const override { return additive; }
   // Unlit: this item ignores the Gouraud sun/point lights and the scene
   // tint (light sources must not be tinted by the atmosphere). World
@@ -212,15 +213,15 @@ public:
   // pixels on an ordered pattern. Two versions of the same object can
   // therefore trade places gradually while both stay in the opaque
   // pass -- no blending, no sorting, depth buffer intact.
-  void  setFade(float f) { fade = f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f); }
+  void setFade(float f) { fade = std::min(std::max(f, 0.0f), 1.0f); }
   [[nodiscard]] float getFade() const { return fade; }
   // The two sides of a handover must drop opposite pixels, or each
   // keeps the same half and the rest shows through to the background.
   // Set this on one of the pair, not on both.
-  void   setFadeInverted(bool on) { fadeInverted = on; }
-  void   setDrawMode(GLenum mode) { drawMode = mode; }
+  void                 setFadeInverted(bool on) { fadeInverted = on; }
+  void                 setDrawMode(GLenum mode) { drawMode = mode; }
   [[nodiscard]] GLenum getDrawMode() const { return drawMode; }
-  void   setVisible(bool visible) { this->visible = visible; }
+  void                 setVisible(bool visible) { this->visible = visible; }
   [[nodiscard]] bool   getVisible() const { return visible; }
 
   // Update and render

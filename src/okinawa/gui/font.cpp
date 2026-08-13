@@ -149,7 +149,8 @@ OkTexture *OkFont::bake(const std::string &name, const std::string &text,
         int di  = fx / ADVANCE;
         int col = fx % ADVANCE;
         if (di < nd && col < GLYPH_W) {
-          const unsigned char *rows = glyphRows(text[static_cast<std::size_t>(di)]);
+          const unsigned char *rows =
+              glyphRows(text[static_cast<std::size_t>(di)]);
           on = ((rows[fy] >> (GLYPH_W - 1 - col)) & 1) != 0;
         }
       }

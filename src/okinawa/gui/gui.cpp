@@ -335,8 +335,9 @@ void OkGui::updateDebugGrid(float logicalW, float logicalH) {
 
   if (!minorIdx.empty()) {
     _gridMinor =
-        new OkItem("gui_grid_minor", minorVerts.data(), static_cast<long>(minorVerts.size()),
-                   minorIdx.data(), static_cast<long>(minorIdx.size()));
+        new OkItem("gui_grid_minor", minorVerts.data(),
+                   static_cast<long>(minorVerts.size()), minorIdx.data(),
+                   static_cast<long>(minorIdx.size()));
     _gridMinor->setWireframeGlobal(false);  // interface, not scene
     _gridMinor->setDrawMode(GL_LINES);
     _gridMinor->setFillColor(GRID_MINOR_COLOR[0], GRID_MINOR_COLOR[1],
@@ -344,17 +345,18 @@ void OkGui::updateDebugGrid(float logicalW, float logicalH) {
   }
   if (!majorIdx.empty()) {
     _gridMajor =
-        new OkItem("gui_grid_major", majorVerts.data(), static_cast<long>(majorVerts.size()),
-                   majorIdx.data(), static_cast<long>(majorIdx.size()));
+        new OkItem("gui_grid_major", majorVerts.data(),
+                   static_cast<long>(majorVerts.size()), majorIdx.data(),
+                   static_cast<long>(majorIdx.size()));
     _gridMajor->setWireframeGlobal(false);  // interface, not scene
     _gridMajor->setDrawMode(GL_LINES);
     _gridMajor->setFillColor(GRID_MAJOR_COLOR[0], GRID_MAJOR_COLOR[1],
                              GRID_MAJOR_COLOR[2]);
   }
   if (!axesIdx.empty()) {
-    _gridAxes =
-        new OkItem("gui_grid_axes", axesVerts.data(), static_cast<long>(axesVerts.size()),
-                   axesIdx.data(), static_cast<long>(axesIdx.size()));
+    _gridAxes = new OkItem("gui_grid_axes", axesVerts.data(),
+                           static_cast<long>(axesVerts.size()), axesIdx.data(),
+                           static_cast<long>(axesIdx.size()));
     _gridAxes->setWireframeGlobal(false);  // interface, not scene
     _gridAxes->setDrawMode(GL_LINES);
     _gridAxes->setFillColor(GRID_AXES_COLOR[0], GRID_AXES_COLOR[1],

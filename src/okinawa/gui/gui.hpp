@@ -1,6 +1,7 @@
 #ifndef OK_GUI_HPP
 #define OK_GUI_HPP
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -16,7 +17,7 @@ class OkGuiLayer;
  *        (X+ right, Y+ up), so an element inset from the right edge uses a
  *        negative X offset.
  */
-enum OkGuiAnchor {
+enum OkGuiAnchor : std::uint8_t {
   OK_GUI_ANCHOR_CENTER = 0,
   OK_GUI_ANCHOR_TOP,
   OK_GUI_ANCHOR_BOTTOM,

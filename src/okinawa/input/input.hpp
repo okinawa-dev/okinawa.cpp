@@ -87,14 +87,14 @@ public:
   // ignores glfwGetKey polling (injected keys still apply) and the cursor is
   // released (GLFW_CURSOR_NORMAL); useful to drive an instance only via the
   // MCP server without the user's input interfering.
-  void setPhysicalInputEnabled(bool enabled);
+  void               setPhysicalInputEnabled(bool enabled);
   [[nodiscard]] bool isPhysicalInputEnabled() const { return _physicalEnabled; }
 
   // Text capture (the console). While captured, isKeyJustPressed/Held/
   // JustReleased and getState() report NOTHING to the game -- typing in
   // the console cannot trigger gameplay keys. The console itself reads
   // through the Raw variants, which ignore the capture flag.
-  void setTextCapture(bool captured) { _textCapture = captured; }
+  void               setTextCapture(bool captured) { _textCapture = captured; }
   [[nodiscard]] bool isTextCaptured() const { return _textCapture; }
   [[nodiscard]] bool isKeyJustPressedRaw(OkKey key) const;
   [[nodiscard]] bool isKeyHeldRaw(OkKey key) const;
@@ -108,7 +108,7 @@ public:
   // Pointer lock. The cursor starts NORMAL (free OS pointer); a click inside
   // the render area captures it (hidden + locked) for mouse-look; ESC or focus
   // loss release it. While released, the title bar / OS chrome work normally.
-  void setCursorCaptured(bool captured);
+  void               setCursorCaptured(bool captured);
   [[nodiscard]] bool isCursorCaptured() const { return _cursorCaptured; }
   // Capture on a left click in the render area (from the mouse-button
   // callback).

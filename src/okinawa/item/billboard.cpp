@@ -99,14 +99,14 @@ void OkBillboard::stepSelf(float dt) {
   if (proximityFade > 0.0f) {
     OkPoint p =
         anchorValid ? OkPoint(anchor[0], anchor[1], anchor[2]) : getPosition();
-    OkPoint c  = cam->getPosition();
-    float   dx = p.x() - c.x();
-    float   dy = p.y() - c.y();
-    float   dz = p.z() - c.z();
-    float   d  = std::sqrt(dx * dx + dy * dy + dz * dz);
-    float   f  = (d - proximityFade) / proximityFade;  // 0 at near, 1 at 2x
-    f = std::max(f, 0.0f);
-    f = std::min(f, 1.0f);
+    OkPoint c    = cam->getPosition();
+    float   dx   = p.x() - c.x();
+    float   dy   = p.y() - c.y();
+    float   dz   = p.z() - c.z();
+    float   d    = std::sqrt(dx * dx + dy * dy + dz * dz);
+    float   f    = (d - proximityFade) / proximityFade;  // 0 at near, 1 at 2x
+    f            = std::max(f, 0.0f);
+    f            = std::min(f, 1.0f);
     tintColor[3] = baseAlpha * f;
   }
 }

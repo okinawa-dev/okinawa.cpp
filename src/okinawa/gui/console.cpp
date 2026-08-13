@@ -33,7 +33,10 @@ static const int   CONSOLE_SCROLLBACK  = 200;
 static const float CONSOLE_BLINK_S     = 0.5f;
 // NOLINTEND(readability-magic-numbers)
 
-static const std::string CONSOLE_LAYER = "ok-console";
+// A plain literal, not a std::string: a string built before main can throw
+// where nothing can catch it, and every use of this converts it back to a
+// name anyway.
+static const char *const CONSOLE_LAYER = "ok-console";
 
 /**
  * @brief Register the engine built-in commands.
@@ -139,7 +142,7 @@ void OkConsole::registerCommand(const std::string      &name,
 std::vector<std::string> OkConsole::getCommandNames() {
   std::vector<std::string> names;
   names.reserve(_commands.size());
-for (std::size_t i = 0; i < _commands.size(); i++) {
+  for (std::size_t i = 0; i < _commands.size(); i++) {
     names.push_back(_commands[i].name + " - " + _commands[i].help);
   }
   return names;
@@ -187,8 +190,9 @@ void OkConsole::print(const std::string &line) {
   _output.push_back(line);
   _printed++;
   if (static_cast<int>(_output.size()) > CONSOLE_SCROLLBACK) {
-    _output.erase(_output.begin(), _output.begin() + (static_cast<long>(_output.size()) -
-                                                      CONSOLE_SCROLLBACK));
+    _output.erase(_output.begin(),
+                  _output.begin() +
+                      (static_cast<long>(_output.size()) - CONSOLE_SCROLLBACK));
   }
 }
 
@@ -201,8 +205,9 @@ std::vector<std::string> OkConsole::getOutputTail(int maxLines) {
     return tail;
   }
   int start = static_cast<int>(_output.size()) - maxLines;
-  start = std::max(start, 0);
-  for (std::size_t i = static_cast<std::size_t>(start); i < _output.size(); i++) {
+  start     = std::max(start, 0);
+  for (std::size_t i = static_cast<std::size_t>(start); i < _output.size();
+       i++) {
     tail.push_back(_output[i]);
   }
   return tail;
@@ -275,12 +280,14 @@ void OkConsole::refreshUi() {
       OkGui::screenToGridY(OkGui::anchorOriginY(OK_GUI_ANCHOR_TOP) * 2.0f);
 
   float lineStep = CONSOLE_TEXT_CELLS + 0.2f;
-  float plateH = static_cast<float>(CONSOLE_LINES + 1) * lineStep + CONSOLE_MARGIN * 3.0f;
+  float plateH =
+      static_cast<float>(CONSOLE_LINES + 1) * lineStep + CONSOLE_MARGIN * 3.0f;
 
   // The half-screen classic: never taller than half the window.
   plateH = std::min(plateH, logicalH * 0.5f);
 
-  OkGuiImage *plate = static_cast<OkGuiImage *>(layer->getItemByName("ok_console_plate"));
+  OkGuiImage *plate =
+      static_cast<OkGuiImage *>(layer->getItemByName("ok_console_plate"));
   if (plate != nullptr) {
     plate->setGridSize(logicalW, plateH);
     plate->setGridPosition(0.0f, -plateH * 0.5f);
@@ -291,7 +298,8 @@ void OkConsole::refreshUi() {
   // text cell height); the visible window is the last CONSOLE_LINES
   // visual rows after wrapping.
   float charCells = CONSOLE_TEXT_CELLS * 6.0f / 7.0f;
-  int   maxChars  = static_cast<int>((logicalW - CONSOLE_MARGIN * 2.0f) / charCells);
+  int   maxChars =
+      static_cast<int>((logicalW - CONSOLE_MARGIN * 2.0f) / charCells);
   maxChars = std::max(maxChars, 8);
   std::vector<std::string> rows;
   for (std::size_t oi = 0; oi < _output.size(); oi++) {
@@ -300,29 +308,32 @@ void OkConsole::refreshUi() {
       rows.push_back("");
       continue;
     }
-    for (std::size_t at = 0; at < full.size(); at += static_cast<std::size_t>(maxChars)) {
+    for (std::size_t at = 0; at < full.size();
+         at += static_cast<std::size_t>(maxChars)) {
       rows.push_back(full.substr(at, static_cast<std::size_t>(maxChars)));
     }
   }
 
   int total = static_cast<int>(rows.size());
   for (int i = 0; i < CONSOLE_LINES; i++) {
-    OkGuiText *line = static_cast<OkGuiText *>(layer->getItemByName("ok_console_line" +
-                                                        std::to_string(i)));
+    OkGuiText *line = static_cast<OkGuiText *>(
+        layer->getItemByName("ok_console_line" + std::to_string(i)));
     if (line == nullptr) {
       continue;
     }
     int         src  = total - CONSOLE_LINES + i;
     std::string text = (src >= 0) ? rows[static_cast<std::size_t>(src)] : "";
     line->setText(text);
-    float y = -CONSOLE_MARGIN - static_cast<float>(i) * lineStep - CONSOLE_TEXT_CELLS * 0.5f;
+    float y = -CONSOLE_MARGIN - static_cast<float>(i) * lineStep -
+              CONSOLE_TEXT_CELLS * 0.5f;
     line->setGridPosition(CONSOLE_MARGIN + line->getGridWidth() * 0.5f, y);
   }
 
-  OkGuiText *prompt = static_cast<OkGuiText *>(layer->getItemByName("ok_console_input"));
+  OkGuiText *prompt =
+      static_cast<OkGuiText *>(layer->getItemByName("ok_console_input"));
   if (prompt != nullptr) {
-    bool        cursorOn = (static_cast<int>(_blinkT / CONSOLE_BLINK_S) % 2) == 0;
-    std::string text     = "> " + _input + (cursorOn ? "_" : " ");
+    bool cursorOn    = (static_cast<int>(_blinkT / CONSOLE_BLINK_S) % 2) == 0;
+    std::string text = "> " + _input + (cursorOn ? "_" : " ");
     prompt->setText(text);
     float y = -CONSOLE_MARGIN - static_cast<float>(CONSOLE_LINES) * lineStep -
               CONSOLE_TEXT_CELLS * 0.5f;
@@ -377,12 +388,14 @@ void OkConsole::update(float dt) {
     if (_historyPos < static_cast<int>(_history.size()) - 1) {
       _historyPos++;
     }
-    _input = _history[_history.size() - 1 - static_cast<std::size_t>(_historyPos)];
+    _input =
+        _history[_history.size() - 1 - static_cast<std::size_t>(_historyPos)];
   }
   if (input->isKeyJustPressedRaw(OK_KEY_DOWN)) {
     if (_historyPos > 0) {
       _historyPos--;
-      _input = _history[_history.size() - 1 - static_cast<std::size_t>(_historyPos)];
+      _input =
+          _history[_history.size() - 1 - static_cast<std::size_t>(_historyPos)];
     } else if (_historyPos == 0) {
       _historyPos = -1;
       _input.clear();

@@ -8,8 +8,11 @@
 #include <glm/trigonometric.hpp>
 
 // pitch is the LOOK pitch: negative looks down (-89 ~ top-down), positive up.
-static const float kMinPitch = glm::radians(-89.0f);
-static const float kMaxPitch = glm::radians(30.0f);
+// Written as the numbers they are rather than as a call, so nothing runs
+// before main to produce them. A function call at namespace scope can in
+// principle throw where nobody can catch it, and these are two constants.
+static const float kMinPitch = -89.0f * 3.14159265358979323846f / 180.0f;
+static const float kMaxPitch = 30.0f * 3.14159265358979323846f / 180.0f;
 
 OkThirdPersonCamera::OkThirdPersonCamera(const std::string &name, int width,
                                          int height, float distance,

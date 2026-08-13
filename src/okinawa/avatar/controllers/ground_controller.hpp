@@ -38,7 +38,7 @@ public:
   void update(float dt, const OkInputState &input,
               OkObject &controlled) override;
 
-  void  setMoveSpeed(float speed) { _moveSpeed = speed; }
+  void                setMoveSpeed(float speed) { _moveSpeed = speed; }
   [[nodiscard]] float getMoveSpeed() const { return _moveSpeed; }
 
   // Movement is relative to this camera (independent of what is rendered). Null

@@ -31,10 +31,14 @@ public:
   void goBack();
 
   // Getters
-  [[nodiscard]] OkScene           *getCurrentScene() const { return currentScene; }
-  [[nodiscard]] const std::string &getCurrentSceneName() const { return currentSceneName; }
-  [[nodiscard]] int                getCurrentSceneIndex() const { return currentSceneIndex; }
-  [[nodiscard]] int getSceneCount() const { return static_cast<int>(collection.size()); }
+  [[nodiscard]] OkScene *getCurrentScene() const { return currentScene; }
+  [[nodiscard]] const std::string &getCurrentSceneName() const {
+    return currentSceneName;
+  }
+  [[nodiscard]] int getCurrentSceneIndex() const { return currentSceneIndex; }
+  [[nodiscard]] int getSceneCount() const {
+    return static_cast<int>(collection.size());
+  }
 
 private:
   static constexpr int     MAX_SCENES = 32;

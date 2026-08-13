@@ -249,8 +249,9 @@ void OkItem::_initBuffers() {
   // Generate and set up VBO
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(numVertices * sizeof(float)),
-               vertices, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER,
+               static_cast<GLsizeiptr>(numVertices * sizeof(float)), vertices,
+               GL_STATIC_DRAW);
 
   // Position attribute (3 floats)
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
@@ -258,20 +259,20 @@ void OkItem::_initBuffers() {
 
   // Texture coords attribute (2 floats)
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                        (GLvoid *)(3 * sizeof(float)));
+                        reinterpret_cast<GLvoid *>(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
 
   // Normal attribute (3 floats)
   glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                        (GLvoid *)(5 * sizeof(float)));
+                        reinterpret_cast<GLvoid *>(5 * sizeof(float)));
   glEnableVertexAttribArray(2);
 
   // Generate and set up EBO
   glGenBuffers(1, &EBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               static_cast<GLsizeiptr>(numIndices * sizeof(unsigned int)), indices,
-               GL_STATIC_DRAW);
+               static_cast<GLsizeiptr>(numIndices * sizeof(unsigned int)),
+               indices, GL_STATIC_DRAW);
 
   // Unbind VAO and VBO (but not EBO while VAO is active)
   // Unbind VAO first, then VBO and EBO
@@ -630,7 +631,8 @@ void OkItem::drawSelf() {
         }
       }
       glDrawElements(drawMode, static_cast<GLsizei>(count), GL_UNSIGNED_INT,
-                     (const void *)(first * static_cast<long>(sizeof(unsigned int))));
+                     reinterpret_cast<const void *>(
+                         first * static_cast<long>(sizeof(unsigned int))));
       OkFrustum::addDraw(count / 3);
     }
   }
@@ -655,7 +657,8 @@ void OkItem::drawSelf() {
                   wireframeColor[2], 1.0f);
     }
 
-    glDrawElements(drawMode, static_cast<GLsizei>(numIndices), GL_UNSIGNED_INT, nullptr);
+    glDrawElements(drawMode, static_cast<GLsizei>(numIndices), GL_UNSIGNED_INT,
+                   nullptr);
   }
 
   // Reset polygon mode and the lighting flag after the overlay.

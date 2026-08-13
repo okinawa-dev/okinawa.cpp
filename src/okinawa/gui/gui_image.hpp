@@ -23,15 +23,15 @@ public:
   // Position of the element CENTRE on the grid (cells from the anchor
   // point, X+ right, Y+ up). The anchor defaults to the screen centre;
   // edge/corner anchors keep the element stable across aspect ratios.
-  void  setGridPosition(float gx, float gy);
+  void                setGridPosition(float gx, float gy);
   [[nodiscard]] float getGridX() const { return _gridX; }
   [[nodiscard]] float getGridY() const { return _gridY; }
 
-  void        setGridAnchor(OkGuiAnchor anchor) { _anchor = anchor; }
+  void setGridAnchor(OkGuiAnchor anchor) { _anchor = anchor; }
   [[nodiscard]] OkGuiAnchor getGridAnchor() const { return _anchor; }
 
   // Size of the quad in grid cells.
-  void  setGridSize(float wCells, float hCells);
+  void                setGridSize(float wCells, float hCells);
   [[nodiscard]] float getGridWidth() const { return _gridW; }
   [[nodiscard]] float getGridHeight() const { return _gridH; }
 

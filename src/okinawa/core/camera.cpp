@@ -211,7 +211,7 @@ void OkCamera::drawSelf() {
 
       // Texture coord attribute
       glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-                            (void *)(3 * sizeof(float)));
+                            reinterpret_cast<void *>(3 * sizeof(float)));
       glEnableVertexAttribArray(1);
 
       // Draw in wireframe mode
@@ -241,7 +241,7 @@ void OkCamera::look(float yawDeg, float pitchDeg) {
   float       pitch    = rot.getPitch() + glm::radians(pitchDeg);
   float       yaw      = rot.getYaw() - glm::radians(yawDeg);
   const float maxPitch = glm::radians(89.0f);
-  pitch = std::min(pitch, maxPitch);
-  pitch = std::max(pitch, -maxPitch);
+  pitch                = std::min(pitch, maxPitch);
+  pitch                = std::max(pitch, -maxPitch);
   setRotation(pitch, yaw, rot.getRoll());
 }
