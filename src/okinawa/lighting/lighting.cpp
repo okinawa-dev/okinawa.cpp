@@ -10,6 +10,13 @@
 #include <string>
 #include <vector>
 
+// NOLINTBEGIN(readability-magic-numbers)
+//
+// The numbers here are colours, and the curve of a sky through the day.
+// Naming each one yields a constant that repeats the number and
+// explains nothing; the ones that do carry meaning are named and
+// commented where they are used.
+
 float OkLighting::_tint[3]     = {1.0f, 1.0f, 1.0f};
 float OkLighting::_fogColor[3] = {0.75f, 0.80f, 0.85f};
 float OkLighting::_fogDensity  = 0.0f;
@@ -31,12 +38,10 @@ long  OkLighting::_lightGeneration = 0;
 // The atmosphere curve: one keyframe per anchor hour, linearly interpolated
 // around the clock (the last segment wraps 23 -> 5). The palette follows the
 // agreed look: neutral day, warm sunset, cold teal night.
-// NOLINTBEGIN(readability-magic-numbers)
 // The engine's DEFAULT curve: a neutral clear day and a plain blue
 // night. It exists so any project renders sensibly out of the box; a
 // game with its own look replaces it through setAtmosphereCurve, which
 // is where artistic direction belongs.
-// NOLINTBEGIN(readability-magic-numbers)
 static const OkAtmosphereKey ATMO_DEFAULT[] = {
     // night
     {0.0f,
@@ -100,7 +105,6 @@ static const OkAtmosphereKey ATMO_DEFAULT[] = {
      {0.03f, 0.05f, 0.10f},
      0.30f},
 };
-// NOLINTEND(readability-magic-numbers)
 
 // The curve in use: the default until a project replaces it.
 static const int       ATMO_MAX_KEYS = 32;
@@ -288,14 +292,12 @@ void OkLighting::evaluate(float hours, float outTint[3], float outFogColor[3],
   // Sun direction: elevation follows a sine across the 6h..21h daylight
   // arc (below the horizon at night), azimuth sweeps east to west. The
   // vector points FROM the sun TOWARD the scene (ready for lighting).
-  // NOLINTBEGIN(readability-magic-numbers)
   float dayFrac = (h - 6.0f) / 15.0f;                   // 0 at 6h, 1 at 21h
   float elev = std::sin(dayFrac * 3.14159265f) * 1.2f;  // radians, peak ~69 deg
   float azim = (dayFrac - 0.5f) * 3.14159265f;          // -90..+90 deg
   if (dayFrac < 0.0f || dayFrac > 1.0f) {
     elev = -0.3f;  // parked below the horizon at night
   }
-  // NOLINTEND(readability-magic-numbers)
   float cosE   = std::cos(elev);
   outSunDir[0] = -std::sin(azim) * cosE;
   outSunDir[1] = -std::sin(elev);
@@ -457,3 +459,5 @@ OkTexture *OkLighting::getHaloTexture() {
   return OkTextureHandler::getInstance()->createTextureFromRawData(
       "ok_halo", rgba, SIZE, SIZE, 4);
 }
+
+// NOLINTEND(readability-magic-numbers)

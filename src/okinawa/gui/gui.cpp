@@ -11,6 +11,13 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 
+// NOLINTBEGIN(readability-magic-numbers)
+//
+// The numbers here are interface layout and colour.
+// Naming each one yields a constant that repeats the number and
+// explains nothing; the ones that do carry meaning are named and
+// commented where they are used.
+
 bool                      OkGui::_initialized = false;
 std::vector<OkGuiLayer *> OkGui::_layers;
 OkItem                   *OkGui::_gridMinor = nullptr;
@@ -21,11 +28,9 @@ float                     OkGui::_builtH    = 0.0f;
 float                     OkGui::_builtStep = 0.0f;
 
 // Grid line colours (minor cell lines, stronger every-5 lines, 0,0 axes).
-// NOLINTBEGIN(readability-magic-numbers)
 static const float GRID_MINOR_COLOR[3] = {0.25f, 0.30f, 0.35f};
 static const float GRID_MAJOR_COLOR[3] = {0.40f, 0.48f, 0.55f};
 static const float GRID_AXES_COLOR[3]  = {0.70f, 0.80f, 0.30f};
-// NOLINTEND(readability-magic-numbers)
 
 // Every how many cells the stronger (major) line is drawn.
 static const int GRID_MAJOR_EVERY = 5;
@@ -461,3 +466,5 @@ void OkGui::draw() {
 
   glEnable(GL_DEPTH_TEST);
 }
+
+// NOLINTEND(readability-magic-numbers)

@@ -20,6 +20,12 @@
 
 // NOLINTBEGIN(readability-magic-numbers)
 //
+// The numbers here are a panel: type sizes, colours, cell offsets, bytes of a
+// small strip. Naming each one yields a constant that repeats the number and
+// explains nothing; the ones that do carry meaning are named and
+// commented where they are used.
+
+//
 // This whole file is a panel: type sizes, colours, cell offsets, byte
 // values for a 96x32 strip. Giving each of those a name produces a wall
 // of constants that repeat the number and explain nothing -- the meaning

@@ -18,6 +18,13 @@
 #include <glm/trigonometric.hpp>
 #include <string>
 
+// NOLINTBEGIN(readability-magic-numbers)
+//
+// The numbers here are the vertices and indices of small marker meshes.
+// Naming each one yields a constant that repeats the number and
+// explains nothing; the ones that do carry meaning are named and
+// commented where they are used.
+
 /**
  * @brief Constructor for the OkCamera class.
  *        Initializes the camera with a given width and height.
@@ -247,3 +254,5 @@ void OkCamera::look(float yawDeg, float pitchDeg) {
   pitch                = std::max(pitch, -maxPitch);
   setRotation(pitch, yaw, rot.getRoll());
 }
+
+// NOLINTEND(readability-magic-numbers)

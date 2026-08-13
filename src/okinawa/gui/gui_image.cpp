@@ -1,10 +1,16 @@
 #include "gui_image.hpp"
 #include "gui.hpp"
 
+// NOLINTBEGIN(readability-magic-numbers)
+//
+// The numbers here are interface layout and colour.
+// Naming each one yields a constant that repeats the number and
+// explains nothing; the ones that do carry meaning are named and
+// commented where they are used.
+
 // Unit quad centred on the origin, on the Z=0 plane. Vertex stride is
 // 5 floats (position + UV); v=0 at the bottom (textures load flipped for
 // GL, so this shows the image upright).
-// NOLINTBEGIN(readability-magic-numbers)
 static float GUI_QUAD_VERTS[20] = {
     -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,  // bottom-left
     0.5f,  -0.5f, 0.0f, 1.0f, 0.0f,  // bottom-right
@@ -12,7 +18,6 @@ static float GUI_QUAD_VERTS[20] = {
     -0.5f, 0.5f,  0.0f, 0.0f, 1.0f,  // top-left
 };
 static unsigned int GUI_QUAD_INDICES[6] = {0, 1, 2, 0, 2, 3};
-// NOLINTEND(readability-magic-numbers)
 
 OkGuiImage::OkGuiImage(const std::string &name)
     : OkItem(name, GUI_QUAD_VERTS, 20, GUI_QUAD_INDICES, 6) {
@@ -56,3 +61,5 @@ void OkGuiImage::drawSelf() {
   setScaling(OkGui::gridToScreenX(_gridW), OkGui::gridToScreenY(_gridH), 1.0f);
   OkItem::drawSelf();
 }
+
+// NOLINTEND(readability-magic-numbers)

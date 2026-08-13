@@ -4,6 +4,13 @@
 #include <algorithm>
 #include <cmath>
 
+// NOLINTBEGIN(readability-magic-numbers)
+//
+// The numbers here are quad corners and texture coordinates.
+// Naming each one yields a constant that repeats the number and
+// explains nothing; the ones that do carry meaning are named and
+// commented where they are used.
+
 // Quad geometry shared with the OkItem base constructor. OkItem copies
 // the arrays, so returning pointers to these static scratch buffers is
 // safe (the engine constructs items from the main thread only).
@@ -131,3 +138,5 @@ OkRotation OkBillboard::facingRotation(const OkPoint &from, const OkPoint &to) {
   float yaw   = std::atan2(dx, dz);
   return OkRotation(pitch, yaw, 0.0f);
 }
+
+// NOLINTEND(readability-magic-numbers)

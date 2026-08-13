@@ -9,6 +9,13 @@
 #include <cmath>
 #include <vector>
 
+// NOLINTBEGIN(readability-magic-numbers)
+//
+// The numbers here are sky colours and the arithmetic that paints them into a
+// texture. Naming each one yields a constant that repeats the number and
+// explains nothing; the ones that do carry meaning are named and
+// commented where they are used.
+
 OkItem    *OkSkybox::_dome           = nullptr;
 OkItem    *OkSkybox::_sunDisc        = nullptr;
 OkTexture *OkSkybox::_sunTex         = nullptr;
@@ -18,7 +25,6 @@ float      OkSkybox::_builtZenith[3] = {-1.0f, -1.0f, -1.0f};
 
 // Dome shape: radius (well inside the far plane), ring elevations from
 // slightly below the horizon to the zenith, and segments around.
-// NOLINTBEGIN(readability-magic-numbers)
 static const float SKY_RADIUS   = 900.0f;
 static const float SKY_RINGS[]  = {-0.08f, 0.10f, 0.35f, 0.75f, 1.5708f};
 static const int   SKY_RING_N   = 5;
@@ -27,7 +33,6 @@ static const int   SKY_SEGMENTS = 24;
 static const int SKY_GRAD_H = 64;
 // Colour drift that triggers a gradient refresh.
 static const float SKY_EPS = 0.004f;
-// NOLINTEND(readability-magic-numbers)
 
 /**
  * @brief Build the dome mesh: rings of vertices from below the horizon to
@@ -264,3 +269,5 @@ void OkSkybox::shutdown() {
   _gradient = nullptr;  // owned by the texture handler
   _sunTex   = nullptr;
 }
+
+// NOLINTEND(readability-magic-numbers)

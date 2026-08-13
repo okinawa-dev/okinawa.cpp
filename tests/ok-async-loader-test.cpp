@@ -17,6 +17,13 @@
 #include <thread>
 #include <vector>
 
+// NOLINTBEGIN(readability-magic-numbers)
+//
+// The numbers here are fixture values, picked to be distinguishable rather than
+// to mean anything. Naming each one yields a constant that repeats the number
+// and explains nothing; the ones that do carry meaning are named and commented
+// where they are used.
+
 namespace {
 
   // Wait until every submitted job has been drained, or give up. Returns
@@ -332,3 +339,5 @@ TEST_CASE("OkAsyncLoader survives many small jobs", "[async]") {
 
   OkAsyncLoader::shutdown();
 }
+
+// NOLINTEND(readability-magic-numbers)

@@ -12,6 +12,13 @@
 #include <cstdlib>
 #include <sstream>
 
+// NOLINTBEGIN(readability-magic-numbers)
+//
+// The numbers here are the console's own look: plate colour, text colour, where
+// things sit. Naming each one yields a constant that repeats the number and
+// explains nothing; the ones that do carry meaning are named and
+// commented where they are used.
+
 bool                            OkConsole::_open = false;
 std::vector<OkConsole::Command> OkConsole::_commands;
 std::vector<std::string>        OkConsole::_output;
@@ -24,14 +31,12 @@ bool                            OkConsole::_uiBuilt = false;
 
 // UI constants: layer order (over everything), visible output lines, text
 // height and margins in grid cells, scrollback cap and cursor blink rate.
-// NOLINTBEGIN(readability-magic-numbers)
 static const int   CONSOLE_LAYER_ORDER = 1000;
 static const int   CONSOLE_LINES       = 12;
 static const float CONSOLE_TEXT_CELLS  = 0.8f;
 static const float CONSOLE_MARGIN      = 0.5f;
 static const int   CONSOLE_SCROLLBACK  = 200;
 static const float CONSOLE_BLINK_S     = 0.5f;
-// NOLINTEND(readability-magic-numbers)
 
 // A plain literal, not a std::string: a string built before main can throw
 // where nothing can catch it, and every use of this converts it back to a
@@ -404,3 +409,5 @@ void OkConsole::update(float dt) {
 
   refreshUi();
 }
+
+// NOLINTEND(readability-magic-numbers)

@@ -4,6 +4,13 @@
 #include "font.hpp"
 #include <vector>
 
+// NOLINTBEGIN(readability-magic-numbers)
+//
+// The numbers here are interface layout and colour.
+// Naming each one yields a constant that repeats the number and
+// explains nothing; the ones that do carry meaning are named and
+// commented where they are used.
+
 OkGuiText::OkGuiText(const std::string &name) : OkObject(name) {
   _text     = "";
   _dirty    = false;
@@ -163,3 +170,5 @@ void OkGuiText::drawSelf() {
       OkGui::gridToScreenY(_gridH) / static_cast<float>(OkFont::GLYPH_H);
   setScaling(pxPerFontPx, pxPerFontPx, 1.0f);
 }
+
+// NOLINTEND(readability-magic-numbers)

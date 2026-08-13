@@ -3,8 +3,14 @@
 #include "../item/texture.hpp"
 #include <vector>
 
-// 5x7 glyphs, 7 row bitmasks per character, bit 4 = left column.
 // NOLINTBEGIN(readability-magic-numbers)
+//
+// The numbers here are glyph metrics and the atlas they are packed into.
+// Naming each one yields a constant that repeats the number and
+// explains nothing; the ones that do carry meaning are named and
+// commented where they are used.
+
+// 5x7 glyphs, 7 row bitmasks per character, bit 4 = left column.
 static const unsigned char DIGIT_FONT[10][7] = {
     {0x0E, 0x11, 0x13, 0x15, 0x19, 0x11, 0x0E},  // 0
     {0x04, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x0E},  // 1
@@ -92,7 +98,6 @@ static const unsigned char PUNCT_123_126[4][7] = {
     {0x08, 0x04, 0x04, 0x02, 0x04, 0x04, 0x08},  // }
     {0x00, 0x00, 0x08, 0x15, 0x02, 0x00, 0x00},  // ~
 };
-// NOLINTEND(readability-magic-numbers)
 
 /**
  * @brief The 7 row bitmasks of a character (lowercase maps to uppercase,
@@ -236,3 +241,5 @@ void OkFont::glyphUV(char c, float &u0, float &v0, float &u1, float &v1) {
   v1 = (h - static_cast<float>(cellY)) / h;
   v0 = (h - static_cast<float>(cellY + GLYPH_H)) / h;
 }
+
+// NOLINTEND(readability-magic-numbers)

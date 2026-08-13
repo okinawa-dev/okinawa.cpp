@@ -1,4 +1,3 @@
-// NOLINTBEGIN(readability-magic-numbers)
 
 #include "okinawa/config/config.hpp"
 #include "okinawa/gui/gui.hpp"
@@ -6,6 +5,11 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+
+// NOLINTBEGIN(readability-magic-numbers)
+//
+// Fixture values, picked to be distinguishable rather than to mean
+// anything. Naming them would name nothing.
 
 using Catch::Matchers::WithinAbs;
 
@@ -93,8 +97,6 @@ TEST_CASE("OkGui layers", "[gui]") {
     REQUIRE(OkGui::getLayerCount() == 0);
   }
 }
-
-// NOLINTEND(readability-magic-numbers)
 
 // Font glyph data and console command plumbing (no GL needed).
 
@@ -198,6 +200,12 @@ TEST_CASE("OkConfig prefix lookup", "[gui]") {
 
 #include "okinawa/lighting/lighting.hpp"
 
+//
+// The numbers here are fixture values, picked to be distinguishable rather than
+// to mean anything. Naming each one yields a constant that repeats the number
+// and explains nothing; the ones that do carry meaning are named and commented
+// where they are used.
+
 TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
   float tint[3];
   float fog[3];
@@ -291,3 +299,5 @@ TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
     REQUIRE(OkLighting::getAtmosphereKeyCount() == 2);
   }
 }
+
+// NOLINTEND(readability-magic-numbers)
