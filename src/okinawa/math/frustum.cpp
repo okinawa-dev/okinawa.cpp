@@ -1,16 +1,24 @@
 #include "frustum.hpp"
 #include <cmath>
 
-const OkFrustum *OkFrustum::_active         = nullptr;
-long             OkFrustum::_culled         = 0;
-long             OkFrustum::_drawCalls      = 0;
-long             OkFrustum::_triangles      = 0;
-long             OkFrustum::_distanceCulled = 0;
-float            OkFrustum::_viewer[3]      = {0.0f, 0.0f, 0.0f};
-float            OkFrustum::_maxDistance    = 0.0f;
+namespace {
+
+  // Below this the plane normal is numerically nothing and dividing by it
+  // would turn the plane into infinities; the plane is left as extracted.
+  const float MIN_PLANE_NORMAL = 1e-9f;
+
+}  // namespace
+
+const OkFrustum     *OkFrustum::_active         = nullptr;
+long                 OkFrustum::_culled         = 0;
+long                 OkFrustum::_drawCalls      = 0;
+long                 OkFrustum::_triangles      = 0;
+long                 OkFrustum::_distanceCulled = 0;
+std::array<float, 3> OkFrustum::_viewer         = {0.0f, 0.0f, 0.0f};
+float                OkFrustum::_maxDistance    = 0.0f;
 
 OkFrustum::OkFrustum() {
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < PLANE_COUNT; i++) {
     planes[i][0] = 0.0f;
     planes[i][1] = 0.0f;
     planes[i][2] = 0.0f;
@@ -27,10 +35,10 @@ OkFrustum::OkFrustum() {
 void OkFrustum::setFromMatrix(const glm::mat4 &projView) {
   // glm is column-major: m[col][row]; row i component of column c is
   // projView[c][i].
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < PLANE_COUNT; i++) {
     int   row  = i / 2;  // 0 = x, 1 = y, 2 = z
     float sign = (i % 2 == 0) ? 1.0f : -1.0f;
-    for (int c = 0; c < 4; c++) {
+    for (int c = 0; c < PLANE_COEFFS; c++) {
       float r3 = projView[c][3];
       float ri = projView[c][row];
       float v  = r3 + sign * ri;
@@ -43,7 +51,7 @@ void OkFrustum::setFromMatrix(const glm::mat4 &projView) {
     float len =
         std::sqrt(planes[i][0] * planes[i][0] + planes[i][1] * planes[i][1] +
                   planes[i][2] * planes[i][2]);
-    if (len > 1e-9f) {
+    if (len > MIN_PLANE_NORMAL) {
       planes[i][0] /= len;
       planes[i][1] /= len;
       planes[i][2] /= len;
@@ -53,7 +61,7 @@ void OkFrustum::setFromMatrix(const glm::mat4 &projView) {
 }
 
 bool OkFrustum::containsSphere(float x, float y, float z, float radius) const {
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < PLANE_COUNT; i++) {
     float d =
         planes[i][0] * x + planes[i][1] * y + planes[i][2] * z + planes[i][3];
     if (d < -radius) {

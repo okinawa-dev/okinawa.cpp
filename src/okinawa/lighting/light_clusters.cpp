@@ -15,6 +15,28 @@ namespace {
   // GPU-side light record: 3 vec4 per light (see the shader struct).
   const int LIGHT_FLOATS = 12;
 
+  // Depth the cluster grid reaches by default, in world units. Past it a
+  // light is simply not clustered: the point lights this feeds are street
+  // lamps and windows, and neither reads at that distance.
+  const float CLUSTER_FAR_DEFAULT = 350.0f;
+
+  // A light's bounding box has eight corners; the screen rectangle it
+  // touches is the bound of their projections.
+  const int BOX_CORNERS = 8;
+
+  // The grid table holds an (offset, count) pair per cluster.
+  const size_t GRID_ENTRY_FLOATS = 2;
+
+  // Texture units the cluster buffers are bound to, matching the
+  // sampler uniforms the world shader declares. They have to agree, and
+  // the number on its own says nothing about which is which.
+  const int TEX_UNIT_LIGHTS  = 4;
+  const int TEX_UNIT_INDICES = 5;
+  const int TEX_UNIT_GRID    = 6;
+
+  // Clip space runs -1..1 and the cluster grid 0..1: halve and shift.
+  const float HALF = 0.5f;
+
   GLuint g_lightTex = 0;  // buffer texture: light records
   GLuint g_lightTbo = 0;
   GLuint g_indexTex = 0;  // buffer texture: light indices per cluster
@@ -47,7 +69,7 @@ void OkLightClusters::initialize() {
   OkConfig::setBool("lighting.clustered", true);
   // Depth range the cluster grid spans, in world units (see the header).
   OkConfig::setFloat("lighting.cluster.near", 1.0f);
-  OkConfig::setFloat("lighting.cluster.far", 350.0f);
+  OkConfig::setFloat("lighting.cluster.far", CLUSTER_FAR_DEFAULT);
   g_clusterLists.resize(CLUSTER_COUNT);
   OkLogger::info("LightClusters", "Config defaults registered");
 }
@@ -135,12 +157,12 @@ void OkLightClusters::update(const glm::mat4 &view, const glm::mat4 &projection,
     float minY = 1.0f;
     float maxY = -1.0f;
     bool  any  = false;
-    for (int c = 0; c < 8; c++) {
+    for (int c = 0; c < BOX_CORNERS; c++) {
       glm::vec4 corner = vp;
       corner.x += ((c & 1) ? lr : -lr);
       corner.y += ((c & 2) ? lr : -lr);
       corner.z += ((c & 4) ? lr : -lr);
-      if (-corner.z < nearPlane * 0.5f) {
+      if (-corner.z < nearPlane * HALF) {
         // Behind or across the near plane: treat as full-screen in x/y.
         minX = -1.0f;
         maxX = 1.0f;
@@ -170,10 +192,10 @@ void OkLightClusters::update(const glm::mat4 &view, const glm::mat4 &projection,
       continue;
     }
 
-    int x0 = static_cast<int>(std::floor((minX * 0.5f + 0.5f) * CLUSTERS_X));
-    int x1 = static_cast<int>(std::floor((maxX * 0.5f + 0.5f) * CLUSTERS_X));
-    int y0 = static_cast<int>(std::floor((minY * 0.5f + 0.5f) * CLUSTERS_Y));
-    int y1 = static_cast<int>(std::floor((maxY * 0.5f + 0.5f) * CLUSTERS_Y));
+    int x0 = static_cast<int>(std::floor((minX * HALF + HALF) * CLUSTERS_X));
+    int x1 = static_cast<int>(std::floor((maxX * HALF + HALF) * CLUSTERS_X));
+    int y0 = static_cast<int>(std::floor((minY * HALF + HALF) * CLUSTERS_Y));
+    int y1 = static_cast<int>(std::floor((maxY * HALF + HALF) * CLUSTERS_Y));
     x0     = std::max(x0, 0);
     y0     = std::max(y0, 0);
     if (x1 >= CLUSTERS_X)
@@ -229,7 +251,7 @@ void OkLightClusters::update(const glm::mat4 &view, const glm::mat4 &projection,
   // (offset, count) table.
   g_indexData.clear();
   g_gridData.clear();
-  g_gridData.reserve(CLUSTER_COUNT * 2);
+  g_gridData.reserve(static_cast<size_t>(CLUSTER_COUNT) * GRID_ENTRY_FLOATS);
   for (int i = 0; i < CLUSTER_COUNT; i++) {
     const std::vector<int> &list   = g_clusterLists[static_cast<size_t>(i)];
     int                     offset = static_cast<int>(g_indexData.size());
@@ -292,13 +314,13 @@ void OkLightClusters::bind(GLuint program, int screenWidth, int screenHeight,
 
   GLint loc = glGetUniformLocation(program, "clusterLights");
   if (loc != -1)
-    glUniform1i(loc, 4);
+    glUniform1i(loc, TEX_UNIT_LIGHTS);
   loc = glGetUniformLocation(program, "clusterIndices");
   if (loc != -1)
-    glUniform1i(loc, 5);
+    glUniform1i(loc, TEX_UNIT_INDICES);
   loc = glGetUniformLocation(program, "clusterGrid");
   if (loc != -1)
-    glUniform1i(loc, 6);
+    glUniform1i(loc, TEX_UNIT_GRID);
   loc = glGetUniformLocation(program, "clusterDims");
   if (loc != -1) {
     glUniform3i(loc, CLUSTERS_X, CLUSTERS_Y, CLUSTERS_Z);

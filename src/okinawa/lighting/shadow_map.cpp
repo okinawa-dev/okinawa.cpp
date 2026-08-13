@@ -8,9 +8,51 @@
 #include "../utils/logger.hpp"
 #include "lighting.hpp"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+namespace {
+
+  // Sun elevation, as -sunDir.y, below which no shadow is drawn at all,
+  // and the span over which the strength fades in above it. A source
+  // sitting on the horizon throws shadows too long and too hard to read
+  // as light, so the last degrees are ramped instead of switched.
+  const float SUN_MIN_ELEVATION = 0.02f;
+  const float SUN_FADE_SPAN     = 0.18f;
+
+  // Stand-in far split for the single fixed box: it covers whatever it
+  // covers, and no fragment is ever past it.
+  const float SPLIT_FAR_UNBOUNDED = 1e9f;
+
+  // |lightDir.y| past which the world up axis is parallel to the light and
+  // glm::lookAt degenerates; the up vector swaps to Z there.
+  const float UP_PARALLEL_LIMIT = 0.98f;
+
+  // The light's ortho box, expressed in multiples of the cascade's
+  // half-width: how deep it reaches along the light, where its near plane
+  // sits, and the slack on the far plane that keeps tall casters behind
+  // the viewer inside it. ORTHO_FAR_RANGE is the product the bias uniform
+  // needs, kept next to the terms it comes from.
+  const float DEPTH_PER_EXTENT = 4.0f;
+  const float ORTHO_NEAR       = 0.1f;
+  const float ORTHO_FAR_SLACK  = 1.5f;
+  const float ORTHO_FAR_RANGE  = DEPTH_PER_EXTENT * ORTHO_FAR_SLACK;
+
+  // Depth-only polygon offset: slope-scaled factor plus a constant nudge,
+  // in depth units. Enough to clear self-shadowing acne on the steep
+  // faces without detaching contact shadows on the flat ones.
+  const float DEPTH_OFFSET_FACTOR = 2.2f;
+  const float DEPTH_OFFSET_UNITS  = 3.5f;
+
+  // A cascade's extent is a half-width; twice it is the world span the
+  // map's texels are spread over.
+  const float EXTENT_TO_WIDTH = 2.0f;
+
+  const float HALF = 0.5f;
+
+}  // namespace
 
 GLuint OkShadowMap::_fbo            = 0;
 GLuint OkShadowMap::_depthTex       = 0;
@@ -18,23 +60,23 @@ GLuint OkShadowMap::_emptyShadowTex = 0;
 GLuint OkShadowMap::_program        = 0;
 int    OkShadowMap::_size           = 0;
 // What the map was last drawn for, so an identical redraw is skipped.
-bool   OkShadowMap::_neverDrawn                            = true;
-float  OkShadowMap::_lastDir[3]                            = {0.0f, 0.0f, 0.0f};
-float  OkShadowMap::_lastExtent[OkShadowMap::MAX_CASCADES] = {0.0f};
-float  OkShadowMap::_lastCx[OkShadowMap::MAX_CASCADES]     = {0.0f};
-float  OkShadowMap::_lastCz[OkShadowMap::MAX_CASCADES]     = {0.0f};
-size_t OkShadowMap::_lastObjects                           = 0;
-int    OkShadowMap::_layers                                = 0;
-int    OkShadowMap::_count                                 = 1;
+bool                 OkShadowMap::_neverDrawn = true;
+std::array<float, 3> OkShadowMap::_lastDir    = {0.0f, 0.0f, 0.0f};
+std::array<float, OkShadowMap::MAX_CASCADES> OkShadowMap::_lastExtent  = {0.0f};
+std::array<float, OkShadowMap::MAX_CASCADES> OkShadowMap::_lastCx      = {0.0f};
+std::array<float, OkShadowMap::MAX_CASCADES> OkShadowMap::_lastCz      = {0.0f};
+size_t                                       OkShadowMap::_lastObjects = 0;
+int                                          OkShadowMap::_layers      = 0;
+int                                          OkShadowMap::_count       = 1;
 // Out of line, because std::min binds its arguments by reference and so
 // takes the constant's address. Declared inside the class it has a value
 // but no storage, and the link fails only where something wants a
 // reference to it.
 const int OkShadowMap::MAX_CASCADES;
 
-glm::mat4 OkShadowMap::_lightSpace[OkShadowMap::MAX_CASCADES];
-float     OkShadowMap::_splitFar[OkShadowMap::MAX_CASCADES] = {0.0f};
-float     OkShadowMap::_strength                            = 0.0f;
+std::array<glm::mat4, OkShadowMap::MAX_CASCADES> OkShadowMap::_lightSpace;
+std::array<float, OkShadowMap::MAX_CASCADES> OkShadowMap::_splitFar = {0.0f};
+float                                        OkShadowMap::_strength = 0.0f;
 
 void OkShadowMap::initialize() {
   // NOLINTBEGIN(readability-magic-numbers)
@@ -138,8 +180,8 @@ void OkShadowMap::ensureTarget(int size, int layers) {
   // Outside the map there is no shadow: clamp to a border of "far away".
   glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-  float border[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-  glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, border);
+  std::array<float, 4> border = {1.0f, 1.0f, 1.0f, 1.0f};
+  glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, border.data());
 
   // The layer is attached per cascade at draw time.
   glGenFramebuffers(1, &_fbo);
@@ -180,13 +222,13 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
   }
   const float *dir  = OkLighting::getSunDirection();
   float        elev = -dir[1];
-  if (elev <= 0.02f) {
+  if (elev <= SUN_MIN_ELEVATION) {
     _strength = 0.0f;  // light at or below the horizon
     return;
   }
   // Fade the shadows in as the light climbs: a source at the horizon
   // throws shadows too long and too hard to be believable.
-  float fade = (elev - 0.02f) / 0.18f;
+  float fade = (elev - SUN_MIN_ELEVATION) / SUN_FADE_SPAN;
   fade       = std::min(fade, 1.0f);
   _strength  = OkConfig::getFloat("shadows.strength") * fade;
 
@@ -216,12 +258,14 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
     _splitFar[c] = lin + (lg - lin) * blend;
   }
   if (shadowFar <= 0.0f) {
-    _splitFar[0] = 1e9f;  // the fixed box covers whatever it covers
+    _splitFar[0] =
+        SPLIT_FAR_UNBOUNDED;  // the fixed box covers whatever it covers
   }
 
   glm::vec3 lightDir(dir[0], dir[1], dir[2]);
-  glm::vec3 up = std::fabs(lightDir.y) > 0.98f ? glm::vec3(0.0f, 0.0f, 1.0f)
-                                               : glm::vec3(0.0f, 1.0f, 0.0f);
+  glm::vec3 up          = std::fabs(lightDir.y) > UP_PARALLEL_LIMIT
+                              ? glm::vec3(0.0f, 0.0f, 1.0f)
+                              : glm::vec3(0.0f, 1.0f, 0.0f);
   GLint     previousFbo = 0;
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousFbo);
   // ...and the viewport with it. Drawing the map means resizing the
@@ -232,8 +276,8 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
   // entirely. It went unnoticed because the post-process happens to set
   // the viewport again on its way in and out, so the damage only shows
   // when that pass is off or when it runs in the wrong order.
-  GLint previousViewport[4] = {0, 0, 0, 0};
-  glGetIntegerv(GL_VIEWPORT, previousViewport);
+  std::array<GLint, 4> previousViewport = {0, 0, 0, 0};
+  glGetIntegerv(GL_VIEWPORT, previousViewport.data());
   bool bound = false;
 
   size_t objects = scene->getObjectCount();
@@ -255,10 +299,10 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
   // Pass one: work out where every cascade's box would sit this frame.
   // Nothing is committed yet -- the decision to redraw is taken once,
   // for all of them together, below.
-  glm::mat4 candidate[MAX_CASCADES];
-  float     candCx[MAX_CASCADES];
-  float     candCz[MAX_CASCADES];
-  float     candExtent[MAX_CASCADES];
+  std::array<glm::mat4, MAX_CASCADES> candidate;
+  std::array<float, MAX_CASCADES>     candCx;
+  std::array<float, MAX_CASCADES>     candCz;
+  std::array<float, MAX_CASCADES>     candExtent;
   for (int c = 0; c < count; c++) {
     // Each cascade is a square centred on the viewer, sized by its own
     // band -- concentric, so the finest box sits inside the next.
@@ -303,19 +347,19 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
     // the map, and slide the projection by the fraction of a texel that
     // puts it on a whole one. Anchoring the origin rather than the
     // centre is what makes the grid world-fixed.
-    float     depth = extent * 4.0f;
+    float     depth = extent * DEPTH_PER_EXTENT;
     glm::vec3 target(focusX, centreY, focusZ);
-    glm::vec3 eye  = target - lightDir * (depth * 0.5f);
+    glm::vec3 eye  = target - lightDir * (depth * HALF);
     glm::mat4 view = glm::lookAt(eye, target, up);
-    glm::mat4 proj =
-        glm::ortho(-extent, extent, -extent, extent, 0.1f, depth * 1.5f);
+    glm::mat4 proj = glm::ortho(-extent, extent, -extent, extent, ORTHO_NEAR,
+                                depth * ORTHO_FAR_SLACK);
 
     glm::vec4 originLs = (proj * view) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    float     half     = static_cast<float>(_size) * 0.5f;
+    float     half     = static_cast<float>(_size) * HALF;
     float     ox       = originLs.x * half;
     float     oy       = originLs.y * half;
-    float     dx       = std::floor(ox + 0.5f) - ox;
-    float     dy       = std::floor(oy + 0.5f) - oy;
+    float     dx       = std::floor(ox + HALF) - ox;
+    float     dy       = std::floor(oy + HALF) - oy;
     if (!OkConfig::getBool("shadows.snap")) {
       // Off, to tell a snapping artefact from anything else. The snap
       // holds the grid still while the box TRANSLATES with the viewer;
@@ -367,7 +411,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
       // the surface's slope pushes only the problem cases, leaving
       // contact shadows in place.
       glEnable(GL_POLYGON_OFFSET_FILL);
-      glPolygonOffset(2.2f, 3.5f);
+      glPolygonOffset(DEPTH_OFFSET_FACTOR, DEPTH_OFFSET_UNITS);
       glDisable(GL_CULL_FACE);
       bound = true;
     }
@@ -459,7 +503,7 @@ void OkShadowMap::bind(GLuint program) {
   }
   loc = glGetUniformLocation(program, "shadowSplit");
   if (loc != -1) {
-    glUniform1fv(loc, _count, _splitFar);
+    glUniform1fv(loc, _count, _splitFar.data());
   }
   loc = glGetUniformLocation(program, "shadowTexel");
   if (loc != -1) {
@@ -478,12 +522,12 @@ void OkShadowMap::bind(GLuint program) {
   loc = glGetUniformLocation(program, "shadowBias");
   if (loc != -1) {
     float worldBias = OkConfig::getFloat("shadows.bias");
-    float perCascade[MAX_CASCADES];
+    std::array<float, MAX_CASCADES> perCascade;
     for (int c = 0; c < _count; c++) {
-      float range   = _lastExtent[c] * 6.0f;  // ortho far, see render()
+      float range   = _lastExtent[c] * ORTHO_FAR_RANGE;
       perCascade[c] = range > 0.0f ? worldBias / range : 0.0f;
     }
-    glUniform1fv(loc, _count, perCascade);
+    glUniform1fv(loc, _count, perCascade.data());
   }
   // Debug view: paint each fragment by the cascade that shadowed it.
   // A shadow artefact seen while moving cannot be told apart in a
@@ -508,11 +552,12 @@ void OkShadowMap::bind(GLuint program) {
   // coarser, and using the near one's figure for them leaves acne.
   loc = glGetUniformLocation(program, "shadowTexelWorld");
   if (loc != -1) {
-    float perCascade[MAX_CASCADES];
+    std::array<float, MAX_CASCADES> perCascade;
     for (int c = 0; c < _count; c++) {
-      perCascade[c] = (2.0f * _lastExtent[c]) / static_cast<float>(_size);
+      perCascade[c] =
+          (EXTENT_TO_WIDTH * _lastExtent[c]) / static_cast<float>(_size);
     }
-    glUniform1fv(loc, _count, perCascade);
+    glUniform1fv(loc, _count, perCascade.data());
   }
 }
 

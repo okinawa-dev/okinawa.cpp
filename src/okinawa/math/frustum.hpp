@@ -1,6 +1,7 @@
 #ifndef OK_FRUSTUM_HPP
 #define OK_FRUSTUM_HPP
 
+#include <array>
 #include <glm/ext/matrix_float4x4.hpp>
 
 /**
@@ -11,7 +12,7 @@
  *        matrix), stored unnormalized-then-normalized so the plane distance
  *        test works in world units.
  *
- *        The engine keeps ONE active frustum per frame (set by OkCore from
+ *        The engine keeps one active frustum per frame (set by OkCore from
  *        the current camera before the world pass); OkItem::drawSelf skips
  *        the draw when the item's bounding sphere is fully outside. The GUI
  *        pass disables the test (its calibrated camera is not the world
@@ -20,6 +21,11 @@
  */
 class OkFrustum {
 public:
+  // A frustum is six planes -- left, right, bottom, top, near, far --
+  // and each plane is the four coefficients of ax + by + cz + d.
+  static const int PLANE_COUNT  = 6;
+  static const int PLANE_COEFFS = 4;
+
   OkFrustum();
 
   // Extract the six planes from projection * view.
@@ -61,15 +67,15 @@ public:
 
 private:
   // plane i: ax + by + cz + d, inside when >= -radius
-  float planes[6][4];
+  std::array<std::array<float, PLANE_COEFFS>, PLANE_COUNT> planes;
 
-  static const OkFrustum *_active;
-  static long             _culled;
-  static long             _drawCalls;
-  static long             _triangles;
-  static long             _distanceCulled;
-  static float            _viewer[3];
-  static float            _maxDistance;
+  static const OkFrustum     *_active;
+  static long                 _culled;
+  static long                 _drawCalls;
+  static long                 _triangles;
+  static long                 _distanceCulled;
+  static std::array<float, 3> _viewer;
+  static float                _maxDistance;
 };
 
 #endif

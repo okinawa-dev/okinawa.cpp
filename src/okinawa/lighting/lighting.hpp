@@ -6,7 +6,7 @@
 /**
  * @brief Static handler for the scene's global lighting and atmosphere.
  *
- *        L1 scope: a DAY CLOCK (hour 0..24 advancing at a configurable
+ *        L1 scope: a day clock (hour 0..24 advancing at a configurable
  *        timescale) driving a keyframe curve — day, sunset, night, dawn —
  *        that interpolates the global atmosphere values every frame:
  *
@@ -164,4 +164,4 @@ private:
   static long                          _lightGeneration;
 };
 
-#endif #include < array>
+#endif
