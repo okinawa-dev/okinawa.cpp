@@ -9,6 +9,10 @@ OkPanController::OkPanController(float speedPerPixel) {
   _speedPerPixel = speedPerPixel;
 }
 
+// Base and spectator cameras report no view distance; pan at the speed
+// a camera this far out would give, so the drag still feels like one.
+static const float kFallbackViewDistance = 10.0f;
+
 void OkPanController::update(float dt, const OkInputState &input,
                              OkObject &controlled) {
   (void)dt;  // pan follows the mouse delta directly, not the frame time
@@ -23,7 +27,7 @@ void OkPanController::update(float dt, const OkInputState &input,
   }
   float distance = camera->viewDistance();
   if (distance <= 0.0f) {
-    distance = 10.0f;  // base/spectator cameras: a sane constant speed
+    distance = kFallbackViewDistance;
   }
 
   // On-screen axes on the ground plane: screen right = the camera's right

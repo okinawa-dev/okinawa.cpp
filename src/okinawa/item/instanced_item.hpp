@@ -25,12 +25,16 @@
  */
 class OkInstancedItem : public OkItem {
 public:
+  // Interleaved vertex layout the mesh arrives in: three position floats
+  // then two texture coordinates.
+  static const int DEFAULT_VERTEX_STRIDE = 5;
+
   // Same mesh contract as OkItem (stride 5 computes normals, 8 takes
   // them verbatim). The mesh is authored around its own origin; every
   // instance places a copy of it.
   OkInstancedItem(const std::string &name, float *vertexData, long vertexCount,
                   unsigned int *indexData, long indexCount,
-                  int vertexStride = 5);
+                  int vertexStride = DEFAULT_VERTEX_STRIDE);
   ~OkInstancedItem() override;
 
   // Add an instance at a world position with a Y rotation (radians) and

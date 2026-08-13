@@ -46,7 +46,10 @@
  * contain enough information to determine roll. Roll is a rotation around the
  * direction vector itself, so it cannot be extracted from just the direction
  * vector.
- */
+ */// How close to straight up or down counts as vertical, where yaw
+// stops meaning anything.
+static const float kVerticalEpsilon = 0.0001f;
+
 void OkMath::directionVectorToAngles(const OkPoint &direction, float &outPitch,
                                      float &outYaw) {
   // Extract components
@@ -64,7 +67,7 @@ void OkMath::directionVectorToAngles(const OkPoint &direction, float &outPitch,
   outPitch = asin(y);
 
   // Vertical look (near ±90° pitch): yaw is indeterminate, default to 0.
-  if (std::abs(std::abs(y) - 1.0f) < 0.0001f) {
+  if (std::abs(std::abs(y) - 1.0f) < kVerticalEpsilon) {
     outYaw = 0.0f;
   }
   // Inverse of OkRotation::getForwardVector = (-sin(yaw)cos(pitch),

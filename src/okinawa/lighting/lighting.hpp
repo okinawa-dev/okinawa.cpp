@@ -41,6 +41,11 @@ struct OkAtmosphereKey {
 
 class OkLighting {
 public:
+  // How many point lights a single fragment can be lit by. The shader
+  // declares this many slots, so asking for more than it can read would
+  // silently drop the extras.
+  static const int MAX_NEAR_LIGHTS = 8;
+
   OkLighting() = delete;
 
   // Replace the atmosphere curve. The engine ships a neutral default

@@ -59,6 +59,9 @@ OkGroundMove OkGroundController::computeGroundMove(const OkInputState &input,
   return result;
 }
 
+// The frame delta arrives in milliseconds; speeds are per second.
+static const float kMsPerSecond = 1000.0f;
+
 void OkGroundController::update(float dt, const OkInputState &input,
                                 OkObject &controlled) {
   OkRotation frame = controlled.getRotation();
@@ -71,7 +74,8 @@ void OkGroundController::update(float dt, const OkInputState &input,
     frame = _referenceCamera->getRotation();
   }
 
-  OkGroundMove move = computeGroundMove(input, frame, _moveSpeed, dt / 1000.0f);
+  OkGroundMove move =
+      computeGroundMove(input, frame, _moveSpeed, dt / kMsPerSecond);
   if (move.moved) {
     controlled.move(move.dx, 0.0f, move.dz);
     controlled.setRotation(0.0f, move.facingYaw, 0.0f);
@@ -80,7 +84,7 @@ void OkGroundController::update(float dt, const OkInputState &input,
   // Vertical nudge (held keys): straight up/down at the walk speed. Altitude
   // fix-ups -- e.g. climbing back above the terrain after a bad teleport.
   if (input.moveUp != input.moveDown) {
-    float dy = _moveSpeed * (dt / 1000.0f);
+    float dy = _moveSpeed * (dt / kMsPerSecond);
     controlled.move(0.0f, input.moveUp ? dy : -dy, 0.0f);
   }
 }

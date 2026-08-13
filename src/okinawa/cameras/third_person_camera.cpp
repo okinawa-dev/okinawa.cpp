@@ -7,10 +7,19 @@
 #include <cmath>
 #include <glm/trigonometric.hpp>
 
-// pitch is the LOOK pitch: negative looks down (-89 ~ top-down), positive up.
+// pitch is the look pitch: negative looks down (-89 ~ top-down), positive up.
 // Written as the numbers they are rather than as a call, so nothing runs
 // before main to produce them. A function call at namespace scope can in
 // principle throw where nobody can catch it, and these are two constants.
+// Starting pitch: looking slightly down at the avatar.
+static const float kStartPitchDeg = -20.0f;
+
+// Each zoom notch scales the orbit radius by this much, and the wheel
+// range is tighter than the absolute one setOrbit allows.
+static const float kZoomPerNotch = 0.88f;
+static const float kZoomMin      = 2.0f;
+static const float kZoomMax      = 80.0f;
+
 static const float kMinPitch = -89.0f * 3.14159265358979323846f / 180.0f;
 static const float kMaxPitch = 30.0f * 3.14159265358979323846f / 180.0f;
 
@@ -21,7 +30,7 @@ OkThirdPersonCamera::OkThirdPersonCamera(const std::string &name, int width,
   _distance    = distance;
   _focusHeight = focusHeight;
   _yaw         = 0.0f;
-  _pitch       = glm::radians(-20.0f);  // look slightly down at the avatar
+  _pitch       = glm::radians(kStartPitchDeg);
 }
 
 void OkThirdPersonCamera::look(float yawDeg, float pitchDeg) {
@@ -33,8 +42,8 @@ void OkThirdPersonCamera::look(float yawDeg, float pitchDeg) {
 void OkThirdPersonCamera::zoom(float delta) {
   // Multiplicative so it feels even at any distance: each notch scales the
   // orbit radius by ~0.88, clamped to a sane gameplay range.
-  _distance *= std::pow(0.88f, delta);
-  _distance = std::max(2.0f, std::min(80.0f, _distance));
+  _distance *= std::pow(kZoomPerNotch, delta);
+  _distance = std::max(kZoomMin, std::min(kZoomMax, _distance));
 }
 
 void OkThirdPersonCamera::setOrbit(float yawDeg, float pitchDeg,
@@ -43,7 +52,7 @@ void OkThirdPersonCamera::setOrbit(float yawDeg, float pitchDeg,
   // top-down (pitch ~ -89, distance = height) can sit high above the avatar.
   _yaw      = glm::radians(yawDeg);
   _pitch    = std::max(kMinPitch, std::min(kMaxPitch, glm::radians(pitchDeg)));
-  _distance = std::max(1.0f, std::min(2000.0f, distance));
+  _distance = std::max(MIN_DISTANCE, std::min(MAX_DISTANCE, distance));
 }
 
 float OkThirdPersonCamera::orbitYawDeg() const {

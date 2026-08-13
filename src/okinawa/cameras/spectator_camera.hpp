@@ -13,8 +13,11 @@ class OkObject;
  */
 class OkSpectatorCamera : public OkCamera {
 public:
+  // Free-flight speed, in metres per second.
+  static constexpr float DEFAULT_MOVE_SPEED = 20.0f;
+
   OkSpectatorCamera(const std::string &name, int width, int height,
-                    float moveSpeed = 20.0f);
+                    float moveSpeed = DEFAULT_MOVE_SPEED);
 
   void updateForTarget(const OkObject *target, float dt) override;
 

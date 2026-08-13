@@ -14,8 +14,21 @@ class OkObject;
  */
 class OkThirdPersonCamera : public OkCamera {
 public:
+  // Where the camera sits when nothing asks for anything else: far
+  // enough back to see the avatar in its surroundings, focused at
+  // roughly chest height so the head is not on the horizon.
+  static constexpr float DEFAULT_DISTANCE     = 12.0f;
+  static constexpr float DEFAULT_FOCUS_HEIGHT = 1.5f;
+
+  // Orbit radius limits. The near one keeps the camera out of the
+  // avatar; the far one is generous, because a top-down placement from
+  // the MCP view tool is expressed as a very large distance.
+  static constexpr float MIN_DISTANCE = 1.0f;
+  static constexpr float MAX_DISTANCE = 2000.0f;
+
   OkThirdPersonCamera(const std::string &name, int width, int height,
-                      float distance = 12.0f, float focusHeight = 1.5f);
+                      float distance    = DEFAULT_DISTANCE,
+                      float focusHeight = DEFAULT_FOCUS_HEIGHT);
 
   void updateForTarget(const OkObject *target, float dt) override;
   void look(float yawDeg, float pitchDeg) override;
@@ -40,7 +53,7 @@ public:
     return _distance;
   }
   void setViewDistance(float d) override {
-    _distance = std::min(std::max(d, 1.0f), 2000.0f);
+    _distance = std::min(std::max(d, MIN_DISTANCE), MAX_DISTANCE);
   }
 
 private:

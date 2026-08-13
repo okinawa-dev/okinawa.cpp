@@ -10,6 +10,13 @@ OkSpectatorCamera::OkSpectatorCamera(const std::string &name, int width,
   _moveSpeed = moveSpeed;
 }
 
+// Below this the movement input is nothing but float noise; the
+// direction is not normalized and no step is taken.
+static const float kMinInputMagnitude = 1e-4f;
+
+// The frame delta arrives in milliseconds; the speed is per second.
+static const float kMsPerSecond = 1000.0f;
+
 void OkSpectatorCamera::updateForTarget(const OkObject *target, float dt) {
   (void)target;  // a spectator does not track anything
   OkInput *input = OkCore::getInput();
@@ -31,9 +38,9 @@ void OkSpectatorCamera::updateForTarget(const OkObject *target, float dt) {
   if (state.strafeLeft)
     dir -= right;
 
-  if (dir.magnitude() > 1e-4f) {
+  if (dir.magnitude() > kMinInputMagnitude) {
     dir          = dir.normalize();
-    OkPoint step = dir * (_moveSpeed * (dt / 1000.0f));
+    OkPoint step = dir * (_moveSpeed * (dt / kMsPerSecond));
     move(step.x(), step.y(), step.z());
   }
 }

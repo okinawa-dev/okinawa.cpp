@@ -3,6 +3,7 @@
 #include "gl_config.hpp"
 #include "math/point.hpp"
 #include "math/rotation.hpp"
+#include <array>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/vector_float3.hpp>
@@ -324,14 +325,17 @@ void OkObject::draw() {
  */
 void OkObject::drawAxis() const {
   // Create axis line vertices in local space (origin-based)
-  float axisVertices[] = {// X-axis (red) - 100 units long
-                          0.0f, 0.0f, 0.0f, 100.0f, 0.0f, 0.0f,
+  // Three axes, each a line from the origin: two points of x, y, z.
+  const size_t                   AXIS_FLOATS  = 18;
+  std::array<float, AXIS_FLOATS> axisVertices = {
+      // X-axis (red) - 100 units long
+      0.0f, 0.0f, 0.0f, 100.0f, 0.0f, 0.0f,
 
-                          // Y-axis (green) - 100 units long
-                          0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.0f,
+      // Y-axis (green) - 100 units long
+      0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.0f,
 
-                          // Z-axis (blue) - 100 units long
-                          0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f};
+      // Z-axis (blue) - 100 units long
+      0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f};
 
   // Create temporary VAO and VBO for the axis lines
   GLuint VAO;
@@ -341,8 +345,9 @@ void OkObject::drawAxis() const {
 
   glBindVertexArray(VAO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(axisVertices), axisVertices,
-               GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER,
+               static_cast<GLsizeiptr>(axisVertices.size() * sizeof(float)),
+               axisVertices.data(), GL_STATIC_DRAW);
 
   // Configure vertex attributes (position only at location 0)
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);

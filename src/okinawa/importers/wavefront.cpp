@@ -189,7 +189,10 @@ std::string OkWavefrontImporter::getItemName(const std::string &filename) {
  *        It checks for texture coordinates and parses the geometry accordingly.
  * @param filename The name of the Wavefront file.
  * @return A pointer to the created OkItem, or nullptr on failure.
- */
+ */// Interleaved vertex layout: three position floats then two texture
+// coordinates.
+static const size_t kFloatsPerVertex = 5;
+
 OkItem *OkWavefrontImporter::importFile(const std::string &filename) {
   bool hasUV = hasTextureCoordinates(filename);
   OkLogger::info("Wavefront", "File " + filename +
@@ -219,7 +222,7 @@ OkItem *OkWavefrontImporter::importFile(const std::string &filename) {
 
   // Create combined vertex data (3 pos + 2 tex = 5 floats per vertex)
   std::vector<float> vertexData;
-  vertexData.reserve(mesh.vertices.size() * 5);
+  vertexData.reserve(mesh.vertices.size() * kFloatsPerVertex);
 
   for (const auto &vertex : mesh.vertices) {
     vertexData.insert(vertexData.end(), std::begin(vertex.position),

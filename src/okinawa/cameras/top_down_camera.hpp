@@ -13,8 +13,14 @@ class OkObject;
  */
 class OkTopDownCamera : public OkCamera {
 public:
+  // Default altitude and field of view: high enough that a few city
+  // blocks fit the frame, narrow enough that the edges do not smear.
+  static constexpr float DEFAULT_HEIGHT_M = 400.0f;
+  static constexpr float DEFAULT_FOV_DEG  = 60.0f;
+
   OkTopDownCamera(const std::string &name, int width, int height,
-                  float height_m = 400.0f, float fovDegrees = 60.0f);
+                  float height_m   = DEFAULT_HEIGHT_M,
+                  float fovDegrees = DEFAULT_FOV_DEG);
 
   void updateForTarget(const OkObject *target, float dt) override;
   void look(float yawDeg, float pitchDeg) override {

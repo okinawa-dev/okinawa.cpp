@@ -190,11 +190,14 @@ static bool parseFloat(const std::string &text, float *out) {
   *out = static_cast<float>(v);
   return true;
 }
+// Config values are written by hand, so they are read as decimal even
+// when they start with a zero.
+static const int kDecimalBase = 10;
 
 static bool parseInt(const std::string &text, int *out) {
   const char *begin = text.c_str();
   char       *end   = nullptr;
-  long        v     = strtol(begin, &end, 10);
+  long        v     = strtol(begin, &end, kDecimalBase);
   if (end == begin || *end != '\0') {
     return false;
   }

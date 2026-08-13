@@ -47,6 +47,17 @@ OkAvatar               *OkCore::_activeAvatar  = nullptr;
  *        over local HTTP and drive the app. See core.hpp for the contract.
  * @param port TCP port to bind on 127.0.0.1.
  */
+namespace {
+
+  // Milliseconds the main thread may spend per frame turning finished
+  // background work into engine objects, before the rest waits a frame.
+  const float DEFAULT_LOAD_BUDGET_MS = 3.0f;
+
+  // glfwGetTime reports seconds; the loop works in milliseconds.
+  const double MS_PER_SECOND = 1000.0;
+
+}  // namespace
+
 void OkCore::enableMcpServer(int port) {
 #ifdef OKINAWA_WITH_MCP
   if (_mcpServer != nullptr) {
@@ -108,7 +119,7 @@ bool OkCore::initialize() {
   OkAsyncLoader::initialize();
   // How long per frame the main thread may spend turning finished
   // background work into engine objects.
-  OkConfig::setFloat("render.loadbudget", 3.0f);
+  OkConfig::setFloat("render.loadbudget", DEFAULT_LOAD_BUDGET_MS);
   // Beyond this range distance fog has swallowed the world, so drawing
   // is waste; 0 disables the cut. Projects tune it to their fog.
   OkConfig::setFloat("render.drawdistance", 0.0f);
@@ -319,11 +330,11 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
     return;
   }
 
-  double lastFrameTime = glfwGetTime() * 1000.0;
+  double lastFrameTime = glfwGetTime() * MS_PER_SECOND;
   float  timePerFrame  = OkConfig::getFloat("graphics.time-per-frame");
 
   while (!glfwWindowShouldClose(_window)) {
-    double currentTime = glfwGetTime() * 1000.0;
+    double currentTime = glfwGetTime() * MS_PER_SECOND;
     double deltaTime   = currentTime - lastFrameTime;
 
     if (deltaTime >= timePerFrame) {

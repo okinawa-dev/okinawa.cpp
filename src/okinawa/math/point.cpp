@@ -14,7 +14,10 @@ OkPoint::OkPoint(float x, float y, float z) : v(x, y, z) {}
 /**
  * @brief Negate the point.
  * @return A new OkPoint object with negated coordinates.
- */
+ */// Below this a vector is numerically nothing: dividing by its length
+// would produce infinities rather than a direction.
+static const float kMinLength = 1e-6f;
+
 OkPoint OkPoint::operator-() const {
   return OkPoint(-v.x, -v.y, -v.z);
 }
@@ -64,7 +67,7 @@ float OkPoint::magnitude() const {
 OkPoint OkPoint::normalize() const {
   // return OkPoint(glm::normalize(v));
   float len = magnitude();
-  if (len < 1e-6f)  // Small epsilon value
+  if (len < kMinLength)
     return OkPoint(0, 0, 0);
   return OkPoint(v / len);
 }

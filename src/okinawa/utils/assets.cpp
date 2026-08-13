@@ -46,12 +46,16 @@ std::filesystem::path &OkAssets::getMutableProjectRoot() {
  *        This method searches for the src/shaders directory starting from
  *        the current working directory and moving up the directory tree.
  * @return True if the engine asset root was found, false otherwise.
- */
+ */// How many directories up the tree the engine assets are looked for.
+// Deep enough for a build directory inside a project, shallow enough
+// that a missing checkout fails instead of walking to the root.
+static const int kMaxSearchDepth = 5;
+
 bool OkAssets::discoverEngineAssetRoot() {
   std::filesystem::path currentPath = std::filesystem::current_path();
 
   // Search up the directory tree for the engine structure
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < kMaxSearchDepth; i++) {
     std::filesystem::path candidate = currentPath / "assets" / "shaders";
 
     if (std::filesystem::exists(candidate) &&

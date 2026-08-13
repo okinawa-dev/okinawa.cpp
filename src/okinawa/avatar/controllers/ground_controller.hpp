@@ -33,7 +33,10 @@ struct OkGroundMove {
  */
 class OkGroundController : public OkAvatarController {
 public:
-  explicit OkGroundController(float moveSpeed = 5.0f);
+  // Walking speed, in metres per second.
+  static constexpr float DEFAULT_MOVE_SPEED = 5.0f;
+
+  explicit OkGroundController(float moveSpeed = DEFAULT_MOVE_SPEED);
 
   void update(float dt, const OkInputState &input,
               OkObject &controlled) override;

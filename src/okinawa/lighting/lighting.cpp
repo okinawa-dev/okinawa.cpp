@@ -17,6 +17,12 @@
 // explains nothing; the ones that do carry meaning are named and
 // commented where they are used.
 
+// Out of line, because std::min binds its arguments by reference and so
+// takes the constant's address. Declared inside the class it has a value
+// but no storage, and the link fails only where something wants a
+// reference to it.
+const int OkLighting::MAX_NEAR_LIGHTS;
+
 std::array<float, 3> OkLighting::_tint       = {1.0f, 1.0f, 1.0f};
 std::array<float, 3> OkLighting::_fogColor   = {0.75f, 0.80f, 0.85f};
 float                OkLighting::_fogDensity = 0.0f;
@@ -43,7 +49,10 @@ long                                      OkLighting::_lightGeneration = 0;
 // night. It exists so any project renders sensibly out of the box; a
 // game with its own look replaces it through setAtmosphereCurve, which
 // is where artistic direction belongs.
-static const OkAtmosphereKey ATMO_DEFAULT[] = {
+//
+// Night, dawn, day, sunset and back to night: eight keys around the clock.
+static const size_t ATMO_DEFAULT_COUNT                                    = 8;
+static const std::array<OkAtmosphereKey, ATMO_DEFAULT_COUNT> ATMO_DEFAULT = {{
     // night
     {0.0f,
      {0.34f, 0.38f, 0.46f},
@@ -105,18 +114,18 @@ static const OkAtmosphereKey ATMO_DEFAULT[] = {
      {0.0f, 0.0f, 0.0f},
      {0.03f, 0.05f, 0.10f},
      0.30f},
-};
+}};
 
 // The curve in use: the default until a project replaces it.
-static const int       ATMO_MAX_KEYS = 32;
-static OkAtmosphereKey ATMO_KEYS[ATMO_MAX_KEYS];
-static int             ATMO_KEY_COUNT = 0;
+static const int                                  ATMO_MAX_KEYS = 32;
+static std::array<OkAtmosphereKey, ATMO_MAX_KEYS> ATMO_KEYS;
+static int                                        ATMO_KEY_COUNT = 0;
 
 static void ensureCurve() {
   if (ATMO_KEY_COUNT > 0) {
     return;
   }
-  int n = static_cast<int>(sizeof(ATMO_DEFAULT) / sizeof(ATMO_DEFAULT[0]));
+  int n = static_cast<int>(ATMO_DEFAULT.size());
   for (int i = 0; i < n; i++) {
     ATMO_KEYS[i] = ATMO_DEFAULT[i];
   }
@@ -242,9 +251,9 @@ void OkLighting::update(float dt) {
  *        direction comes from the hour itself (elevation follows a sine
  *        over the 6h..21h daylight arc, azimuth sweeps east to west).
  */
-void OkLighting::evaluate(float hours, float outTint[3], float outFogColor[3],
-                          float &outFogDensity, float outSunColor[3],
-                          float outSunDir[3], float outZenith[3],
+void OkLighting::evaluate(float hours, float *outTint, float *outFogColor,
+                          float &outFogDensity, float *outSunColor,
+                          float *outSunDir, float *outZenith,
                           float *outAmbient) {
   ensureCurve();
   float h = std::fmod(hours, 24.0f);
@@ -254,7 +263,7 @@ void OkLighting::evaluate(float hours, float outTint[3], float outFogColor[3],
 
   // Find the surrounding keyframes (wrapping around midnight).
   const OkAtmosphereKey *prev = &ATMO_KEYS[ATMO_KEY_COUNT - 1];
-  const OkAtmosphereKey *next = &ATMO_KEYS[0];
+  const OkAtmosphereKey *next = ATMO_KEYS.data();
   float                  span = (24.0f - prev->hour) + next->hour;
   float                  frac = 0.0f;
   if (h < ATMO_KEYS[0].hour) {
@@ -263,10 +272,10 @@ void OkLighting::evaluate(float hours, float outTint[3], float outFogColor[3],
     for (int i = 0; i < ATMO_KEY_COUNT; i++) {
       if (ATMO_KEYS[i].hour <= h) {
         prev = &ATMO_KEYS[i];
-        next = (i + 1 < ATMO_KEY_COUNT) ? &ATMO_KEYS[i + 1] : &ATMO_KEYS[0];
+        next = (i + 1 < ATMO_KEY_COUNT) ? &ATMO_KEYS[i + 1] : ATMO_KEYS.data();
       }
     }
-    if (next == &ATMO_KEYS[0]) {
+    if (next == ATMO_KEYS.data()) {
       span = (24.0f - prev->hour) + next->hour;
       frac = (h - prev->hour) / span;
     } else {
@@ -373,9 +382,9 @@ int OkLighting::getLightCount() {
  */
 int OkLighting::getNearestLights(float x, float y, float z, int *outIdx,
                                  int maxN) {
-  float bestScore[8];
-  int   n = 0;
-  maxN    = std::min(maxN, 8);
+  std::array<float, MAX_NEAR_LIGHTS> bestScore;
+  int                                n = 0;
+  maxN                                 = std::min(maxN, MAX_NEAR_LIGHTS);
   for (int i = 0; i < _lightCount; i++) {
     float dx = _lightPos[i][0] - x;
     float dy = _lightPos[i][1] - y;
@@ -440,8 +449,10 @@ OkTexture *OkLighting::getHaloTexture() {
   if (existing != nullptr) {
     return existing;
   }
-  const int     SIZE = 64;
-  unsigned char rgba[SIZE * SIZE * 4];
+  const int SIZE          = 64;
+  const int RGBA_CHANNELS = 4;
+  std::array<unsigned char, static_cast<size_t>(SIZE) * SIZE * RGBA_CHANNELS>
+      rgba;
   for (int y = 0; y < SIZE; y++) {
     for (int x = 0; x < SIZE; x++) {
       float dx      = (static_cast<float>(x) + 0.5f) / SIZE - 0.5f;
@@ -458,7 +469,7 @@ OkTexture *OkLighting::getHaloTexture() {
     }
   }
   return OkTextureHandler::getInstance()->createTextureFromRawData(
-      "ok_halo", rgba, SIZE, SIZE, 4);
+      "ok_halo", rgba.data(), SIZE, SIZE, RGBA_CHANNELS);
 }
 
 // NOLINTEND(readability-magic-numbers)

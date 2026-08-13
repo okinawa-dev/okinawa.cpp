@@ -14,7 +14,10 @@
 /**
  * @brief Default constructor initializes rotation to identity.
  * The rotation matrix is set to the identity matrix and angles are set to zero.
- */
+ */// How close to straight up or down counts as vertical, where roll
+// stops meaning anything.
+static const float kVerticalEpsilon = 0.001f;
+
 OkRotation::OkRotation() {
   matrix = glm::mat4(1.0f);
   angles = glm::vec3(0.0f);
@@ -250,7 +253,7 @@ float OkRotation::getYaw() const {
  */
 float OkRotation::getRoll() const {
   // Return 0 for vertical orientations where roll is undefined
-  if (std::abs(std::abs(angles.x) - glm::half_pi<float>()) < 0.001f) {
+  if (std::abs(std::abs(angles.x) - glm::half_pi<float>()) < kVerticalEpsilon) {
     return 0.0f;
   }
 

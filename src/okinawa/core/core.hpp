@@ -21,6 +21,9 @@ class OkAvatar;
  */
 class OkCore {
 public:
+  // Loopback port the in-engine MCP server listens on by default.
+  static const int DEFAULT_MCP_PORT = 8765;
+
   // Callback type for engine loop
   using OkCoreCallback = std::function<void(float deltaTime)>;
 
@@ -105,7 +108,7 @@ public:
   // 127.0.0.1:port. This symbol always exists; if the engine was built
   // without MCP support (OKINAWA_WITH_MCP undefined) it logs a warning and
   // does nothing, so apps compile identically with or without the server.
-  static void enableMcpServer(int port = 8765);
+  static void enableMcpServer(int port = DEFAULT_MCP_PORT);
 
   // Ignore the user's physical keyboard/mouse input (e.g. when an instance is
   // meant to be driven only through the MCP server). Injected/MCP input still

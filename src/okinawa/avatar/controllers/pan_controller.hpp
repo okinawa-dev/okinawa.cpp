@@ -21,9 +21,13 @@ class OkInputState;
  */
 class OkPanController : public OkAvatarController {
 public:
+  // World units moved per mouse pixel, per unit of camera view distance:
+  // a screen-height sweep crosses roughly the visible area.
+  static constexpr float DEFAULT_SPEED_PER_PIXEL = 0.002f;
+
   // speedPerPixel = world units moved per mouse pixel, per unit of camera view
   // distance. 0.002 ~= a screen-height mouse sweep crosses the visible area.
-  explicit OkPanController(float speedPerPixel = 0.002f);
+  explicit OkPanController(float speedPerPixel = DEFAULT_SPEED_PER_PIXEL);
 
   void update(float dt, const OkInputState &input,
               OkObject &controlled) override;

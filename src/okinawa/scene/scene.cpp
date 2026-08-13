@@ -10,7 +10,11 @@
 /**
  * @brief Constructor for the OkScene class.
  * @param name The name of the scene.
- */
+ */// Frames between draw-order sorts. The order only has to be roughly
+// right, and sorting thousands of objects every frame would cost more
+// than the overdraw it saves.
+static const int kSortEveryFrames = 12;
+
 OkScene::OkScene(const std::string &name) {
   this->name  = name;
   _isActive   = false;
@@ -141,7 +145,8 @@ void OkScene::draw() {
   // sorting thousands of objects every frame would cost more than it
   // saves.
   _sortTimer++;
-  if (_drawOrder.size() != rootObjects.size() || (_sortTimer % 12) == 0) {
+  if (_drawOrder.size() != rootObjects.size() ||
+      (_sortTimer % kSortEveryFrames) == 0) {
     _drawOrder.clear();
     _drawOrder.reserve(rootObjects.size());
     for (size_t i = 0; i < rootObjects.size(); ++i) {
