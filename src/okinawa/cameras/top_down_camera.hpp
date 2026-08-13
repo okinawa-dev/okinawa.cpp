@@ -23,10 +23,16 @@ public:
   }
   void zoom(float delta) override;
 
-  void setHeight(float height_m) { _height = height_m; }
+  void setHeight(float height_m) {
+    _height = height_m;
+  }
 
-  [[nodiscard]] float viewDistance() const override { return _height; }
-  void                setViewDistance(float d) override { setHeight(d); }
+  float viewDistance() const override {
+    return _height;
+  }
+  void setViewDistance(float d) override {
+    setHeight(d);
+  }
 
 private:
   float _height;

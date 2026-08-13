@@ -27,8 +27,7 @@ public:
 
   // True when a sphere at (x, y, z) with the given radius is at least
   // partially inside the frustum.
-  [[nodiscard]] bool containsSphere(float x, float y, float z,
-                                    float radius) const;
+  bool containsSphere(float x, float y, float z, float radius) const;
 
   // Global per-frame frustum used by the draw path. `enabled` is false
   // outside the world pass (GUI) so nothing is culled there.

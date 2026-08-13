@@ -40,29 +40,39 @@ public:
   void rebuild();
 
   // Render options.
-  void setRenderMode(RenderMode mode) { _mode = mode; }
+  void setRenderMode(RenderMode mode) {
+    _mode = mode;
+  }
   void setEdgeColor(float r, float g, float b);
   void setNodeColor(float r, float g, float b);
   void setShowEdges(bool show);
   void setShowNodes(bool show);
-  void setNodeSize(float pixels) { _nodeSize = pixels; }  // RENDER_LINES points
-  void setEdgeWidth(float meters) { _edgeWidth = meters; }  // RENDER_POLYGONS
+  void setNodeSize(float pixels) {
+    _nodeSize = pixels;
+  }  // RENDER_LINES points
+  void setEdgeWidth(float meters) {
+    _edgeWidth = meters;
+  }  // RENDER_POLYGONS
   void setNodeMarkerSize(float meters) {
     _nodeMarker = meters;
   }  // RENDER_POLYGONS
 
   // Queries.
-  [[nodiscard]] int getNodeCount() const {
+  int getNodeCount() const {
     return static_cast<int>(_nodes.size());
   }
-  [[nodiscard]] int getEdgeCount() const {
+  int getEdgeCount() const {
     return static_cast<int>(_edges.size());
   }
-  [[nodiscard]] const OkPoint &getNode(int i) const { return _nodes[i]; }
+  const OkPoint &getNode(int i) const {
+    return _nodes[i];
+  }
 
   // OkObject hooks. drawSelf only sets GL point size; the child items draw.
   void drawSelf() override;
-  void stepSelf(float dt) override { (void)dt; }
+  void stepSelf(float dt) override {
+    (void)dt;
+  }
   void updateTransformSelf() override {}
 
 private:

@@ -18,7 +18,9 @@ public:
 
   void updateForTarget(const OkObject *target, float dt) override;
 
-  void setMoveSpeed(float moveSpeed) { _moveSpeed = moveSpeed; }
+  void setMoveSpeed(float moveSpeed) {
+    _moveSpeed = moveSpeed;
+  }
 
 private:
   float _moveSpeed;  // units per second

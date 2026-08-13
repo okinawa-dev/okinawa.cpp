@@ -44,12 +44,14 @@ public:
   // drawn and cost nothing but their slot.
   void setInstanceVisible(int index, bool visible);
   // Drop every instance.
-  void              clearInstances();
-  [[nodiscard]] int getInstanceCount() const {
+  void clearInstances();
+  int  getInstanceCount() const {
     return static_cast<int>(_instances.size());
   }
   // Instances actually drawn in the last frame (after frustum culling).
-  [[nodiscard]] int getDrawnCount() const { return _drawnCount; }
+  int getDrawnCount() const {
+    return _drawnCount;
+  }
 
 protected:
   void drawSelf() override;

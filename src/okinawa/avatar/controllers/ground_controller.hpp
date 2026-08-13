@@ -38,15 +38,23 @@ public:
   void update(float dt, const OkInputState &input,
               OkObject &controlled) override;
 
-  void                setMoveSpeed(float speed) { _moveSpeed = speed; }
-  [[nodiscard]] float getMoveSpeed() const { return _moveSpeed; }
+  void setMoveSpeed(float speed) {
+    _moveSpeed = speed;
+  }
+  float getMoveSpeed() const {
+    return _moveSpeed;
+  }
 
   // Movement is relative to this camera (independent of what is rendered). Null
   // falls back to the controlled object's own facing.
-  void setReferenceCamera(OkCamera *camera) { _referenceCamera = camera; }
+  void setReferenceCamera(OkCamera *camera) {
+    _referenceCamera = camera;
+  }
   // Ignore the explicit reference and use the active rendered camera instead
   // (room-relative control, e.g. fixed-camera games).
-  void setUseActiveCamera(bool useActive) { _useActiveCamera = useActive; }
+  void setUseActiveCamera(bool useActive) {
+    _useActiveCamera = useActive;
+  }
 
   // Pure movement maths, unit-tested without a window/GL. Projects the frame's
   // forward/right onto the ground and returns the scaled XZ delta + facing yaw.

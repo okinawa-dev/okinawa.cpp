@@ -40,7 +40,9 @@ public:
   // approaches (fully faded at `nearDist`, full alpha beyond
   // `nearDist * 2`). 0 disables. Essential for light halos: a quad
   // crossing the camera plane would otherwise fill the screen.
-  void setProximityFade(float nearDist) { proximityFade = nearDist; }
+  void setProximityFade(float nearDist) {
+    proximityFade = nearDist;
+  }
 
   // Camera offset (depth bias): each frame the quad is drawn `metres`
   // closer to the camera ALONG THE VIEW RAY. Since a point moved along
@@ -51,7 +53,9 @@ public:
   //
   // setPosition() sets the ANCHOR: the offset is applied on top of it
   // every frame, never accumulated.
-  void setCameraOffset(float metres) { cameraOffset = metres; }
+  void setCameraOffset(float metres) {
+    cameraOffset = metres;
+  }
 
   // The rotation that turns a +Z-facing quad placed at `from` toward
   // `to` (pitch and yaw; roll always 0). Static so the math is testable

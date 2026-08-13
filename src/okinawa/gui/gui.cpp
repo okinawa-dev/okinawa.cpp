@@ -158,16 +158,16 @@ float OkGui::getCameraDistance() {
  */
 float OkGui::anchorOriginXFor(OkGuiAnchor anchor, float logicalW) {
   switch (anchor) {
-    case OK_GUI_ANCHOR_LEFT:
-    case OK_GUI_ANCHOR_TOP_LEFT:
-    case OK_GUI_ANCHOR_BOTTOM_LEFT:
-      return -logicalW * 0.5f;
-    case OK_GUI_ANCHOR_RIGHT:
-    case OK_GUI_ANCHOR_TOP_RIGHT:
-    case OK_GUI_ANCHOR_BOTTOM_RIGHT:
-      return logicalW * 0.5f;
-    default:
-      return 0.0f;
+  case OK_GUI_ANCHOR_LEFT:
+  case OK_GUI_ANCHOR_TOP_LEFT:
+  case OK_GUI_ANCHOR_BOTTOM_LEFT:
+    return -logicalW * 0.5f;
+  case OK_GUI_ANCHOR_RIGHT:
+  case OK_GUI_ANCHOR_TOP_RIGHT:
+  case OK_GUI_ANCHOR_BOTTOM_RIGHT:
+    return logicalW * 0.5f;
+  default:
+    return 0.0f;
   }
 }
 
@@ -177,16 +177,16 @@ float OkGui::anchorOriginXFor(OkGuiAnchor anchor, float logicalW) {
  */
 float OkGui::anchorOriginYFor(OkGuiAnchor anchor, float logicalH) {
   switch (anchor) {
-    case OK_GUI_ANCHOR_TOP:
-    case OK_GUI_ANCHOR_TOP_LEFT:
-    case OK_GUI_ANCHOR_TOP_RIGHT:
-      return logicalH * 0.5f;
-    case OK_GUI_ANCHOR_BOTTOM:
-    case OK_GUI_ANCHOR_BOTTOM_LEFT:
-    case OK_GUI_ANCHOR_BOTTOM_RIGHT:
-      return -logicalH * 0.5f;
-    default:
-      return 0.0f;
+  case OK_GUI_ANCHOR_TOP:
+  case OK_GUI_ANCHOR_TOP_LEFT:
+  case OK_GUI_ANCHOR_TOP_RIGHT:
+    return logicalH * 0.5f;
+  case OK_GUI_ANCHOR_BOTTOM:
+  case OK_GUI_ANCHOR_BOTTOM_LEFT:
+  case OK_GUI_ANCHOR_BOTTOM_RIGHT:
+    return -logicalH * 0.5f;
+  default:
+    return 0.0f;
   }
 }
 

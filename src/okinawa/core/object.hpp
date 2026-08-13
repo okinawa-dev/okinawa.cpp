@@ -45,47 +45,73 @@ public:
   virtual ~OkObject();
 
   // Position
-  [[nodiscard]] OkPoint getPosition() const;
-  void                  setPosition(float x, float y, float z);
-  void                  setPosition(const OkPoint &newPosition);
-  void                  move(float dx, float dy, float dz);
+  OkPoint getPosition() const;
+  void    setPosition(float x, float y, float z);
+  void    setPosition(const OkPoint &newPosition);
+  void    move(float dx, float dy, float dz);
 
-  void setDrawOriginAxis(bool drawAxis) { drawOriginAxis = drawAxis; }
-  [[nodiscard]] bool getDrawOriginAxis() const { return drawOriginAxis; }
-  void               drawAxis() const;
+  void setDrawOriginAxis(bool drawAxis) {
+    drawOriginAxis = drawAxis;
+  }
+  bool getDrawOriginAxis() const {
+    return drawOriginAxis;
+  }
+  void drawAxis() const;
 
   // Rotation
-  [[nodiscard]] OkRotation getRotation() const;
-  void                     setRotation(float x, float y, float z);
-  void                     setRotation(const OkRotation &newRotation);
-  void                     rotate(float dx, float dy, float dz);
+  OkRotation getRotation() const;
+  void       setRotation(float x, float y, float z);
+  void       setRotation(const OkRotation &newRotation);
+  void       rotate(float dx, float dy, float dz);
 
   // Scale
-  [[nodiscard]] OkPoint getScaling() const { return scaling; }
-  void setScaling(float x, float y, float z) { scaling = OkPoint(x, y, z); }
+  OkPoint getScaling() const {
+    return scaling;
+  }
+  void setScaling(float x, float y, float z) {
+    scaling = OkPoint(x, y, z);
+  }
 
   // Physics
-  [[nodiscard]] OkPoint getSpeed() const { return speed; }
-  void setSpeed(float x, float y, float z) { speed = OkPoint(x, y, z); }
-  [[nodiscard]] float getSpeedMagnitude() const { return speed.magnitude(); }
+  OkPoint getSpeed() const {
+    return speed;
+  }
+  void setSpeed(float x, float y, float z) {
+    speed = OkPoint(x, y, z);
+  }
+  float getSpeedMagnitude() const {
+    return speed.magnitude();
+  }
 
-  void setMaxVelocity(float maxVelocity) { maxVel = maxVelocity; }
-  void setAcceleration(float acceleration) { accel = acceleration; }
+  void setMaxVelocity(float maxVelocity) {
+    maxVel = maxVelocity;
+  }
+  void setAcceleration(float acceleration) {
+    accel = acceleration;
+  }
 
   // Getters
-  [[nodiscard]] const std::string &getName() const { return name; }
+  const std::string &getName() const {
+    return name;
+  }
 
   // Hierarchy
-  void                    attach(OkObject *object);
-  void                    attachTo(OkObject *parent);
-  void                    detachFromParent();
-  void                    detachAllChildren();
-  [[nodiscard]] OkObject *getNextSibling() const { return _nextSibling; }
-  [[nodiscard]] OkObject *getFirstChild() const { return _firstChild; }
-  [[nodiscard]] OkObject *getParent() const { return _parent; }
+  void      attach(OkObject *object);
+  void      attachTo(OkObject *parent);
+  void      detachFromParent();
+  void      detachAllChildren();
+  OkObject *getNextSibling() const {
+    return _nextSibling;
+  }
+  OkObject *getFirstChild() const {
+    return _firstChild;
+  }
+  OkObject *getParent() const {
+    return _parent;
+  }
 
   // Transform matrix
-  [[nodiscard]] glm::mat4 getTransformMatrix() const;
+  glm::mat4 getTransformMatrix() const;
 
   // Final transform update that enforces hierarchy
   virtual void updateTransform() final;
@@ -101,7 +127,9 @@ public:
   // opaque surface drawn later would pass the depth test and paint over
   // them. OkScene::draw uses this to order the two passes; subtrees
   // report true when any descendant is blended.
-  [[nodiscard]] virtual bool isBlended() const { return false; }
+  virtual bool isBlended() const {
+    return false;
+  }
 };
 
 #endif

@@ -31,19 +31,33 @@ public:
 
   // Text content; the mesh is rebuilt lazily on the next draw.
   void               setText(const std::string &text);
-  const std::string &getText() const { return _text; }
+  const std::string &getText() const {
+    return _text;
+  }
 
   // Grid placement (same contract as OkGuiImage).
   void  setGridPosition(float gx, float gy);
-  float getGridX() const { return _gridX; }
-  float getGridY() const { return _gridY; }
+  float getGridX() const {
+    return _gridX;
+  }
+  float getGridY() const {
+    return _gridY;
+  }
 
-  void        setGridAnchor(OkGuiAnchor anchor) { _anchor = anchor; }
-  OkGuiAnchor getGridAnchor() const { return _anchor; }
+  void setGridAnchor(OkGuiAnchor anchor) {
+    _anchor = anchor;
+  }
+  OkGuiAnchor getGridAnchor() const {
+    return _anchor;
+  }
 
   // Glyph height in grid cells (default 1 cell). Width is derived.
-  void  setGridHeight(float hCells) { _gridH = hCells; }
-  float getGridHeight() const { return _gridH; }
+  void setGridHeight(float hCells) {
+    _gridH = hCells;
+  }
+  float getGridHeight() const {
+    return _gridH;
+  }
 
   // Width of the current text in grid cells (for layout math).
   float getGridWidth() const;
@@ -58,7 +72,9 @@ public:
 
   // OkObject hooks: sync transform from the grid and rebuild on demand.
   void drawSelf() override;
-  void stepSelf(float dt) override { (void)dt; }
+  void stepSelf(float dt) override {
+    (void)dt;
+  }
   void updateTransformSelf() override {}
 
 private:

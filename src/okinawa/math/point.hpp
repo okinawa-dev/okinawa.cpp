@@ -22,46 +22,78 @@ public:
 
   // Operators
   OkPoint &operator=(const OkPoint &other) = default;
-  bool     operator==(const OkPoint &other) const { return v == other.v; }
-  OkPoint operator+(const OkPoint &other) const { return OkPoint(v + other.v); }
-  OkPoint operator-(const OkPoint &other) const { return OkPoint(v - other.v); }
-  OkPoint operator*(float scalar) const { return OkPoint(v * scalar); }
-  OkPoint operator-() const;
+  bool     operator==(const OkPoint &other) const {
+    return v == other.v;
+  }
+  OkPoint operator+(const OkPoint &other) const {
+    return OkPoint(v + other.v);
+  }
+  OkPoint operator-(const OkPoint &other) const {
+    return OkPoint(v - other.v);
+  }
+  OkPoint operator*(float scalar) const {
+    return OkPoint(v * scalar);
+  }
+  OkPoint  operator-() const;
   OkPoint &operator+=(const OkPoint &other);
   OkPoint &operator-=(const OkPoint &other);
   OkPoint &operator*=(float scalar);
 
   // Methods
-  [[nodiscard]] float   magnitude() const;
-  [[nodiscard]] OkPoint normalize() const;
-  [[nodiscard]] float   distance(const OkPoint &destination) const;
+  float   magnitude() const;
+  OkPoint normalize() const;
+  float   distance(const OkPoint &destination) const;
 
   // Vector operations
-  [[nodiscard]] float   dot(const OkPoint &other) const;
-  [[nodiscard]] OkPoint cross(const OkPoint &other) const;
+  float   dot(const OkPoint &other) const;
+  OkPoint cross(const OkPoint &other) const;
 
   // Static methods for common points
-  static OkPoint Forward() { return OkPoint(0, 0, 1); }
-  static OkPoint Right() { return OkPoint(1, 0, 0); }
-  static OkPoint Up() { return OkPoint(0, 1, 0); }
+  static OkPoint Forward() {
+    return OkPoint(0, 0, 1);
+  }
+  static OkPoint Right() {
+    return OkPoint(1, 0, 0);
+  }
+  static OkPoint Up() {
+    return OkPoint(0, 1, 0);
+  }
 
   // Getters/Setters
-  [[nodiscard]] float x() const { return v.x; }
-  [[nodiscard]] float y() const { return v.y; }
-  [[nodiscard]] float z() const { return v.z; }
-  void                setX(float x) { v.x = x; }
-  void                setY(float y) { v.y = y; }
-  void                setZ(float z) { v.z = z; }
+  float x() const {
+    return v.x;
+  }
+  float y() const {
+    return v.y;
+  }
+  float z() const {
+    return v.z;
+  }
+  void setX(float x) {
+    v.x = x;
+  }
+  void setY(float y) {
+    v.y = y;
+  }
+  void setZ(float z) {
+    v.z = z;
+  }
 
   // GLM data access
-  [[nodiscard]] const glm::vec3 &data() const { return v; }
-  glm::vec3                     &data() { return v; }
+  const glm::vec3 &data() const {
+    return v;
+  }
+  glm::vec3 &data() {
+    return v;
+  }
 
   // String representation
-  [[nodiscard]] std::string toString() const;
+  std::string toString() const;
 
   // Conversion
-  [[nodiscard]] glm::vec3 toVec3() const { return v; }
+  glm::vec3 toVec3() const {
+    return v;
+  }
 };
 
 #endif  // OK_POINT_HPP

@@ -50,13 +50,17 @@ public:
   // getOutputTail returns the newest lines still in the buffer, oldest
   // first. Take the count before and after an execute() and the difference
   // is that command's answer.
-  static unsigned long            getPrintedCount() { return _printed; }
+  static unsigned long getPrintedCount() {
+    return _printed;
+  }
   static std::vector<std::string> getOutputTail(int maxLines);
 
   // Open state. While open the console owns the keyboard (OkInput is
   // captured) and the game receives no keys.
   static void toggle();
-  static bool isOpen() { return _open; }
+  static bool isOpen() {
+    return _open;
+  }
 
   // Per-frame update: handles the toggle key, line editing and history
   // while open, and refreshes the UI. Called by OkCore::loop right after

@@ -43,15 +43,25 @@ public:
 
   // Replace the pixel data in place (same size and channel count the
   // texture was created with). RGBA/RGB raw data, no mipmap rebuild.
-  void               updateRawData(const unsigned char *data, int newWidth,
-                                   int newHeight) const;
-  [[nodiscard]] bool isLoaded() const { return loaded; }
+  void updateRawData(const unsigned char *data, int newWidth,
+                     int newHeight) const;
+  bool isLoaded() const {
+    return loaded;
+  }
 
   // Getters
-  [[nodiscard]] int                getWidth() const { return width; }
-  [[nodiscard]] int                getHeight() const { return height; }
-  [[nodiscard]] int                getChannels() const { return channels; }
-  [[nodiscard]] const std::string &getPath() const { return path; }
+  int getWidth() const {
+    return width;
+  }
+  int getHeight() const {
+    return height;
+  }
+  int getChannels() const {
+    return channels;
+  }
+  const std::string &getPath() const {
+    return path;
+  }
 
   // Create texture from raw data
   bool createFromRawData(const unsigned char *data, int width, int height,

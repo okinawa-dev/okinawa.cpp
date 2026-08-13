@@ -8,7 +8,9 @@
 // and independent of the (randomised) execution order.
 namespace {
   struct ConfigTestFixture {
-    ConfigTestFixture() { OkConfig::reset(); }
+    ConfigTestFixture() {
+      OkConfig::reset();
+    }
   };
 }  // namespace
 

@@ -32,8 +32,10 @@ public:
   // Move the controlled object from input, then reposition the rig cameras.
   void update(float dt, const OkInputState &input);
 
-  [[nodiscard]] OkObject *getControlledObject() const { return _controlled; }
-  [[nodiscard]] OkAvatarController *getController() const {
+  OkObject *getControlledObject() const {
+    return _controlled;
+  }
+  OkAvatarController *getController() const {
     return _controller;
   }
   void setController(OkAvatarController *controller);

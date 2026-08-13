@@ -55,7 +55,9 @@ public:
   void setItemTags(OkItem *item, const std::vector<std::string> &tags);
 
   // Query methods
-  size_t                   getItemCount() const { return items.size(); }
+  size_t getItemCount() const {
+    return items.size();
+  }
   OkItem                  *getItem(int index) const;
   int                      getItemIndex(OkItem *item) const;
   std::vector<OkItem *>    getAllItems() const;

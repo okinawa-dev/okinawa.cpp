@@ -35,20 +35,34 @@ public:
   static void exit();
 
   // Scene handler
-  static OkSceneHandler *getSceneHandler() { return _sceneHandler; }
+  static OkSceneHandler *getSceneHandler() {
+    return _sceneHandler;
+  }
 
   // Getters
-  static OkCamera   *getCamera() { return _cameras[_currentCamera]; }
-  static GLFWwindow *getWindow() { return _window; }
-  static GLuint      getShaderProgram() { return _shaderProgram; }
-  static OkInput    *getInput() { return _input; }
+  static OkCamera *getCamera() {
+    return _cameras[_currentCamera];
+  }
+  static GLFWwindow *getWindow() {
+    return _window;
+  }
+  static GLuint getShaderProgram() {
+    return _shaderProgram;
+  }
+  static OkInput *getInput() {
+    return _input;
+  }
 
   // Camera management
   static void addCamera(OkCamera *camera);
   static void clearCameras();  // delete all cameras (install your own set)
   static void switchCamera(int index);
-  static int  getCurrentCameraIndex() { return _currentCamera; }
-  static int  getCameraCount() { return static_cast<int>(_cameras.size()); }
+  static int  getCurrentCameraIndex() {
+    return _currentCamera;
+  }
+  static int getCameraCount() {
+    return static_cast<int>(_cameras.size());
+  }
   // Camera at an index (nullptr out of range) and lookup by the name the
   // camera was created with (-1 when not found). Cameras are identified by
   // NAME across the engine surface (MCP, tools): indices are an internal
@@ -64,8 +78,12 @@ public:
   // owned by the core (the game keeps ownership). Set null to fall back to the
   // free-fly camera control. Swapping it (on foot -> car) changes the controls
   // and camera behaviour in one call.
-  static void      setActiveAvatar(OkAvatar *avatar) { _activeAvatar = avatar; }
-  static OkAvatar *getActiveAvatar() { return _activeAvatar; }
+  static void setActiveAvatar(OkAvatar *avatar) {
+    _activeAvatar = avatar;
+  }
+  static OkAvatar *getActiveAvatar() {
+    return _activeAvatar;
+  }
 
   // Apply a look delta in degrees: orbits the active avatar's current view if
   // it consumes the mouse, otherwise rotates the current camera (free-fly).

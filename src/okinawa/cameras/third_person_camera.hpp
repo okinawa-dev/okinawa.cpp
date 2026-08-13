@@ -21,17 +21,25 @@ public:
   void look(float yawDeg, float pitchDeg) override;
   void zoom(float delta) override;
 
-  void setDistance(float distance) { _distance = distance; }
+  void setDistance(float distance) {
+    _distance = distance;
+  }
 
   // Orbit interface (driven by the MCP `view` tool): absolute
   // yaw/pitch/distance.
-  [[nodiscard]] bool isOrbit() const override { return true; }
-  void setOrbit(float yawDeg, float pitchDeg, float distance) override;
-  [[nodiscard]] float orbitYawDeg() const override;
-  [[nodiscard]] float orbitPitchDeg() const override;
-  [[nodiscard]] float orbitDistance() const override { return _distance; }
-  [[nodiscard]] float viewDistance() const override { return _distance; }
-  void                setViewDistance(float d) override {
+  bool isOrbit() const override {
+    return true;
+  }
+  void  setOrbit(float yawDeg, float pitchDeg, float distance) override;
+  float orbitYawDeg() const override;
+  float orbitPitchDeg() const override;
+  float orbitDistance() const override {
+    return _distance;
+  }
+  float viewDistance() const override {
+    return _distance;
+  }
+  void setViewDistance(float d) override {
     _distance = std::min(std::max(d, 1.0f), 2000.0f);
   }
 

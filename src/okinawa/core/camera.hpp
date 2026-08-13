@@ -29,41 +29,65 @@ public:
   // Apply a zoom delta (mouse-wheel notches; + zooms in, - zooms out). Base
   // ignores it; subclasses pull the orbit closer (third-person distance) or
   // lower the overhead height (top-down). Repositioned by updateForTarget.
-  virtual void zoom(float delta) { (void)delta; }
+  virtual void zoom(float delta) {
+    (void)delta;
+  }
 
   // Orbit interface: a camera that orbits its target (third-person). The MCP
   // `view` tool drives it absolutely -- yaw/pitch/distance around the avatar --
   // so any viewpoint is set and reproduced with one call. Base camera is not an
   // orbit; subclasses override. pitch is the LOOK pitch in degrees (negative =
   // looking down; -90 ~ top-down).
-  [[nodiscard]] virtual bool isOrbit() const { return false; }
+  virtual bool isOrbit() const {
+    return false;
+  }
   virtual void setOrbit(float yawDeg, float pitchDeg, float distance) {
     (void)yawDeg;
     (void)pitchDeg;
     (void)distance;
   }
-  [[nodiscard]] virtual float orbitYawDeg() const { return 0.0f; }
-  [[nodiscard]] virtual float orbitPitchDeg() const { return 0.0f; }
-  [[nodiscard]] virtual float orbitDistance() const { return 0.0f; }
+  virtual float orbitYawDeg() const {
+    return 0.0f;
+  }
+  virtual float orbitPitchDeg() const {
+    return 0.0f;
+  }
+  virtual float orbitDistance() const {
+    return 0.0f;
+  }
 
   // How far this camera sits from what it observes (orbit distance, overhead
   // height, ...). 0 when the notion does not apply (base/spectator). Lets
   // consumers scale interactions with the visible area -- e.g. the pan
   // controller moves the avatar faster the further the camera is.
-  [[nodiscard]] virtual float viewDistance() const { return 0.0f; }
+  virtual float viewDistance() const {
+    return 0.0f;
+  }
   // Write counterpart of viewDistance(): drive the camera's distance/height
   // directly (MCP `view`). Base ignores it; subclasses apply and clamp.
-  virtual void setViewDistance(float d) { (void)d; }
+  virtual void setViewDistance(float d) {
+    (void)d;
+  }
 
   // Projection planes (the post-process depth linearization needs them)
-  [[nodiscard]] float getNearPlane() const { return near; }
-  [[nodiscard]] float getFarPlane() const { return far; }
+  float getNearPlane() const {
+    return near;
+  }
+  float getFarPlane() const {
+    return far;
+  }
 
   // Getters for matrices
-  [[nodiscard]] const glm::mat4 &getView() const { return view; }
-  [[nodiscard]] const glm::mat4 &getProjection() const { return projection; }
-  [[nodiscard]] const float *getViewPtr() const { return glm::value_ptr(view); }
-  [[nodiscard]] const float *getProjectionPtr() const {
+  const glm::mat4 &getView() const {
+    return view;
+  }
+  const glm::mat4 &getProjection() const {
+    return projection;
+  }
+  const float *getViewPtr() const {
+    return glm::value_ptr(view);
+  }
+  const float *getProjectionPtr() const {
     return glm::value_ptr(projection);
   }
 

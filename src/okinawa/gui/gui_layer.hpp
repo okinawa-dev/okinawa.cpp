@@ -25,13 +25,23 @@ public:
   OkGuiLayer(const OkGuiLayer &)            = delete;
   OkGuiLayer &operator=(const OkGuiLayer &) = delete;
 
-  [[nodiscard]] const std::string &getName() const { return _name; }
+  const std::string &getName() const {
+    return _name;
+  }
 
-  [[nodiscard]] int getOrder() const { return _order; }
-  void              setOrder(int order) { _order = order; }
+  int getOrder() const {
+    return _order;
+  }
+  void setOrder(int order) {
+    _order = order;
+  }
 
-  [[nodiscard]] bool getVisible() const { return _visible; }
-  void               setVisible(bool visible) { _visible = visible; }
+  bool getVisible() const {
+    return _visible;
+  }
+  void setVisible(bool visible) {
+    _visible = visible;
+  }
 
   // Add an element (takes ownership; any OkObject: items, graphs,
   // composite elements). Returns the same pointer for chaining.
@@ -40,7 +50,7 @@ public:
   // Remove and DELETE the element. True if it was found.
   bool removeItem(OkObject *item);
 
-  [[nodiscard]] int getItemCount() const {
+  int getItemCount() const {
     return static_cast<int>(_items.size());
   }
 

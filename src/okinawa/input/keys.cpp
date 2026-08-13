@@ -271,17 +271,17 @@ const char *OkKeys::getKeyName(OkKey key) {
  */
 bool OkKeys::isModifierKey(OkKey key) {
   switch (key) {
-    case OK_KEY_LEFT_SHIFT:
-    case OK_KEY_LEFT_CONTROL:
-    case OK_KEY_LEFT_ALT:
-    case OK_KEY_LEFT_SUPER:
-    case OK_KEY_RIGHT_SHIFT:
-    case OK_KEY_RIGHT_CONTROL:
-    case OK_KEY_RIGHT_ALT:
-    case OK_KEY_RIGHT_SUPER:
-      return true;
-    default:
-      return false;
+  case OK_KEY_LEFT_SHIFT:
+  case OK_KEY_LEFT_CONTROL:
+  case OK_KEY_LEFT_ALT:
+  case OK_KEY_LEFT_SUPER:
+  case OK_KEY_RIGHT_SHIFT:
+  case OK_KEY_RIGHT_CONTROL:
+  case OK_KEY_RIGHT_ALT:
+  case OK_KEY_RIGHT_SUPER:
+    return true;
+  default:
+    return false;
   }
 }
 

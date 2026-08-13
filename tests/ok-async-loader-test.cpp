@@ -96,7 +96,7 @@ TEST_CASE("OkAsyncLoader runs every job exactly once", "[async]") {
                             // may touch plain containers without atomics
                             // -- the lock here only guards against the
                             // test itself being wrong about that.
-                            std::lock_guard<std::mutex> lock(finishMutex);
+                            std::scoped_lock lock(finishMutex);
                             finishedIds.push_back(i);
                           });
   }

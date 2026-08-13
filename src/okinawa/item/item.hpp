@@ -113,7 +113,9 @@ public:
   OkItem &operator=(const OkItem &) = delete;
 
   // Geometry
-  [[nodiscard]] float getRadius() const { return radius; }
+  float getRadius() const {
+    return radius;
+  }
   void updateVertexData(float *newVertexData, long newVertexCount);
 
   // Texture methods
@@ -138,31 +140,47 @@ public:
   // of the index buffer, textured from `path`. Ranges are drawn in the
   // order added and should cover the buffer without overlapping; adding
   // none leaves the item single-material.
-  void                 addMaterialFromFile(long firstIndex, long indexCount,
-                                           const std::string &path);
-  void                 clearMaterials();
-  [[nodiscard]] size_t getMaterialCount() const { return materials.size(); }
+  void   addMaterialFromFile(long firstIndex, long indexCount,
+                             const std::string &path);
+  void   clearMaterials();
+  size_t getMaterialCount() const {
+    return materials.size();
+  }
 
-  void               setWireframe(bool wireframe) { drawWireframe = wireframe; }
-  [[nodiscard]] bool getWireframe() const { return drawWireframe; }
+  void setWireframe(bool wireframe) {
+    drawWireframe = wireframe;
+  }
+  bool getWireframe() const {
+    return drawWireframe;
+  }
   // Opt this item out of (or back into) the global wireframe switch.
   // Its own setWireframe still applies either way.
-  void setWireframeGlobal(bool on) { wireframeGlobal = on; }
+  void setWireframeGlobal(bool on) {
+    wireframeGlobal = on;
+  }
   // Take this item out of (or back into) the shadow maps. Light does
   // not cast shadows; matter does.
-  void               setCastsShadow(bool on) { castsShadow = on; }
-  [[nodiscard]] bool getCastsShadow() const { return castsShadow; }
+  void setCastsShadow(bool on) {
+    castsShadow = on;
+  }
+  bool getCastsShadow() const {
+    return castsShadow;
+  }
   // Set by the shadow map around its own pass, so an item can tell
   // which pass is drawing it.
-  static void        setShadowPass(bool on);
-  static bool        inShadowPass();
-  [[nodiscard]] bool getWireframeGlobal() const { return wireframeGlobal; }
-  void               setWireframeColor(float r, float g, float b) {
+  static void setShadowPass(bool on);
+  static bool inShadowPass();
+  bool        getWireframeGlobal() const {
+    return wireframeGlobal;
+  }
+  void setWireframeColor(float r, float g, float b) {
     wireframeColor[0] = r;
     wireframeColor[1] = g;
     wireframeColor[2] = b;
   }
-  void setFillColor(float r, float g, float b) { setFillColor(r, g, b, 1.0f); }
+  void setFillColor(float r, float g, float b) {
+    setFillColor(r, g, b, 1.0f);
+  }
   void setFillColor(float r, float g, float b, float a) {
     fillColor[0] = r;
     fillColor[1] = g;
@@ -172,18 +190,26 @@ public:
   // Tint multiplied over the texture in the fill pass (white = untouched).
   // Additive blending (glows/halos): drawn with src-alpha one blending
   // and no depth writes. World pass only.
-  void               setAdditive(bool on) { additive = on; }
-  [[nodiscard]] bool isBlended() const override { return additive; }
+  void setAdditive(bool on) {
+    additive = on;
+  }
+  bool isBlended() const override {
+    return additive;
+  }
   // Unlit: this item ignores the Gouraud sun/point lights and the scene
   // tint (light sources must not be tinted by the atmosphere). World
   // pass only -- the flag restores world-pass uniforms after drawing.
-  void setUnlit(bool on) { unlit = on; }
+  void setUnlit(bool on) {
+    unlit = on;
+  }
 
   // Masked materials: when the texture carries a material code in its
   // alpha channel (instead of opacity), each code takes its own tint,
   // so one texture serves many colour variants. Codes are read as
   // ~1.00, ~0.50 and ~0.25; anything below ~0.12 is discarded.
-  void setMaskedMaterials(bool on) { maskedMaterials = on; }
+  void setMaskedMaterials(bool on) {
+    maskedMaterials = on;
+  }
   // Per-slot: false multiplies the tint over the texture (keeping its
   // hue), true keeps only the texture's luminance so the tint sets the
   // hue -- what an emissive surface wants, where the artwork gives the
@@ -213,16 +239,30 @@ public:
   // pixels on an ordered pattern. Two versions of the same object can
   // therefore trade places gradually while both stay in the opaque
   // pass -- no blending, no sorting, depth buffer intact.
-  void setFade(float f) { fade = std::min(std::max(f, 0.0f), 1.0f); }
-  [[nodiscard]] float getFade() const { return fade; }
+  void setFade(float f) {
+    fade = std::min(std::max(f, 0.0f), 1.0f);
+  }
+  float getFade() const {
+    return fade;
+  }
   // The two sides of a handover must drop opposite pixels, or each
   // keeps the same half and the rest shows through to the background.
   // Set this on one of the pair, not on both.
-  void                 setFadeInverted(bool on) { fadeInverted = on; }
-  void                 setDrawMode(GLenum mode) { drawMode = mode; }
-  [[nodiscard]] GLenum getDrawMode() const { return drawMode; }
-  void                 setVisible(bool visible) { this->visible = visible; }
-  [[nodiscard]] bool   getVisible() const { return visible; }
+  void setFadeInverted(bool on) {
+    fadeInverted = on;
+  }
+  void setDrawMode(GLenum mode) {
+    drawMode = mode;
+  }
+  GLenum getDrawMode() const {
+    return drawMode;
+  }
+  void setVisible(bool visible) {
+    this->visible = visible;
+  }
+  bool getVisible() const {
+    return visible;
+  }
 
   // Update and render
   void stepSelf(float dt) override;

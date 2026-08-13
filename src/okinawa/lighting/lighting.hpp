@@ -62,15 +62,27 @@ public:
   static void  setTimeOfDay(float hours);
 
   // Current interpolated atmosphere values.
-  static const float *getSceneTint() { return _tint; }     // rgb
-  static const float *getFogColor() { return _fogColor; }  // rgb
+  static const float *getSceneTint() {
+    return _tint;
+  }  // rgb
+  static const float *getFogColor() {
+    return _fogColor;
+  }  // rgb
   // 0 while lighting.fog is disabled (the console/game fog toggle).
   static float        getFogDensity();
-  static const float *getSunColor() { return _sunColor; }    // rgb
-  static const float *getSunDirection() { return _sunDir; }  // xyz, normalized
-  static const float *getSkyZenith() { return _zenith; }     // rgb, sky top
+  static const float *getSunColor() {
+    return _sunColor;
+  }  // rgb
+  static const float *getSunDirection() {
+    return _sunDir;
+  }  // xyz, normalized
+  static const float *getSkyZenith() {
+    return _zenith;
+  }  // rgb, sky top
   // Flat ambient floor under the Gouraud sun (L3).
-  static float getAmbientLight() { return _ambient; }
+  static float getAmbientLight() {
+    return _ambient;
+  }
 
   // --- Point lights (L4) ---------------------------------------------
   // Small registry of point lights. Each item is lit by its nearest
@@ -111,7 +123,9 @@ public:
   // through the horizon (computed every update from the sun elevation).
   // The shader multiplies every point light by it, so artificial
   // lights come up at dusk with no per-light bookkeeping.
-  static float getPointLightLevel() { return _pointLightLevel; }
+  static float getPointLightLevel() {
+    return _pointLightLevel;
+  }
 
   // Lazily-built shared radial halo texture ("ok_halo", additive white
   // falloff disc) for light glows; tint it per light.

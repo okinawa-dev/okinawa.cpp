@@ -28,8 +28,12 @@ public:
   void update(float dt, const OkInputState &input,
               OkObject &controlled) override;
 
-  void                setSpeedPerPixel(float speed) { _speedPerPixel = speed; }
-  [[nodiscard]] float getSpeedPerPixel() const { return _speedPerPixel; }
+  void setSpeedPerPixel(float speed) {
+    _speedPerPixel = speed;
+  }
+  float getSpeedPerPixel() const {
+    return _speedPerPixel;
+  }
 
 private:
   float _speedPerPixel;
