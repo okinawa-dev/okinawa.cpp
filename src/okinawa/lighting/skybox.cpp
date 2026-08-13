@@ -6,6 +6,7 @@
 #include "../math/point.hpp"
 #include "lighting.hpp"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <vector>
 
@@ -16,19 +17,22 @@
 // explains nothing; the ones that do carry meaning are named and
 // commented where they are used.
 
-OkItem    *OkSkybox::_dome           = nullptr;
-OkItem    *OkSkybox::_sunDisc        = nullptr;
-OkTexture *OkSkybox::_sunTex         = nullptr;
-OkTexture *OkSkybox::_gradient       = nullptr;
-float      OkSkybox::_builtFog[3]    = {-1.0f, -1.0f, -1.0f};
-float      OkSkybox::_builtZenith[3] = {-1.0f, -1.0f, -1.0f};
+OkItem              *OkSkybox::_dome        = nullptr;
+OkItem              *OkSkybox::_sunDisc     = nullptr;
+OkTexture           *OkSkybox::_sunTex      = nullptr;
+OkTexture           *OkSkybox::_gradient    = nullptr;
+std::array<float, 3> OkSkybox::_builtFog    = {-1.0f, -1.0f, -1.0f};
+std::array<float, 3> OkSkybox::_builtZenith = {-1.0f, -1.0f, -1.0f};
 
 // Dome shape: radius (well inside the far plane), ring elevations from
 // slightly below the horizon to the zenith, and segments around.
-static const float SKY_RADIUS   = 900.0f;
-static const float SKY_RINGS[]  = {-0.08f, 0.10f, 0.35f, 0.75f, 1.5708f};
-static const int   SKY_RING_N   = 5;
-static const int   SKY_SEGMENTS = 24;
+static const float                         SKY_RADIUS   = 900.0f;
+static const int                           SKY_RING_N   = 5;
+static const std::array<float, SKY_RING_N> SKY_RINGS    = {-0.08f, 0.10f, 0.35f,
+                                                           0.75f, 1.5708f};
+static const int                           SKY_SEGMENTS = 24;
+// Bytes per texel in the textures built here.
+static const int RGBA_CHANNELS = 4;
 // Gradient texture height (1 px wide, sampled by elevation).
 static const int SKY_GRAD_H = 64;
 // Colour drift that triggers a gradient refresh.
@@ -103,25 +107,27 @@ void OkSkybox::refreshGradient() {
     return;
   }
 
-  unsigned char rgba[SKY_GRAD_H * 4];
+  std::array<unsigned char, static_cast<size_t>(SKY_GRAD_H) * RGBA_CHANNELS>
+      rgba;
   for (int i = 0; i < SKY_GRAD_H; i++) {
     // v=0 (texture bottom) is the horizon row.
     float t = static_cast<float>(i) / static_cast<float>(SKY_GRAD_H - 1);
     for (int c = 0; c < 3; c++) {
-      float col       = fog[c] + (zenith[c] - fog[c]) * t;
-      rgba[i * 4 + c] = static_cast<unsigned char>(col * 255.0f);
+      float col = fog[c] + (zenith[c] - fog[c]) * t;
+      rgba[static_cast<size_t>(i) * RGBA_CHANNELS + c] =
+          static_cast<unsigned char>(col * 255.0f);
     }
-    rgba[i * 4 + 3] = 255;
+    rgba[static_cast<size_t>(i) * RGBA_CHANNELS + 3] = 255;
   }
 
   if (_gradient == nullptr) {
     _gradient = OkTextureHandler::getInstance()->createTextureFromRawData(
-        "ok_skybox_gradient", rgba, 1, SKY_GRAD_H, 4);
+        "ok_skybox_gradient", rgba.data(), 1, SKY_GRAD_H, 4);
     if (_dome != nullptr && _gradient != nullptr) {
       _dome->setTexture("ok_skybox_gradient", _gradient);
     }
   } else {
-    _gradient->updateRawData(rgba, 1, SKY_GRAD_H);
+    _gradient->updateRawData(rgba.data(), 1, SKY_GRAD_H);
   }
   for (int c = 0; c < 3; c++) {
     _builtFog[c]    = fog[c];
@@ -139,8 +145,10 @@ void OkSkybox::ensureSunDisc() {
   if (_sunDisc != nullptr) {
     return;
   }
-  const int     SUN_TEX = 64;
-  unsigned char rgba[SUN_TEX * SUN_TEX * 4];
+  const int SUN_TEX = 64;
+  std::array<unsigned char,
+             static_cast<size_t>(SUN_TEX) * SUN_TEX * RGBA_CHANNELS>
+      rgba;
   for (int y = 0; y < SUN_TEX; y++) {
     for (int x = 0; x < SUN_TEX; x++) {
       float dx = (static_cast<float>(x) + 0.5f) / SUN_TEX - 0.5f;
@@ -162,17 +170,22 @@ void OkSkybox::ensureSunDisc() {
     }
   }
   _sunTex = OkTextureHandler::getInstance()->createTextureFromRawData(
-      "ok_sun", rgba, SUN_TEX, SUN_TEX, 4);
+      "ok_sun", rgba.data(), SUN_TEX, SUN_TEX, RGBA_CHANNELS);
 
   // Angular size. The real sun subtends about half a degree; a disc
   // that small reads as a dot, so the core is drawn slightly larger and
   // the corona around it carries the perceived size. At the dome
   // distance below, this quad spans ~4 degrees with a ~1.7 degree core.
-  const float  S         = 28.0f;
-  float        verts[20] = {-S, -S, 0.0f, 0.0f, 0.0f, S,  -S, 0.0f, 1.0f, 0.0f,
-                            S,  S,  0.0f, 1.0f, 1.0f, -S, S,  0.0f, 0.0f, 1.0f};
-  unsigned int idx[6]    = {0, 1, 2, 0, 2, 3};
-  _sunDisc               = new OkItem("ok_sun_disc", verts, 20, idx, 6);
+  const float S = 28.0f;
+  // Four corners of the quad, each x, y, z plus texture u, v.
+  const long                     QUAD_FLOATS  = 20;
+  const long                     QUAD_INDICES = 6;
+  std::array<float, QUAD_FLOATS> verts        = {
+      -S, -S, 0.0f, 0.0f, 0.0f, S,  -S, 0.0f, 1.0f, 0.0f,
+      S,  S,  0.0f, 1.0f, 1.0f, -S, S,  0.0f, 0.0f, 1.0f};
+  std::array<unsigned int, QUAD_INDICES> idx = {0, 1, 2, 0, 2, 3};
+  _sunDisc = new OkItem("ok_sun_disc", verts.data(), QUAD_FLOATS, idx.data(),
+                        QUAD_INDICES);
   _sunDisc->setCastsShadow(false);
   if (_sunTex != nullptr) {
     _sunDisc->setTexture("ok_sun", _sunTex);

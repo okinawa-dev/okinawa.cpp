@@ -1,4 +1,5 @@
 #include "billboard.hpp"
+#include <array>
 
 #include "../core/core.hpp"
 #include <algorithm>
@@ -14,28 +15,31 @@
 // Quad geometry shared with the OkItem base constructor. OkItem copies
 // the arrays, so returning pointers to these static scratch buffers is
 // safe (the engine constructs items from the main thread only).
+// Four corners, each x, y, z plus texture u, v, and the two triangles
+// that span them.
+static const long QUAD_FLOATS  = 20;
+static const long QUAD_INDICES = 6;
+
 static float *_quadVertexData(float width, float height) {
-  static float verts[20];
-  float        hw = width * 0.5f;
-  float        hh = height * 0.5f;
+  static std::array<float, QUAD_FLOATS> verts;
+  float                                 hw = width * 0.5f;
+  float                                 hh = height * 0.5f;
   // x, y, z, u, v (stride 5); the visible face looks toward local +Z
-  float data[20] = {-hw, -hh, 0.0f, 0.0f, 0.0f,   //
-                    hw,  -hh, 0.0f, 1.0f, 0.0f,   //
-                    hw,  hh,  0.0f, 1.0f, 1.0f,   //
-                    -hw, hh,  0.0f, 0.0f, 1.0f};  //
-  for (int i = 0; i < 20; i++) {
-    verts[i] = data[i];
-  }
-  return verts;
+  verts = {-hw, -hh, 0.0f, 0.0f, 0.0f,   //
+           hw,  -hh, 0.0f, 1.0f, 0.0f,   //
+           hw,  hh,  0.0f, 1.0f, 1.0f,   //
+           -hw, hh,  0.0f, 0.0f, 1.0f};  //
+  return verts.data();
 }
 
 static unsigned int *_quadIndexData() {
-  static unsigned int idx[6] = {0, 1, 2, 0, 2, 3};
-  return idx;
+  static std::array<unsigned int, QUAD_INDICES> idx = {0, 1, 2, 0, 2, 3};
+  return idx.data();
 }
 
 OkBillboard::OkBillboard(const std::string &name, float width, float height)
-    : OkItem(name, _quadVertexData(width, height), 20, _quadIndexData(), 6) {
+    : OkItem(name, _quadVertexData(width, height), QUAD_FLOATS,
+             _quadIndexData(), QUAD_INDICES) {
   proximityFade = 0.0f;
   baseAlpha     = 1.0f;
   cameraOffset  = 0.0f;

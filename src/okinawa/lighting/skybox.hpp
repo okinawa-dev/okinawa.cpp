@@ -1,6 +1,8 @@
 #ifndef OK_SKYBOX_HPP
 #define OK_SKYBOX_HPP
 
+#include <array>
+
 class OkItem;
 class OkTexture;
 
@@ -36,12 +38,12 @@ private:
   static void ensureSunDisc();
   static void drawSun(float camX, float camY, float camZ);
 
-  static OkItem    *_dome;      // owned
-  static OkItem    *_sunDisc;   // owned: the light's visible body
-  static OkTexture *_gradient;  // owned by the texture handler
-  static OkTexture *_sunTex;    // owned by the texture handler
-  static float      _builtFog[3];
-  static float      _builtZenith[3];
+  static OkItem              *_dome;      // owned
+  static OkItem              *_sunDisc;   // owned: the light's visible body
+  static OkTexture           *_gradient;  // owned by the texture handler
+  static OkTexture           *_sunTex;    // owned by the texture handler
+  static std::array<float, 3> _builtFog;
+  static std::array<float, 3> _builtZenith;
 };
 
 #endif

@@ -1,6 +1,8 @@
 #ifndef OK_BILLBOARD_HPP
 #define OK_BILLBOARD_HPP
 
+#include <array>
+
 #include "../math/point.hpp"
 #include "../math/rotation.hpp"
 #include "item.hpp"
@@ -29,9 +31,11 @@ protected:
   float proximityFade;
   float baseAlpha;     // tint alpha before the fade modulation
   float cameraOffset;  // depth bias toward the camera, metres
-  float anchor[3];     // position as set by the caller (offset applied on top)
-  float applied[3];    // position this class last wrote, to detect moves
-  bool  anchorValid;
+  // Position as set by the caller (the offset is applied on top), and
+  // the position this class last wrote, so a move can be told apart.
+  std::array<float, 3> anchor;
+  std::array<float, 3> applied;
+  bool                 anchorValid;
 
 public:
   OkBillboard(const std::string &name, float width, float height);

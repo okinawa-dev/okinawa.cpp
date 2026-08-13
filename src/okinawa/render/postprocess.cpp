@@ -1,4 +1,5 @@
 #include "postprocess.hpp"
+#include <array>
 
 #include "../config/config.hpp"
 #include "../shaders/shaders.hpp"
@@ -6,25 +7,44 @@
 #include "../utils/logger.hpp"
 #include <algorithm>
 
-GLuint OkPostProcess::_fbo           = 0;
-GLuint OkPostProcess::_colorTex      = 0;
-GLuint OkPostProcess::_depthTex      = 0;
-int    OkPostProcess::_width         = 0;
-int    OkPostProcess::_height        = 0;
-GLuint OkPostProcess::_program       = 0;
-GLuint OkPostProcess::_brightProgram = 0;
-GLuint OkPostProcess::_blurProgram   = 0;
-GLuint OkPostProcess::_bloomFbo[2]   = {0, 0};
-GLuint OkPostProcess::_bloomTex[2]   = {0, 0};
-int    OkPostProcess::_bloomW        = 0;
-int    OkPostProcess::_bloomH        = 0;
-GLuint OkPostProcess::_quadVao       = 0;
-float  OkPostProcess::_time          = 0.0f;
-float  OkPostProcess::_motion[3]     = {0.0f, 0.0f, 0.0f};
-GLuint OkPostProcess::_focusPbo      = 0;
-bool   OkPostProcess::_focusPending  = false;
-float  OkPostProcess::_focusMetres   = 30.0f;
-bool   OkPostProcess::_active        = false;
+GLuint OkPostProcess::_fbo      = 0;
+GLuint OkPostProcess::_colorTex = 0;
+GLuint OkPostProcess::_depthTex = 0;
+namespace {
+
+  // Where the lens focuses before anything has been measured, in metres.
+  const float DEFAULT_FOCUS_METRES = 30.0f;
+
+  // A depth this close to 1 is the far plane: empty sky, nothing to focus
+  // on, so the reading is discarded rather than pulling focus to infinity.
+  const float DEPTH_AT_FAR_PLANE = 0.9999f;
+
+  // Depth buffer runs 0..1 and normalized device coordinates -1..1.
+  const float DEPTH_TO_NDC = 2.0f;
+
+  // The frame delta arrives in milliseconds; the shader clock is seconds.
+  const float SECONDS_PER_MS = 0.001f;
+
+}  // namespace
+
+int    OkPostProcess::_width                                             = 0;
+int    OkPostProcess::_height                                            = 0;
+GLuint OkPostProcess::_program                                           = 0;
+GLuint OkPostProcess::_brightProgram                                     = 0;
+GLuint OkPostProcess::_blurProgram                                       = 0;
+std::array<GLuint, OkPostProcess::BLOOM_PASSES> OkPostProcess::_bloomFbo = {0,
+                                                                            0};
+std::array<GLuint, OkPostProcess::BLOOM_PASSES> OkPostProcess::_bloomTex = {0,
+                                                                            0};
+int                                             OkPostProcess::_bloomW   = 0;
+int                                             OkPostProcess::_bloomH   = 0;
+GLuint                                          OkPostProcess::_quadVao  = 0;
+float                                           OkPostProcess::_time     = 0.0f;
+std::array<float, 3> OkPostProcess::_motion       = {0.0f, 0.0f, 0.0f};
+GLuint               OkPostProcess::_focusPbo     = 0;
+bool                 OkPostProcess::_focusPending = false;
+float                OkPostProcess::_focusMetres  = DEFAULT_FOCUS_METRES;
+bool                 OkPostProcess::_active       = false;
 
 void OkPostProcess::initialize() {
   // Master switch and per-effect toggles/parameters. All console-reachable.
@@ -240,9 +260,9 @@ void OkPostProcess::updateAutoFocus(float nearPlane, float farPlane) {
       glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
       // Depth 1.0 is the far plane: empty sky, nothing to focus on, so
       // the lens keeps whatever it had.
-      if (raw < 0.9999f) {
-        float z      = raw * 2.0f - 1.0f;
-        float linear = 2.0f * nearPlane * farPlane /
+      if (raw < DEPTH_AT_FAR_PLANE) {
+        float z      = raw * DEPTH_TO_NDC - 1.0f;
+        float linear = DEPTH_TO_NDC * nearPlane * farPlane /
                        (farPlane + nearPlane - z * (farPlane - nearPlane));
         float target = OkConfig::getFloat("post.dof.autofocus.max");
         target       = std::min(linear, target);
@@ -267,7 +287,7 @@ void OkPostProcess::end(float nearPlane, float farPlane, float dt) {
   if (!_active) {
     return;
   }
-  _time += dt * 0.001f;
+  _time += dt * SECONDS_PER_MS;
 
   bool bloom = OkConfig::getBool("post.bloom");
   if (bloom) {

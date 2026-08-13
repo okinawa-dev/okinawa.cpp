@@ -2,6 +2,7 @@
 #define OK_POSTPROCESS_HPP
 
 #include "../core/gl_config.hpp"
+#include <array>
 
 /**
  * @brief Static handler for the post-process chain.
@@ -28,6 +29,9 @@
  */
 class OkPostProcess {
 public:
+  // The bloom blur ping-pongs between two targets, one per axis.
+  static const int BLOOM_PASSES = 2;
+
   OkPostProcess() = delete;
 
   // Register config defaults. Called by OkCore::initialize.
@@ -63,20 +67,20 @@ private:
   // ease the focus toward it.
   static void updateAutoFocus(float nearPlane, float farPlane);
 
-  static GLuint _fbo;
-  static GLuint _colorTex;
-  static GLuint _depthTex;
-  static int    _width, _height;
-  static GLuint _program;
-  static GLuint _brightProgram;
-  static GLuint _blurProgram;
-  static GLuint _bloomFbo[2];
-  static GLuint _bloomTex[2];
-  static int    _bloomW, _bloomH;
-  static GLuint _quadVao;
-  static float  _time;
-  static float  _motion[3];  // dx, dy, strength
-  static bool   _active;
+  static GLuint                           _fbo;
+  static GLuint                           _colorTex;
+  static GLuint                           _depthTex;
+  static int                              _width, _height;
+  static GLuint                           _program;
+  static GLuint                           _brightProgram;
+  static GLuint                           _blurProgram;
+  static std::array<GLuint, BLOOM_PASSES> _bloomFbo;
+  static std::array<GLuint, BLOOM_PASSES> _bloomTex;
+  static int                              _bloomW, _bloomH;
+  static GLuint                           _quadVao;
+  static float                            _time;
+  static std::array<float, 3>             _motion;  // dx, dy, strength
+  static bool                             _active;
   static GLuint _focusPbo;  // async depth readback, avoids a GPU stall
   static bool   _focusPending;
   static float  _focusMetres;  // the eased focus distance
