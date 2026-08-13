@@ -2,6 +2,7 @@
 #include "okinawa/config/config.hpp"
 #include "okinawa/gui/gui.hpp"
 #include "okinawa/gui/gui_layer.hpp"
+#include <array>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
@@ -207,11 +208,11 @@ TEST_CASE("OkConfig prefix lookup", "[gui]") {
 // where they are used.
 
 TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
-  float tint[3];
-  float fog[3];
-  float density;
-  float sun[3];
-  float dir[3];
+  std::array<float, 3> tint;
+  std::array<float, 3> fog;
+  float                density;
+  std::array<float, 3> sun;
+  std::array<float, 3> dir;
 
   // These assert the MECHANISM, not a particular look: the values in
   // the engine's default curve are a starting point projects replace,
@@ -219,19 +220,23 @@ TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
   // art direction.
 
   SECTION("The sun rides above the horizon by day and below it at night") {
-    OkLighting::evaluate(12.0f, tint, fog, density, sun, dir);
+    OkLighting::evaluate(12.0f, tint.data(), fog.data(), density, sun.data(),
+                         dir.data());
     REQUIRE(dir[1] < -0.5f);  // high above: the light points down
-    OkLighting::evaluate(2.0f, tint, fog, density, sun, dir);
+    OkLighting::evaluate(2.0f, tint.data(), fog.data(), density, sun.data(),
+                         dir.data());
     REQUIRE(dir[1] > 0.0f);  // parked below the horizon
   }
   SECTION("Night is darker than midday") {
-    float dayTint[3];
-    float dayFog[3];
-    float dayDensity;
-    float daySun[3];
-    float dayDir[3];
-    OkLighting::evaluate(12.0f, dayTint, dayFog, dayDensity, daySun, dayDir);
-    OkLighting::evaluate(2.0f, tint, fog, density, sun, dir);
+    std::array<float, 3> dayTint;
+    std::array<float, 3> dayFog;
+    float                dayDensity;
+    std::array<float, 3> daySun;
+    std::array<float, 3> dayDir;
+    OkLighting::evaluate(12.0f, dayTint.data(), dayFog.data(), dayDensity,
+                         daySun.data(), dayDir.data());
+    OkLighting::evaluate(2.0f, tint.data(), fog.data(), density, sun.data(),
+                         dir.data());
     float dayLum   = dayTint[0] + dayTint[1] + dayTint[2];
     float nightLum = tint[0] + tint[1] + tint[2];
     REQUIRE(nightLum < dayLum);
@@ -239,36 +244,37 @@ TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
     REQUIRE(sun[0] + sun[1] + sun[2] < daySun[0] + daySun[1] + daySun[2]);
   }
   SECTION("Hours wrap") {
-    float t2[3];
-    float f2[3];
-    float d2;
-    float s2[3];
-    float dd2[3];
-    OkLighting::evaluate(26.0f, tint, fog, density, sun, dir);
-    OkLighting::evaluate(2.0f, t2, f2, d2, s2, dd2);
+    std::array<float, 3> t2;
+    std::array<float, 3> f2;
+    float                d2;
+    std::array<float, 3> s2;
+    std::array<float, 3> dd2;
+    OkLighting::evaluate(26.0f, tint.data(), fog.data(), density, sun.data(),
+                         dir.data());
+    OkLighting::evaluate(2.0f, t2.data(), f2.data(), d2, s2.data(), dd2.data());
     REQUIRE_THAT(tint[0], WithinAbs(t2[0], 0.0001f));
     REQUIRE_THAT(density, WithinAbs(d2, 0.0001f));
   }
   SECTION("Continuity across midnight") {
-    float a[3];
-    float b[3];
-    float fa[3];
-    float fb[3];
-    float da;
-    float db;
-    float sa[3];
-    float sb[3];
-    float za[3];
-    float zb[3];
-    OkLighting::evaluate(23.99f, a, fa, da, sa, za);
-    OkLighting::evaluate(0.01f, b, fb, db, sb, zb);
+    std::array<float, 3> a;
+    std::array<float, 3> b;
+    std::array<float, 3> fa;
+    std::array<float, 3> fb;
+    float                da;
+    float                db;
+    std::array<float, 3> sa;
+    std::array<float, 3> sb;
+    std::array<float, 3> za;
+    std::array<float, 3> zb;
+    OkLighting::evaluate(23.99f, a.data(), fa.data(), da, sa.data(), za.data());
+    OkLighting::evaluate(0.01f, b.data(), fb.data(), db, sb.data(), zb.data());
     REQUIRE_THAT(a[0], WithinAbs(b[0], 0.01f));
     REQUIRE_THAT(da, WithinAbs(db, 0.0005f));
   }
   SECTION("A project can replace the curve") {
     // Two keys are enough to describe a world: the engine must take
     // them and interpolate between them, wrapping around midnight.
-    const OkAtmosphereKey CUSTOM[] = {
+    const std::array<OkAtmosphereKey, 2> CUSTOM = {{
         {0.0f,
          {0.10f, 0.10f, 0.10f},
          {0.0f, 0.0f, 0.0f},
@@ -283,19 +289,23 @@ TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
          {1.0f, 1.0f, 1.0f},
          {1.0f, 1.0f, 1.0f},
          0.90f},
-    };
-    OkLighting::setAtmosphereCurve(CUSTOM, 2);
+    }};
+
+    OkLighting::setAtmosphereCurve(CUSTOM.data(), 2);
     REQUIRE(OkLighting::getAtmosphereKeyCount() == 2);
 
-    OkLighting::evaluate(0.0f, tint, fog, density, sun, dir);
+    OkLighting::evaluate(0.0f, tint.data(), fog.data(), density, sun.data(),
+                         dir.data());
     REQUIRE_THAT(tint[0], WithinAbs(0.10f, 0.001f));
-    OkLighting::evaluate(12.0f, tint, fog, density, sun, dir);
+    OkLighting::evaluate(12.0f, tint.data(), fog.data(), density, sun.data(),
+                         dir.data());
     REQUIRE_THAT(tint[0], WithinAbs(0.90f, 0.001f));
     // halfway between the keys, halfway between the values
-    OkLighting::evaluate(6.0f, tint, fog, density, sun, dir);
+    OkLighting::evaluate(6.0f, tint.data(), fog.data(), density, sun.data(),
+                         dir.data());
     REQUIRE_THAT(tint[0], WithinAbs(0.50f, 0.01f));
     // a curve with too few keys is rejected rather than half-applied
-    OkLighting::setAtmosphereCurve(CUSTOM, 1);
+    OkLighting::setAtmosphereCurve(CUSTOM.data(), 1);
     REQUIRE(OkLighting::getAtmosphereKeyCount() == 2);
   }
 }

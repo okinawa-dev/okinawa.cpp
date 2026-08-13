@@ -3,6 +3,7 @@
 #include "okinawa/math/math.hpp"
 #include "okinawa/math/point.hpp"
 #include "okinawa/math/rotation.hpp"
+#include <array>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
@@ -248,11 +249,12 @@ TEST_CASE("OkMath lookAt", "[math]") {
 TEST_CASE("OkMath forward/angle round-trip", "[math]") {
   // directionVectorToAngles and lookAt must invert OkRotation::getForwardVector
   // (the convention the camera renders). Round-trip a spread of orientations.
-  const float pitches[] = {-1.2f, -0.6f, 0.0f, 0.4f, 1.0f};
-  const float yaws[]    = {-3.0f, -1.5f, -0.3f, 0.0f, 0.7f, 2.2f, 3.0f};
+  const std::array<float, 5> pitches = {-1.2f, -0.6f, 0.0f, 0.4f, 1.0f};
+  const std::array<float, 7> yaws    = {-3.0f, -1.5f, -0.3f, 0.0f,
+                                        0.7f,  2.2f,  3.0f};
 
-  for (int i = 0; i < 5; i++) {
-    for (int j = 0; j < 7; j++) {
+  for (size_t i = 0; i < pitches.size(); i++) {
+    for (size_t j = 0; j < yaws.size(); j++) {
       OkRotation source(pitches[i], yaws[j], 0.0f);
       OkPoint    f = source.getForwardVector();
 

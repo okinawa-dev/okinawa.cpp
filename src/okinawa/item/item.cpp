@@ -311,19 +311,26 @@ void OkItem::_initBuffers() {
  */
 void OkItem::_calculateRadius() {
 
-  // Return early if no vertices
-  if (numVertices <= 0 || !vertices) {
+  // numVertices counts floats, not vertices: fewer than one whole
+  // vertex means there is no x, y, z to seed the bounds with, and
+  // reading them would walk off the buffer.
+  if (numVertices < VERTEX_STRIDE || vertices == nullptr) {
     radius = 0.0f;
     OkLogger::warning("Item", "No vertices to calculate radius");
     return;
   }
 
+  // The analyser cannot see that a buffer with at least one whole vertex
+  // in it has been written: _adoptVertexData fills every float it counts,
+  // and numVertices is only set from that fill.
+  // NOLINTBEGIN(clang-analyzer-core.uninitialized.Assign)
   float minX = vertices[0];
   float maxX = vertices[0];
   float minY = vertices[1];
   float maxY = vertices[1];
   float minZ = vertices[2];
   float maxZ = vertices[2];
+  // NOLINTEND(clang-analyzer-core.uninitialized.Assign)
 
   // Each vertex has 8 components: position (xyz), UV, normal (xyz)
   const int  stride            = 8;
