@@ -107,13 +107,31 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
 void OkItem::_adoptVertexData(float *vertexData, long vertexCount,
                               const unsigned int *indexData, long indexCount,
                               int vertexStride) {
+  // Nothing to adopt: say so plainly rather than allocating an empty
+  // buffer. An item with a zero-length array behind a non-null pointer
+  // looks like an item with vertices to everything downstream, and the
+  // first thing that reads one walks off the end.
+  if (vertexData == nullptr || vertexCount <= 0) {
+    vertices    = nullptr;
+    numVertices = 0;
+    return;
+  }
   if (vertexStride == VERTEX_STRIDE) {
     vertices = new float[vertexCount];
     std::memcpy(vertices, vertexData, vertexCount * sizeof(float));
     numVertices = vertexCount;
   } else {
     long vcount = vertexCount / VERTEX_STRIDE_IN;
-    vertices    = new float[vcount * VERTEX_STRIDE];
+    // Fewer floats than one whole vertex: same as having none. Said here
+    // rather than left to fall through, because an allocation of length
+    // zero behind a non-null pointer reads as a mesh to everything
+    // downstream and the buffer it points at can never be read.
+    if (vcount <= 0) {
+      vertices    = nullptr;
+      numVertices = 0;
+      return;
+    }
+    vertices = new float[vcount * VERTEX_STRIDE];
     for (long i = 0; i < vcount; i++) {
       long src                          = i * VERTEX_STRIDE_IN;
       long dst                          = i * VERTEX_STRIDE;
@@ -320,25 +338,18 @@ void OkItem::_calculateRadius() {
     return;
   }
 
-  // The analyser cannot see that a buffer with at least one whole vertex
-  // in it has been written: _adoptVertexData fills every float it counts,
-  // and numVertices is only set from that fill.
-  // NOLINTBEGIN(clang-analyzer-core.uninitialized.Assign)
   float minX = vertices[0];
   float maxX = vertices[0];
   float minY = vertices[1];
   float maxY = vertices[1];
   float minZ = vertices[2];
   float maxZ = vertices[2];
-  // NOLINTEND(clang-analyzer-core.uninitialized.Assign)
 
-  // Each vertex has 8 components: position (xyz), UV, normal (xyz)
-  const int  stride            = 8;
-  const long actualVertexCount = numVertices / stride;
+  const long actualVertexCount = numVertices / VERTEX_STRIDE;
 
   // Iterate through actual vertices
   for (long i = 0; i < actualVertexCount; i++) {
-    long  offset = i * stride;
+    long  offset = i * VERTEX_STRIDE;
     float x      = vertices[offset];      // Position X
     float y      = vertices[offset + 1];  // Position Y
     float z      = vertices[offset + 2];  // Position Z

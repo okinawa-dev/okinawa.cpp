@@ -653,11 +653,6 @@ struct OkMcpServer::Impl {
     }
 
     if (name == "view") {
-      // runOnLoop wraps whatever it is given in a try/catch and turns a
-      // throw into an error reply, so nothing escapes to the loop thread.
-      // The check cannot see that from here, because the lambda reaches it
-      // through a std::function.
-      // NOLINTBEGIN(bugprone-exception-escape)
       json out = runOnLoop([args]() -> json {
         // Optional camera selection by name (see get_state.cameras). The
         // tool then drives the active camera -- it no longer force-switches
@@ -706,7 +701,6 @@ struct OkMcpServer::Impl {
       }
       return textResult(out.dump(2));
     }
-    // NOLINTEND(bugprone-exception-escape)
 
     if (name == "set_item_visible") {
       std::string itemName = args.value("name", std::string());
