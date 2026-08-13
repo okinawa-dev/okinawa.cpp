@@ -17,23 +17,24 @@
 // explains nothing; the ones that do carry meaning are named and
 // commented where they are used.
 
-float OkLighting::_tint[3]     = {1.0f, 1.0f, 1.0f};
-float OkLighting::_fogColor[3] = {0.75f, 0.80f, 0.85f};
-float OkLighting::_fogDensity  = 0.0f;
-float OkLighting::_sunColor[3] = {1.0f, 1.0f, 1.0f};
-float OkLighting::_sunDir[3]   = {0.0f, -1.0f, 0.0f};
-float OkLighting::_zenith[3]   = {0.25f, 0.48f, 0.80f};
-float OkLighting::_ambient     = 0.55f;
+std::array<float, 3> OkLighting::_tint       = {1.0f, 1.0f, 1.0f};
+std::array<float, 3> OkLighting::_fogColor   = {0.75f, 0.80f, 0.85f};
+float                OkLighting::_fogDensity = 0.0f;
+std::array<float, 3> OkLighting::_sunColor   = {1.0f, 1.0f, 1.0f};
+std::array<float, 3> OkLighting::_sunDir     = {0.0f, -1.0f, 0.0f};
+std::array<float, 3> OkLighting::_zenith     = {0.25f, 0.48f, 0.80f};
+float                OkLighting::_ambient    = 0.55f;
 
-float OkLighting::_lightPos[OkLighting::MAX_LIGHTS][3];
-float OkLighting::_lightColor[OkLighting::MAX_LIGHTS][3];
-float OkLighting::_lightRadius[OkLighting::MAX_LIGHTS];
-float OkLighting::_lightDir[OkLighting::MAX_LIGHTS][3];
-float OkLighting::_lightCosCone[OkLighting::MAX_LIGHTS];
-float OkLighting::_lightIntensity[OkLighting::MAX_LIGHTS];
-float OkLighting::_pointLightLevel = 0.0f;
-int   OkLighting::_lightCount      = 0;
-long  OkLighting::_lightGeneration = 0;
+std::array<std::array<float, 3>, OkLighting::MAX_LIGHTS> OkLighting::_lightPos;
+std::array<std::array<float, 3>, OkLighting::MAX_LIGHTS>
+                                          OkLighting::_lightColor;
+std::array<float, OkLighting::MAX_LIGHTS> OkLighting::_lightRadius;
+std::array<std::array<float, 3>, OkLighting::MAX_LIGHTS> OkLighting::_lightDir;
+std::array<float, OkLighting::MAX_LIGHTS> OkLighting::_lightCosCone;
+std::array<float, OkLighting::MAX_LIGHTS> OkLighting::_lightIntensity;
+float                                     OkLighting::_pointLightLevel = 0.0f;
+int                                       OkLighting::_lightCount      = 0;
+long                                      OkLighting::_lightGeneration = 0;
 
 // The atmosphere curve: one keyframe per anchor hour, linearly interpolated
 // around the clock (the last segment wraps 23 -> 5). The palette follows the
@@ -222,8 +223,8 @@ void OkLighting::update(float dt) {
     float hoursAdvance = (dt / 1000.0f) * timescale / 3600.0f;
     setTimeOfDay(getTimeOfDay() + hoursAdvance);
   }
-  evaluate(getTimeOfDay(), _tint, _fogColor, _fogDensity, _sunColor, _sunDir,
-           _zenith, &_ambient);
+  evaluate(getTimeOfDay(), _tint.data(), _fogColor.data(), _fogDensity,
+           _sunColor.data(), _sunDir.data(), _zenith.data(), &_ambient);
 
   // Point-light level: sin(sun elevation) is -_sunDir[1]; ramp 0 -> 1
   // as it falls from +0.05 to -0.05 (through the sunset).
@@ -406,11 +407,11 @@ int OkLighting::getNearestLights(float x, float y, float z, int *outIdx,
 }
 
 const float *OkLighting::getLightPosition(int idx) {
-  return _lightPos[idx];
+  return _lightPos[idx].data();
 }
 
 const float *OkLighting::getLightColor(int idx) {
-  return _lightColor[idx];
+  return _lightColor[idx].data();
 }
 
 float OkLighting::getLightRadius(int idx) {
@@ -418,7 +419,7 @@ float OkLighting::getLightRadius(int idx) {
 }
 
 const float *OkLighting::getLightDirection(int idx) {
-  return _lightDir[idx];
+  return _lightDir[idx].data();
 }
 
 float OkLighting::getLightCosCone(int idx) {

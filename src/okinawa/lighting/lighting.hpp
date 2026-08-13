@@ -1,6 +1,8 @@
 #ifndef OK_LIGHTING_HPP
 #define OK_LIGHTING_HPP
 
+#include <array>
+
 /**
  * @brief Static handler for the scene's global lighting and atmosphere.
  *
@@ -28,13 +30,13 @@
  *        between consecutive keys, wrapping around midnight.
  */
 struct OkAtmosphereKey {
-  float hour;        // 0..24, keys must be given in ascending order
-  float tint[3];     // multiplied over every world fragment
-  float fog[3];      // fog colour, and the sky at the horizon
-  float fogDensity;  // exponential fog, per metre
-  float sun[3];      // directional light colour (black = no sun)
-  float zenith[3];   // sky colour straight up
-  float ambient;     // flat ambient floor under the directional light
+  float                hour;  // 0..24, keys must be given in ascending order
+  std::array<float, 3> tint;  // multiplied over every world fragment
+  std::array<float, 3> fog;   // fog colour, and the sky at the horizon
+  float                fogDensity;  // exponential fog, per metre
+  std::array<float, 3> sun;         // directional light colour (black = no sun)
+  std::array<float, 3> zenith;      // sky colour straight up
+  float ambient;  // flat ambient floor under the directional light
 };
 
 class OkLighting {
@@ -63,21 +65,21 @@ public:
 
   // Current interpolated atmosphere values.
   static const float *getSceneTint() {
-    return _tint;
+    return _tint.data();
   }  // rgb
   static const float *getFogColor() {
-    return _fogColor;
+    return _fogColor.data();
   }  // rgb
   // 0 while lighting.fog is disabled (the console/game fog toggle).
   static float        getFogDensity();
   static const float *getSunColor() {
-    return _sunColor;
+    return _sunColor.data();
   }  // rgb
   static const float *getSunDirection() {
-    return _sunDir;
+    return _sunDir.data();
   }  // xyz, normalized
   static const float *getSkyZenith() {
-    return _zenith;
+    return _zenith.data();
   }  // rgb, sky top
   // Flat ambient floor under the Gouraud sun (L3).
   static float getAmbientLight() {
@@ -132,29 +134,34 @@ public:
   static class OkTexture *getHaloTexture();
 
   // Evaluate the curve for an arbitrary hour (pure; unit-testable).
-  static void evaluate(float hours, float outTint[3], float outFogColor[3],
-                       float &outFogDensity, float outSunColor[3],
-                       float outSunDir[3], float outZenith[3] = nullptr,
+  // Written as pointers rather than as arrays because that is what they
+  // are: an array parameter decays to one, and the caller may pass
+  // nothing at all for the last two. Each points at RGB floats, or at a
+  // direction, and the names say which.
+  static void evaluate(float hours, float *outTint, float *outFogColor,
+                       float &outFogDensity, float *outSunColor,
+                       float *outSunDir, float *outZenith = nullptr,
                        float *outAmbient = nullptr);
 
 private:
-  static float _tint[3];
-  static float _fogColor[3];
-  static float _fogDensity;
-  static float _sunColor[3];
-  static float _sunDir[3];
-  static float _zenith[3];
-  static float _ambient;
+  static std::array<float, 3> _tint;
+  static std::array<float, 3> _fogColor;
+  static float                _fogDensity;
+  static std::array<float, 3> _sunColor;
+  static std::array<float, 3> _sunDir;
+  static std::array<float, 3> _zenith;
+  static float                _ambient;
 
-  static float _lightPos[MAX_LIGHTS][3];
-  static float _lightColor[MAX_LIGHTS][3];
-  static float _lightRadius[MAX_LIGHTS];
-  static float _lightDir[MAX_LIGHTS][3];
-  static float _lightCosCone[MAX_LIGHTS];  // cos(half-angle); -2 = omni
-  static float _lightIntensity[MAX_LIGHTS];
-  static float _pointLightLevel;
-  static int   _lightCount;
-  static long  _lightGeneration;
+  static std::array<std::array<float, 3>, MAX_LIGHTS> _lightPos;
+  static std::array<std::array<float, 3>, MAX_LIGHTS> _lightColor;
+  static std::array<float, MAX_LIGHTS>                _lightRadius;
+  static std::array<std::array<float, 3>, MAX_LIGHTS> _lightDir;
+  static std::array<float, MAX_LIGHTS>
+      _lightCosCone;  // cos(half-angle); -2 = omni
+  static std::array<float, MAX_LIGHTS> _lightIntensity;
+  static float                         _pointLightLevel;
+  static int                           _lightCount;
+  static long                          _lightGeneration;
 };
 
-#endif
+#endif #include < array>
