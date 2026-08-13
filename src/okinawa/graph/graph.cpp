@@ -64,6 +64,12 @@ void OkGraph::setEdgeColor(float r, float g, float b) {
   if (_edgesItem) {
     _edgesItem->setFillColor(r, g, b);
     _edgesItem->setUnlit(true);  // debug layer: exact colour
+    // ...and out of the shadow maps. A graph is a drawing over the
+    // world, not a thing in it: a line has no thickness to block light
+    // with, and the shadow it would cast falls across the very thing it
+    // was drawn to explain. It also spends a pass over geometry that
+    // only exists while somebody is looking at it.
+    _edgesItem->setCastsShadow(false);
     _edgesItem->setWireframeColor(r * 0.35f, g * 0.35f, b * 0.35f);
   }
 }
@@ -75,6 +81,7 @@ void OkGraph::setNodeColor(float r, float g, float b) {
   if (_nodesItem) {
     _nodesItem->setFillColor(r, g, b);
     _nodesItem->setUnlit(true);  // debug layer: exact colour
+    _nodesItem->setCastsShadow(false);
     _nodesItem->setWireframeColor(r * 0.35f, g * 0.35f, b * 0.35f);
   }
 }
@@ -131,6 +138,7 @@ void OkGraph::buildLines() {
     _edgesItem->setDrawMode(GL_LINES);
     _edgesItem->setFillColor(_edgeColor[0], _edgeColor[1], _edgeColor[2]);
     _edgesItem->setUnlit(true);  // debug layer: exact colour
+    _edgesItem->setCastsShadow(false);
     _edgesItem->setVisible(_showEdges);
     attach(_edgesItem);
   }
@@ -147,6 +155,7 @@ void OkGraph::buildLines() {
   _nodesItem->setDrawMode(GL_POINTS);
   _nodesItem->setFillColor(_nodeColor[0], _nodeColor[1], _nodeColor[2]);
   _nodesItem->setUnlit(true);  // debug layer: exact colour
+  _nodesItem->setCastsShadow(false);
   _nodesItem->setVisible(_showNodes);
   attach(_nodesItem);
 }
@@ -194,7 +203,8 @@ void OkGraph::buildPolygons() {
                               static_cast<long>(ev.size()), ei.data(),
                               static_cast<long>(ei.size()));
       _edgesItem->setFillColor(_edgeColor[0], _edgeColor[1], _edgeColor[2]);
-      _edgesItem->setUnlit(true);      // debug layer: exact colour
+      _edgesItem->setUnlit(true);  // debug layer: exact colour
+      _edgesItem->setCastsShadow(false);
       _edgesItem->setWireframe(true);  // outline over the fill
       _edgesItem->setWireframeColor(
           _edgeColor[0] * 0.35f, _edgeColor[1] * 0.35f, _edgeColor[2] * 0.35f);
@@ -232,7 +242,8 @@ void OkGraph::buildPolygons() {
       new OkItem(getName() + "_nodes", nv.data(), static_cast<long>(nv.size()),
                  ni.data(), static_cast<long>(ni.size()));
   _nodesItem->setFillColor(_nodeColor[0], _nodeColor[1], _nodeColor[2]);
-  _nodesItem->setUnlit(true);      // debug layer: exact colour
+  _nodesItem->setUnlit(true);  // debug layer: exact colour
+  _nodesItem->setCastsShadow(false);
   _nodesItem->setWireframe(true);  // outline over the fill
   _nodesItem->setWireframeColor(_nodeColor[0] * 0.35f, _nodeColor[1] * 0.35f,
                                 _nodeColor[2] * 0.35f);
