@@ -36,8 +36,8 @@ public:
   // so any viewpoint is set and reproduced with one call. Base camera is not an
   // orbit; subclasses override. pitch is the LOOK pitch in degrees (negative =
   // looking down; -90 ~ top-down).
-  virtual bool  isOrbit() const { return false; }
-  virtual void  setOrbit(float yawDeg, float pitchDeg, float distance) {
+  virtual bool isOrbit() const { return false; }
+  virtual void setOrbit(float yawDeg, float pitchDeg, float distance) {
     (void)yawDeg;
     (void)pitchDeg;
     (void)distance;

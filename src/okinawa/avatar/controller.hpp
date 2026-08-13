@@ -7,8 +7,8 @@ class OkInputState;
 /**
  * @brief Input scheme for an avatar. An OkAvatar owns one controller; it
  *        interprets the per-frame input state and moves/acts on the controlled
- *        object. Different avatars (on foot, vehicle) use different controllers,
- *        which is how switching avatar swaps the controls.
+ *        object. Different avatars (on foot, vehicle) use different
+ * controllers, which is how switching avatar swaps the controls.
  */
 class OkAvatarController {
 public:

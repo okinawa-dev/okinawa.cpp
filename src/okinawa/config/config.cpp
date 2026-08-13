@@ -1,8 +1,8 @@
 #include "config.hpp"
+#include "../utils/logger.hpp"
+#include <algorithm>
 #include <cctype>
 #include <cstdlib>
-#include <algorithm>
-#include "../utils/logger.hpp"
 #include <exception>
 #include <string>
 
@@ -25,9 +25,9 @@ void OkConfig::setDefaults() {
   boolValues["graphics.drawCameras"] = true;
 
   // Window settings
-  intValues["window.width"]     = 800;
-  intValues["window.height"]    = 600;
-  stringValues["window.title"]  = "okinawa";
+  intValues["window.width"]    = 800;
+  intValues["window.height"]   = 600;
+  stringValues["window.title"] = "okinawa";
 
   // Performance settings
   intValues["fps"] = 60;
@@ -39,14 +39,15 @@ void OkConfig::setDefaults() {
   float timePerFrame = 1000.0f / 60.0f;  // Using hardcoded FPS value
   floatValues["graphics.time-per-frame"] = timePerFrame;
 
-  // Size (half-extent, metres) of the camera gizmo drawn for non-active cameras.
+  // Size (half-extent, metres) of the camera gizmo drawn for non-active
+  // cameras.
   floatValues["camera.gizmo-size"] = 0.25f;
 
   // GUI settings: grid cell size in logical pixels, global UI scale
   // (0 = resolve automatically from the monitor content scale), field of
   // view of the calibrated GUI camera (degrees; the oblique-element knob)
   // and the debug grid overlay.
-  intValues["gui.grid.size"]    = 20;
+  intValues["gui.grid.size"] = 20;
   // Lighting: day-clock hour (0-24) and how much faster than real time
   // the clock runs (30 = a full day in 48 real minutes; 0 freezes it).
   floatValues["lighting.time"]      = 12.0f;
@@ -55,8 +56,8 @@ void OkConfig::setDefaults() {
   // 0 runs free. Turn it off to MEASURE: with vsync on, frame times can
   // only land on multiples of the refresh, so a change that costs 2 ms
   // shows up as either nothing at all or a drop to half the frame rate.
-  intValues["render.vsync"] = 1;
-  boolValues["lighting.fog"]        = true;
+  intValues["render.vsync"]  = 1;
+  boolValues["lighting.fog"] = true;
   // Fog thins with altitude: the atmosphere curve's density applies at
   // "base", and every "height" metres above it the air is e times
   // thinner. A very large height makes the air uniform, which is plain
@@ -64,9 +65,9 @@ void OkConfig::setDefaults() {
   // level, since world Y is not altitude above the ground.
   floatValues["lighting.fog.height"] = 25.0f;
   floatValues["lighting.fog.base"]   = 0.0f;
-  floatValues["gui.scale"]      = 0.0f;
-  floatValues["gui.fov"]        = 35.0f;
-  boolValues["gui.debug.grid"]  = false;
+  floatValues["gui.scale"]           = 0.0f;
+  floatValues["gui.fov"]             = 35.0f;
+  boolValues["gui.debug.grid"]       = false;
   // NOLINTEND(readability-magic-numbers)
 }
 
@@ -74,8 +75,8 @@ void OkConfig::setDefaults() {
  * @brief Every key starting with `prefix`, across the four typed maps,
  *        sorted alphabetically.
  */
-std::vector<std::string> OkConfig::getKeysWithPrefix(
-    const std::string &prefix) {
+std::vector<std::string>
+OkConfig::getKeysWithPrefix(const std::string &prefix) {
   OkConfig                &config = getConfig();
   std::vector<std::string> keys;
   for (const auto &kv : config.intValues) {
@@ -107,10 +108,8 @@ std::vector<std::string> OkConfig::getKeysWithPrefix(
  */
 bool OkConfig::hasKey(const std::string &key) {
   OkConfig &config = getConfig();
-  return config.intValues.count(key) > 0 ||
-         config.floatValues.count(key) > 0 ||
-         config.boolValues.count(key) > 0 ||
-         config.stringValues.count(key) > 0;
+  return config.intValues.count(key) > 0 || config.floatValues.count(key) > 0 ||
+         config.boolValues.count(key) > 0 || config.stringValues.count(key) > 0;
 }
 
 /**

@@ -49,8 +49,8 @@ public:
   static const std::vector<float> &getHistory();
   // Summary of that history. `count` is 0 when nothing has been
   // recorded yet, in which case the other outputs are left alone.
-  static void getSummary(int &count, float &minMs, float &maxMs,
-                         float &meanMs, float &medianMs);
+  static void getSummary(int &count, float &minMs, float &maxMs, float &meanMs,
+                         float &medianMs);
   // How many samples to keep. The graph draws its own shorter window.
   static void setHistoryLength(int samples);
 
@@ -64,7 +64,7 @@ public:
   // swap, so it shows the work rather than the wait, and it is where a
   // change in the number of objects, draw calls or culling tests shows
   // up first.
-  static void recordDraw(float ms);
+  static void                      recordDraw(float ms);
   static const std::vector<float> &getDrawHistory();
   static void getDrawSummary(int &count, float &minMs, float &maxMs,
                              float &meanMs, float &medianMs);
@@ -79,11 +79,11 @@ private:
   static OkGuiImage *_graph;
   static OkTexture  *_graphTex;
 
-  static std::vector<float> _history;   // frame times, milliseconds
+  static std::vector<float> _history;      // frame times, milliseconds
   static std::vector<float> _drawHistory;  // draw CPU time, milliseconds
-  static int                _historyMax;  // samples kept
-  static float              _accum;     // time since the last refresh
-  static float              _worst;     // worst frame in the window
+  static int                _historyMax;   // samples kept
+  static float              _accum;        // time since the last refresh
+  static float              _worst;        // worst frame in the window
   static bool               _visible;
 };
 

@@ -8,8 +8,8 @@ class OkObject;
 /**
  * @brief Free-fly spectator camera: ignores any target and flies from the input
  *        state (move relative to its own facing, full 3D), while the mouse
- *        (look) rotates it (the base free-fly behaviour). Drive it as the active
- *        camera with no active avatar, e.g. a debug fly-through.
+ *        (look) rotates it (the base free-fly behaviour). Drive it as the
+ * active camera with no active avatar, e.g. a debug fly-through.
  */
 class OkSpectatorCamera : public OkCamera {
 public:

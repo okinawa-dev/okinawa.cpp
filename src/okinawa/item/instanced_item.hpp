@@ -28,15 +28,15 @@ public:
   // Same mesh contract as OkItem (stride 5 computes normals, 8 takes
   // them verbatim). The mesh is authored around its own origin; every
   // instance places a copy of it.
-  OkInstancedItem(const std::string &name, float *vertexData,
-                  long vertexCount, unsigned int *indexData, long indexCount,
+  OkInstancedItem(const std::string &name, float *vertexData, long vertexCount,
+                  unsigned int *indexData, long indexCount,
                   int vertexStride = 5);
   ~OkInstancedItem();
 
   // Add an instance at a world position with a Y rotation (radians) and
   // a uniform scale; returns its index.
-  int  addInstance(float x, float y, float z, float yaw = 0.0f,
-                   float scale = 1.0f);
+  int addInstance(float x, float y, float z, float yaw = 0.0f,
+                  float scale = 1.0f);
   // Move an existing instance.
   void setInstance(int index, float x, float y, float z, float yaw = 0.0f,
                    float scale = 1.0f);
@@ -47,7 +47,7 @@ public:
   void clearInstances();
   int  getInstanceCount() const { return (int)_instances.size(); }
   // Instances actually drawn in the last frame (after frustum culling).
-  int  getDrawnCount() const { return _drawnCount; }
+  int getDrawnCount() const { return _drawnCount; }
 
 protected:
   void drawSelf() override;

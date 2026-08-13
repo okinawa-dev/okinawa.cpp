@@ -40,8 +40,7 @@ public:
   // sending those draws is pure waste. A maxDistance of 0 disables the
   // test. Set by the core from the active camera each frame.
   static void  setViewer(float x, float y, float z, float maxDistance);
-  static bool  isBeyondDrawDistance(float x, float y, float z,
-                                    float radius);
+  static bool  isBeyondDrawDistance(float x, float y, float z, float radius);
   static float getViewerX();
   static float getViewerY();
   static float getViewerZ();

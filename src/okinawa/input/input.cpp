@@ -53,11 +53,11 @@ void OkInput::process() {
   // behaves exactly like a physically held key.
   double now = glfwGetTime();
   for (int i = 0; i < OK_KEY_COUNT; i++) {
-    OkKey okKey    = static_cast<OkKey>(i);
-    int   glfwKey  = OkKeys::okKeyToGLFW(okKey);
-    bool  physical = _physicalEnabled && glfwKey != GLFW_KEY_UNKNOWN &&
-                    glfwGetKey(_window, glfwKey) == GLFW_PRESS;
-    bool injected   = now < _injectedUntil[i];
+    OkKey okKey     = static_cast<OkKey>(i);
+    int   glfwKey   = OkKeys::okKeyToGLFW(okKey);
+    bool  physical  = _physicalEnabled && glfwKey != GLFW_KEY_UNKNOWN &&
+                      glfwGetKey(_window, glfwKey) == GLFW_PRESS;
+    bool  injected  = now < _injectedUntil[i];
     _currentKeys[i] = physical || injected;
   }
 
@@ -232,8 +232,8 @@ void OkInput::injectKey(OkKey key, double durationSeconds) {
  */
 void OkInput::setPhysicalInputEnabled(bool enabled) {
   _physicalEnabled = enabled;
-  // Pointer lock is opt-in via a click; disabling physical input just makes sure
-  // the cursor is released. It is never auto-captured here.
+  // Pointer lock is opt-in via a click; disabling physical input just makes
+  // sure the cursor is released. It is never auto-captured here.
   if (!enabled) {
     setCursorCaptured(false);
   }

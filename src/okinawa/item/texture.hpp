@@ -44,7 +44,7 @@ public:
   // Replace the pixel data in place (same size and channel count the
   // texture was created with). RGBA/RGB raw data, no mipmap rebuild.
   void updateRawData(const unsigned char *data, int newWidth, int newHeight);
-  bool        isLoaded() const { return loaded; }
+  bool isLoaded() const { return loaded; }
 
   // Getters
   int                getWidth() const { return width; }

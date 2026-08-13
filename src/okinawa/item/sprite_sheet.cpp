@@ -22,14 +22,14 @@ OkSpriteSheet::~OkSpriteSheet() {
 
 namespace {
 
-// The directory part of a path, so meta.image resolves next to the JSON.
-std::string dirOf(const std::string &path) {
-  size_t slash = path.find_last_of("/\\");
-  if (slash == std::string::npos) {
-    return "";
+  // The directory part of a path, so meta.image resolves next to the JSON.
+  std::string dirOf(const std::string &path) {
+    size_t slash = path.find_last_of("/\\");
+    if (slash == std::string::npos) {
+      return "";
+    }
+    return path.substr(0, slash + 1);
   }
-  return path.substr(0, slash + 1);
-}
 
 }  // namespace
 
@@ -62,13 +62,12 @@ bool OkSpriteSheet::load(const std::string &jsonPath,
 
   // Sheet size: from meta when present, otherwise from the image itself
   // after loading (regions need it to compute UVs).
-  _width  = 0;
-  _height = 0;
+  _width            = 0;
+  _height           = 0;
   std::string image = imageOverride;
   if (doc.contains("meta")) {
     const json &meta = doc["meta"];
-    if (image.empty() && meta.contains("image") &&
-        meta["image"].is_string()) {
+    if (image.empty() && meta.contains("image") && meta["image"].is_string()) {
       image = dirOf(jsonPath) + meta["image"].get<std::string>();
     }
     if (meta.contains("size")) {
@@ -100,11 +99,10 @@ bool OkSpriteSheet::load(const std::string &jsonPath,
   _regions.clear();
   _order.clear();
   if (doc.contains("frames")) {
-    const json &frames = doc["frames"];
-    std::vector<std::pair<std::string, const json *> > entries;
+    const json                                       &frames = doc["frames"];
+    std::vector<std::pair<std::string, const json *>> entries;
     if (frames.is_object()) {
-      for (json::const_iterator it = frames.begin(); it != frames.end();
-           ++it) {
+      for (json::const_iterator it = frames.begin(); it != frames.end(); ++it) {
         entries.push_back(std::make_pair(it.key(), &it.value()));
       }
     } else if (frames.is_array()) {
@@ -136,12 +134,12 @@ bool OkSpriteSheet::load(const std::string &jsonPath,
       }
       // Textures load flipped for GL, so the region's TOP pixel row maps
       // to the higher v. v0 is the bottom of the region.
-      float fw = (float)_width;
-      float fh = (float)_height;
-      region.u0 = (float)region.x / fw;
-      region.u1 = (float)(region.x + region.w) / fw;
-      region.v1 = 1.0f - (float)region.y / fh;
-      region.v0 = 1.0f - (float)(region.y + region.h) / fh;
+      float fw              = (float)_width;
+      float fh              = (float)_height;
+      region.u0             = (float)region.x / fw;
+      region.u1             = (float)(region.x + region.w) / fw;
+      region.v1             = 1.0f - (float)region.y / fh;
+      region.v0             = 1.0f - (float)(region.y + region.h) / fh;
       _regions[region.name] = region;
       _order.push_back(region.name);
     }
@@ -170,14 +168,13 @@ bool OkSpriteSheet::load(const std::string &jsonPath,
     }
   }
 
-  OkLogger::info("SpriteSheet",
-                 "Loaded " + std::to_string(_regions.size()) +
-                     " region(s) from " + jsonPath + " over " + image);
+  OkLogger::info("SpriteSheet", "Loaded " + std::to_string(_regions.size()) +
+                                    " region(s) from " + jsonPath + " over " +
+                                    image);
   return true;
 }
 
-const OkSpriteRegion *OkSpriteSheet::getRegion(
-    const std::string &name) const {
+const OkSpriteRegion *OkSpriteSheet::getRegion(const std::string &name) const {
   std::map<std::string, OkSpriteRegion>::const_iterator it =
       _regions.find(name);
   if (it == _regions.end()) {
@@ -194,11 +191,12 @@ std::vector<std::string> OkSpriteSheet::getRegionNames() const {
   return _order;
 }
 
-int OkSpriteSheet::getRegionCount() const { return (int)_regions.size(); }
+int OkSpriteSheet::getRegionCount() const {
+  return (int)_regions.size();
+}
 
-std::vector<std::string> OkSpriteSheet::getGroup(
-    const std::string &tag) const {
-  std::map<std::string, std::vector<std::string> >::const_iterator it =
+std::vector<std::string> OkSpriteSheet::getGroup(const std::string &tag) const {
+  std::map<std::string, std::vector<std::string>>::const_iterator it =
       _groups.find(tag);
   if (it == _groups.end()) {
     return std::vector<std::string>();

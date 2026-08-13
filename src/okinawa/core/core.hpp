@@ -67,8 +67,8 @@ public:
   static void      setActiveAvatar(OkAvatar *avatar) { _activeAvatar = avatar; }
   static OkAvatar *getActiveAvatar() { return _activeAvatar; }
 
-  // Apply a look delta in degrees: orbits the active avatar's current view if it
-  // consumes the mouse, otherwise rotates the current camera (free-fly).
+  // Apply a look delta in degrees: orbits the active avatar's current view if
+  // it consumes the mouse, otherwise rotates the current camera (free-fly).
   static void applyLook(float yawDeg, float pitchDeg);
 
   // Apply a zoom delta (mouse-wheel notches; + zooms in, - out) to the current
@@ -109,10 +109,12 @@ private:
 
   static void mouseCallback(GLFWwindow *window, double xpos, double ypos);
   // Mouse-wheel scroll -> zoom the current camera (yoffset = notches).
-  static void scrollCallback(GLFWwindow *window, double xoffset, double yoffset);
+  static void scrollCallback(GLFWwindow *window, double xoffset,
+                             double yoffset);
   // Window focus changed -> release the captured cursor (see OkInput).
   static void focusCallback(GLFWwindow *window, int focused);
-  // Mouse button -> click in the render area captures the cursor (pointer lock).
+  // Mouse button -> click in the render area captures the cursor (pointer
+  // lock).
   static void mouseButtonCallback(GLFWwindow *window, int button, int action,
                                   int mods);
   // Keep the GL viewport matching the (possibly HiDPI) framebuffer size.

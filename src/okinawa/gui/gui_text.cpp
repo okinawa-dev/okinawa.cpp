@@ -1,7 +1,7 @@
 #include "gui_text.hpp"
-#include "font.hpp"
 #include "../item/item.hpp"
 #include "../item/texture.hpp"
+#include "font.hpp"
 #include <vector>
 
 OkGuiText::OkGuiText(const std::string &name) : OkObject(name) {
@@ -68,10 +68,10 @@ void OkGuiText::setTextColor(float r, float g, float b, float a) {
 OkTexture *OkGuiText::bakeTexture(const std::string &textureName,
                                   int                scale) const {
   unsigned char fg[4];
-  fg[0] = (unsigned char)(_color[0] * 255.0f);
-  fg[1] = (unsigned char)(_color[1] * 255.0f);
-  fg[2] = (unsigned char)(_color[2] * 255.0f);
-  fg[3] = (unsigned char)(_color[3] * 255.0f);
+  fg[0]               = (unsigned char)(_color[0] * 255.0f);
+  fg[1]               = (unsigned char)(_color[1] * 255.0f);
+  fg[2]               = (unsigned char)(_color[2] * 255.0f);
+  fg[3]               = (unsigned char)(_color[3] * 255.0f);
   unsigned char bg[4] = {0, 0, 0, 0};
   return OkFont::bake(textureName, _text, scale, fg, bg);
 }
@@ -113,7 +113,7 @@ void OkGuiText::rebuildMesh() {
     float x0 = (float)i * (float)OkFont::ADVANCE - halfW;
     float x1 = x0 + (float)OkFont::GLYPH_W;
 
-    unsigned int base = (unsigned int)(verts.size() / 5);
+    unsigned int base     = (unsigned int)(verts.size() / 5);
     float        quad[20] = {
         x0, -halfH, 0.0f, u0, v0,  // bottom-left
         x1, -halfH, 0.0f, u1, v0,  // bottom-right
@@ -133,7 +133,7 @@ void OkGuiText::rebuildMesh() {
 
   _mesh = new OkItem(getName() + "_mesh", verts.data(), (long)verts.size(),
                      idx.data(), (long)idx.size());
-  _mesh->setWireframeGlobal(false);   // text is interface, not scene
+  _mesh->setWireframeGlobal(false);  // text is interface, not scene
   _mesh->setTexture("okfont_atlas", OkFont::atlas());
   _mesh->setTintColor(_color[0], _color[1], _color[2], _color[3]);
   attach(_mesh);
@@ -155,7 +155,6 @@ void OkGuiText::drawSelf() {
   setPosition(OkGui::anchorOriginX(_anchor) + OkGui::gridToScreenX(_gridX),
               OkGui::anchorOriginY(_anchor) + OkGui::gridToScreenY(_gridY),
               0.0f);
-  float pxPerFontPx =
-      OkGui::gridToScreenY(_gridH) / (float)OkFont::GLYPH_H;
+  float pxPerFontPx = OkGui::gridToScreenY(_gridH) / (float)OkFont::GLYPH_H;
   setScaling(pxPerFontPx, pxPerFontPx, 1.0f);
 }

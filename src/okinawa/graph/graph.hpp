@@ -10,11 +10,11 @@ class OkItem;
 
 /**
  * @brief A generic graph of nodes and edges that can be rendered. Build it with
- *        addNode / addEdge, then rebuild() to (re)generate its geometry. It is a
- *        scene object (transform + hierarchy); rendering is delegated to internal
+ *        addNode / addEdge, then rebuild() to (re)generate its geometry. It is
+ * a scene object (transform + hierarchy); rendering is delegated to internal
  *        OkItems attached as children: edges as GL_LINES, nodes as GL_POINTS,
- *        each with its own colour. The node/edge data stays queryable (a base for
- *        pathfinding and, later, spline/tracker paths).
+ *        each with its own colour. The node/edge data stays queryable (a base
+ * for pathfinding and, later, spline/tracker paths).
  */
 class OkGraph : public OkObject {
 public:
@@ -22,7 +22,10 @@ public:
   // - RENDER_LINES: edges as GL_LINES, nodes as GL_POINTS (cheap, 1px).
   // - RENDER_POLYGONS: edges as filled ribbons, nodes as filled quads, each in
   //   its colour (thicker / more visible, more geometry).
-  enum RenderMode { RENDER_LINES, RENDER_POLYGONS };
+  enum RenderMode {
+    RENDER_LINES,
+    RENDER_POLYGONS
+  };
 
   explicit OkGraph(const std::string &name);
   ~OkGraph() override;
@@ -42,12 +45,14 @@ public:
   void setShowEdges(bool show);
   void setShowNodes(bool show);
   void setNodeSize(float pixels) { _nodeSize = pixels; }  // RENDER_LINES points
-  void setEdgeWidth(float meters) { _edgeWidth = meters; }       // RENDER_POLYGONS
-  void setNodeMarkerSize(float meters) { _nodeMarker = meters; }  // RENDER_POLYGONS
+  void setEdgeWidth(float meters) { _edgeWidth = meters; }  // RENDER_POLYGONS
+  void setNodeMarkerSize(float meters) {
+    _nodeMarker = meters;
+  }  // RENDER_POLYGONS
 
   // Queries.
-  int            getNodeCount() const { return static_cast<int>(_nodes.size()); }
-  int            getEdgeCount() const { return static_cast<int>(_edges.size()); }
+  int getNodeCount() const { return static_cast<int>(_nodes.size()); }
+  int getEdgeCount() const { return static_cast<int>(_edges.size()); }
   const OkPoint &getNode(int i) const { return _nodes[i]; }
 
   // OkObject hooks. drawSelf only sets GL point size; the child items draw.

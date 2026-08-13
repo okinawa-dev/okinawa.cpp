@@ -12,9 +12,9 @@ OkGroundController::OkGroundController(float moveSpeed) {
 }
 
 OkGroundMove OkGroundController::computeGroundMove(const OkInputState &input,
-                                                  const OkRotation  &frame,
-                                                  float speed,
-                                                  float dtSeconds) {
+                                                   const OkRotation   &frame,
+                                                   float               speed,
+                                                   float dtSeconds) {
   const float eps = 1e-4f;
 
   // Frame forward/right projected onto the ground plane (drop Y) so movement
@@ -23,14 +23,20 @@ OkGroundMove OkGroundController::computeGroundMove(const OkInputState &input,
   OkPoint right   = frame.getRightVector();
   OkPoint forwardGround(forward.x(), 0.0f, forward.z());
   OkPoint rightGround(right.x(), 0.0f, right.z());
-  if (forwardGround.magnitude() > eps) forwardGround = forwardGround.normalize();
-  if (rightGround.magnitude() > eps) rightGround = rightGround.normalize();
+  if (forwardGround.magnitude() > eps)
+    forwardGround = forwardGround.normalize();
+  if (rightGround.magnitude() > eps)
+    rightGround = rightGround.normalize();
 
   OkPoint direction(0.0f, 0.0f, 0.0f);
-  if (input.forward) direction += forwardGround;
-  if (input.backward) direction -= forwardGround;
-  if (input.strafeRight) direction += rightGround;
-  if (input.strafeLeft) direction -= rightGround;
+  if (input.forward)
+    direction += forwardGround;
+  if (input.backward)
+    direction -= forwardGround;
+  if (input.strafeRight)
+    direction += rightGround;
+  if (input.strafeLeft)
+    direction -= rightGround;
 
   OkGroundMove result;
   result.moved     = false;
@@ -54,7 +60,7 @@ OkGroundMove OkGroundController::computeGroundMove(const OkInputState &input,
 }
 
 void OkGroundController::update(float dt, const OkInputState &input,
-                               OkObject &controlled) {
+                                OkObject &controlled) {
   OkRotation frame = controlled.getRotation();
   if (_useActiveCamera) {
     OkCamera *active = OkCore::getCamera();
@@ -65,8 +71,7 @@ void OkGroundController::update(float dt, const OkInputState &input,
     frame = _referenceCamera->getRotation();
   }
 
-  OkGroundMove move =
-      computeGroundMove(input, frame, _moveSpeed, dt / 1000.0f);
+  OkGroundMove move = computeGroundMove(input, frame, _moveSpeed, dt / 1000.0f);
   if (move.moved) {
     controlled.move(move.dx, 0.0f, move.dz);
     controlled.setRotation(0.0f, move.facingYaw, 0.0f);

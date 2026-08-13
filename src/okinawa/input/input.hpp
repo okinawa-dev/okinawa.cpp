@@ -105,12 +105,13 @@ public:
   void        onChar(unsigned int codepoint);
   std::string drainChars();
 
-  // Pointer lock. The cursor starts NORMAL (free OS pointer); a click inside the
-  // render area captures it (hidden + locked) for mouse-look; ESC or focus loss
-  // release it. While released, the title bar / OS chrome work normally.
+  // Pointer lock. The cursor starts NORMAL (free OS pointer); a click inside
+  // the render area captures it (hidden + locked) for mouse-look; ESC or focus
+  // loss release it. While released, the title bar / OS chrome work normally.
   void setCursorCaptured(bool captured);
   bool isCursorCaptured() const { return _cursorCaptured; }
-  // Capture on a left click in the render area (from the mouse-button callback).
+  // Capture on a left click in the render area (from the mouse-button
+  // callback).
   void onMouseButton(int button, int action);
   // Release the cursor when the window loses focus (from the focus callback).
   void onWindowFocus(bool focused);
@@ -133,17 +134,17 @@ private:
   bool          _prevKeys[OK_KEY_COUNT];     // Previous key states
   // Per-key "injected until" timestamps (glfwGetTime seconds). A key counts as
   // pressed while glfwGetTime() < _injectedUntil[key].
-  double        _injectedUntil[OK_KEY_COUNT];
+  double _injectedUntil[OK_KEY_COUNT];
   // When false, physical keyboard/mouse input is ignored (MCP-only control).
-  bool          _physicalEnabled;
+  bool _physicalEnabled;
   // Pointer lock state: true while the cursor is captured for mouse-look.
-  bool          _cursorCaptured;
+  bool _cursorCaptured;
   // Mouse pan delta accumulated since the last process() (raw pixels).
-  float         _pendingPanX;
-  float         _pendingPanY;
+  float _pendingPanX;
+  float _pendingPanY;
   // Text capture flag (console open) and pending typed characters.
-  bool          _textCapture;
-  std::string   _pendingChars;
+  bool        _textCapture;
+  std::string _pendingChars;
 };
 
 #endif

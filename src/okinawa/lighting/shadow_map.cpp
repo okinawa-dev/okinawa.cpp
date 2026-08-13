@@ -1,6 +1,6 @@
 #include "shadow_map.hpp"
-#include "../item/item.hpp"
 #include "../config/config.hpp"
+#include "../item/item.hpp"
 #include "../math/frustum.hpp"
 #include "../scene/scene.hpp"
 #include "../shaders/shaders.hpp"
@@ -11,29 +11,29 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-GLuint    OkShadowMap::_fbo      = 0;
-GLuint    OkShadowMap::_depthTex = 0;
-GLuint    OkShadowMap::_emptyShadowTex = 0;
-GLuint    OkShadowMap::_program  = 0;
-int       OkShadowMap::_size     = 0;
+GLuint OkShadowMap::_fbo            = 0;
+GLuint OkShadowMap::_depthTex       = 0;
+GLuint OkShadowMap::_emptyShadowTex = 0;
+GLuint OkShadowMap::_program        = 0;
+int    OkShadowMap::_size           = 0;
 // What the map was last drawn for, so an identical redraw is skipped.
-bool      OkShadowMap::_neverDrawn  = true;
-float     OkShadowMap::_lastDir[3]  = {0.0f, 0.0f, 0.0f};
+bool      OkShadowMap::_neverDrawn = true;
+float     OkShadowMap::_lastDir[3] = {0.0f, 0.0f, 0.0f};
 float     OkShadowMap::_lastExtent[OkShadowMap::MAX_CASCADES] = {0.0f};
 float     OkShadowMap::_lastCx[OkShadowMap::MAX_CASCADES]     = {0.0f};
 float     OkShadowMap::_lastCz[OkShadowMap::MAX_CASCADES]     = {0.0f};
-size_t    OkShadowMap::_lastObjects = 0;
-int       OkShadowMap::_layers      = 0;
-int       OkShadowMap::_count       = 1;
+size_t    OkShadowMap::_lastObjects                           = 0;
+int       OkShadowMap::_layers                                = 0;
+int       OkShadowMap::_count                                 = 1;
 glm::mat4 OkShadowMap::_lightSpace[OkShadowMap::MAX_CASCADES];
-float     OkShadowMap::_splitFar[OkShadowMap::MAX_CASCADES]   = {0.0f};
-float     OkShadowMap::_strength   = 0.0f;
+float     OkShadowMap::_splitFar[OkShadowMap::MAX_CASCADES] = {0.0f};
+float     OkShadowMap::_strength                            = 0.0f;
 
 void OkShadowMap::initialize() {
   // NOLINTBEGIN(readability-magic-numbers)
   OkConfig::setBool("shadows", true);
-  OkConfig::setInt("shadows.size", 2048);      // depth map resolution
-  OkConfig::setFloat("shadows.extent", 90.0f); // metres covered, half-width
+  OkConfig::setInt("shadows.size", 2048);       // depth map resolution
+  OkConfig::setFloat("shadows.extent", 90.0f);  // metres covered, half-width
   // How far the sun must turn before the depth map is redrawn, as
   // 1 - cos(angle). 0 redraws whenever the sun moves at all; the skip
   // still saves the pass when nothing is moving.
@@ -124,8 +124,8 @@ void OkShadowMap::ensureTarget(int size, int layers) {
   // single sampler however many cascades there are.
   glGenTextures(1, &_depthTex);
   glBindTexture(GL_TEXTURE_2D_ARRAY, _depthTex);
-  glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT24, size, size,
-               layers, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+  glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT24, size, size, layers,
+               0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
   glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   // Outside the map there is no shadow: clamp to a border of "far away".
@@ -137,8 +137,8 @@ void OkShadowMap::ensureTarget(int size, int layers) {
   // The layer is attached per cascade at draw time.
   glGenFramebuffers(1, &_fbo);
   glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-  glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, _depthTex,
-                            0, 0);
+  glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, _depthTex, 0,
+                            0);
   glDrawBuffer(GL_NONE);
   glReadBuffer(GL_NONE);
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -147,14 +147,13 @@ void OkShadowMap::ensureTarget(int size, int layers) {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   if (_program == 0) {
-    _program = OkShader::createProgram(
-        OkAssets::loadShaderSource("shadow.vert.glsl"),
-        OkAssets::loadShaderSource("shadow.frag.glsl"));
+    _program =
+        OkShader::createProgram(OkAssets::loadShaderSource("shadow.vert.glsl"),
+                                OkAssets::loadShaderSource("shadow.frag.glsl"));
   }
-  OkLogger::info("ShadowMap",
-                 "Depth map " + std::to_string(size) + "x" +
-                     std::to_string(size) + " x " + std::to_string(layers) +
-                     " cascade(s)");
+  OkLogger::info("ShadowMap", "Depth map " + std::to_string(size) + "x" +
+                                  std::to_string(size) + " x " +
+                                  std::to_string(layers) + " cascade(s)");
 }
 
 /**
@@ -166,8 +165,8 @@ void OkShadowMap::ensureTarget(int size, int layers) {
  *        grid slides under the geometry as the camera moves and every
  *        shadow edge shimmers.
  */
-void OkShadowMap::render(OkScene *scene, const float *viewProj,
-                         float centreX, float centreY, float centreZ) {
+void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
+                         float centreY, float centreZ) {
   if (scene == nullptr || !OkConfig::getBool("shadows")) {
     _strength = 0.0f;
     return;
@@ -175,7 +174,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
   const float *dir  = OkLighting::getSunDirection();
   float        elev = -dir[1];
   if (elev <= 0.02f) {
-    _strength = 0.0f;   // light at or below the horizon
+    _strength = 0.0f;  // light at or below the horizon
     return;
   }
   // Fade the shadows in as the light climbs: a source at the horizon
@@ -199,9 +198,9 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
   float shadowFar = OkConfig::getFloat("shadows.distance");
   if (shadowFar < 1.0f || viewProj == nullptr) {
     // Fitting off: one cascade over a fixed square on the viewer.
-    _count     = 1;
-    count      = 1;
-    shadowFar  = 0.0f;
+    _count    = 1;
+    count     = 1;
+    shadowFar = 0.0f;
   }
 
   // Where each cascade ends. Even spacing wastes the near cascade on
@@ -210,19 +209,19 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
   const float NEAR_START = 1.0f;
   float       blend      = OkConfig::getFloat("shadows.cascades.blend");
   for (int c = 0; c < count; c++) {
-    float f    = (float)(c + 1) / (float)count;
-    float lin  = NEAR_START + (shadowFar - NEAR_START) * f;
-    float lg   = NEAR_START * std::pow(shadowFar / NEAR_START, f);
+    float f      = (float)(c + 1) / (float)count;
+    float lin    = NEAR_START + (shadowFar - NEAR_START) * f;
+    float lg     = NEAR_START * std::pow(shadowFar / NEAR_START, f);
     _splitFar[c] = lin + (lg - lin) * blend;
   }
   if (shadowFar <= 0.0f) {
-    _splitFar[0] = 1e9f;   // the fixed box covers whatever it covers
+    _splitFar[0] = 1e9f;  // the fixed box covers whatever it covers
   }
 
   glm::vec3 lightDir(dir[0], dir[1], dir[2]);
   glm::vec3 up = std::fabs(lightDir.y) > 0.98f ? glm::vec3(0.0f, 0.0f, 1.0f)
                                                : glm::vec3(0.0f, 1.0f, 0.0f);
-  GLint previousFbo = 0;
+  GLint     previousFbo = 0;
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousFbo);
   // ...and the viewport with it. Drawing the map means resizing the
   // viewport to the map, and whatever draws next expects the window's.
@@ -238,7 +237,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
 
   size_t objects = scene->getObjectCount();
   float  turn    = 1.0f - (dir[0] * _lastDir[0] + dir[1] * _lastDir[1] +
-                        dir[2] * _lastDir[2]);
+                           dir[2] * _lastDir[2]);
   float  turnMax = OkConfig::getFloat("shadows.refresh.turn");
 
   // The refresh is all or nothing, across every cascade at once.
@@ -337,7 +336,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
     candExtent[c] = extent;
     if (candCx[c] != _lastCx[c] || candCz[c] != _lastCz[c] ||
         candExtent[c] != _lastExtent[c]) {
-      redrawAll = true;   // the viewer moved: every box moves with them
+      redrawAll = true;  // the viewer moved: every box moves with them
     }
   }
 
@@ -371,8 +370,8 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
       glDisable(GL_CULL_FACE);
       bound = true;
     }
-    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, _depthTex,
-                              0, c);
+    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, _depthTex, 0,
+                              c);
     glClear(GL_DEPTH_BUFFER_BIT);
     glUniformMatrix4fv(glGetUniformLocation(_program, "lightSpace"), 1,
                        GL_FALSE, glm::value_ptr(_lightSpace[c]));
@@ -382,7 +381,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj,
     // worse: the whole scene was drawn to fill a box a couple of hundred
     // metres across. The right test is the light's own volume, which
     // this orthographic box already is.
-    OkFrustum        lightFrustum;
+    OkFrustum lightFrustum;
     lightFrustum.setFromMatrix(_lightSpace[c]);
     const OkFrustum *saved = OkFrustum::getActive();
     OkFrustum::setActive(OkConfig::getBool("shadows.cull") ? &lightFrustum
@@ -428,10 +427,8 @@ void OkShadowMap::bind(GLuint program) {
                    GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
       glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
       glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S,
-                      GL_CLAMP_TO_EDGE);
-      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T,
-                      GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
       glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
     }
     glActiveTexture(GL_TEXTURE3);
@@ -457,8 +454,7 @@ void OkShadowMap::bind(GLuint program) {
   }
   loc = glGetUniformLocation(program, "lightSpace");
   if (loc != -1) {
-    glUniformMatrix4fv(loc, _count, GL_FALSE,
-                       glm::value_ptr(_lightSpace[0]));
+    glUniformMatrix4fv(loc, _count, GL_FALSE, glm::value_ptr(_lightSpace[0]));
   }
   loc = glGetUniformLocation(program, "shadowSplit");
   if (loc != -1) {
@@ -483,7 +479,7 @@ void OkShadowMap::bind(GLuint program) {
     float worldBias = OkConfig::getFloat("shadows.bias");
     float perCascade[MAX_CASCADES];
     for (int c = 0; c < _count; c++) {
-      float range   = _lastExtent[c] * 6.0f;   // ortho far, see render()
+      float range   = _lastExtent[c] * 6.0f;  // ortho far, see render()
       perCascade[c] = range > 0.0f ? worldBias / range : 0.0f;
     }
     glUniform1fv(loc, _count, perCascade);
@@ -519,7 +515,9 @@ void OkShadowMap::bind(GLuint program) {
   }
 }
 
-float OkShadowMap::getStrength() { return _strength; }
+float OkShadowMap::getStrength() {
+  return _strength;
+}
 
 void OkShadowMap::shutdown() {
   if (_fbo != 0) {

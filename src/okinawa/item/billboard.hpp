@@ -25,7 +25,7 @@
  */
 class OkBillboard : public OkItem {
 protected:
-  void stepSelf(float dt) override;
+  void  stepSelf(float dt) override;
   float proximityFade;
   float baseAlpha;     // tint alpha before the fade modulation
   float cameraOffset;  // depth bias toward the camera, metres

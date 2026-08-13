@@ -35,7 +35,8 @@ class OkGroundController : public OkAvatarController {
 public:
   explicit OkGroundController(float moveSpeed = 5.0f);
 
-  void update(float dt, const OkInputState &input, OkObject &controlled) override;
+  void update(float dt, const OkInputState &input,
+              OkObject &controlled) override;
 
   void  setMoveSpeed(float speed) { _moveSpeed = speed; }
   float getMoveSpeed() const { return _moveSpeed; }
@@ -50,7 +51,7 @@ public:
   // Pure movement maths, unit-tested without a window/GL. Projects the frame's
   // forward/right onto the ground and returns the scaled XZ delta + facing yaw.
   static OkGroundMove computeGroundMove(const OkInputState &input,
-                                        const OkRotation  &frame, float speed,
+                                        const OkRotation &frame, float speed,
                                         float dtSeconds);
 
 private:

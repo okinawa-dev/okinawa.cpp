@@ -132,7 +132,7 @@ TEST_CASE("OkShader program creation error cases", "[shaders]") {
     // (An entirely absent input is NOT portable: some drivers, e.g. Mesa, link
     // it successfully and read undefined values, while others, e.g. Apple's GL,
     // reject it.)
-    const char *vertexMismatched   = R"(
+    const char *vertexMismatched = R"(
           #version 330 core
           layout (location = 0) in vec3 aPos;
           out vec2 color;

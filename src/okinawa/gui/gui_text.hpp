@@ -1,8 +1,8 @@
 #ifndef OK_GUI_TEXT_HPP
 #define OK_GUI_TEXT_HPP
 
-#include "gui.hpp"
 #include "../core/object.hpp"
+#include "gui.hpp"
 #include <string>
 
 class OkItem;

@@ -11,15 +11,15 @@ class OkInputState;
 
 /**
  * @brief A controllable representation of the player in a scene: a controlled
- *        object plus the input scheme (controller) that drives it, plus a rig of
- *        cameras that observe it. The avatar owns its controller (deleted in the
+ *        object plus the input scheme (controller) that drives it, plus a rig
+ * of cameras that observe it. The avatar owns its controller (deleted in the
  *        destructor) but NOT the controlled object (the scene owns it) nor the
  *        rig cameras (OkCore owns them).
  *
- *        OkCore tracks the active avatar and updates it each frame; swapping the
- *        active avatar (on foot -> car) changes controls and cameras in one
- *        step. Control is independent of which camera is rendered: the
- *        controller carries its own reference frame.
+ *        OkCore tracks the active avatar and updates it each frame; swapping
+ * the active avatar (on foot -> car) changes controls and cameras in one step.
+ * Control is independent of which camera is rendered: the controller carries
+ * its own reference frame.
  */
 class OkAvatar {
 public:
@@ -42,8 +42,8 @@ public:
 
 private:
   OkObject               *_controlled;  // not owned (the scene owns it)
-  OkAvatarController     *_controller;   // owned
-  std::vector<OkCamera *> _cameras;      // rig, not owned (OkCore owns)
+  OkAvatarController     *_controller;  // owned
+  std::vector<OkCamera *> _cameras;     // rig, not owned (OkCore owns)
 };
 
 #endif  // OK_AVATAR_HPP

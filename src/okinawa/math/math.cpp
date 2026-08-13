@@ -112,8 +112,10 @@ OkRotation OkMath::lookAt(const OkPoint &eye, const OkPoint &target,
       target.x() - eye.x(), target.y() - eye.y(), target.z() - eye.z()));
 
   float fy = forward.y;
-  if (fy > 1.0f) fy = 1.0f;
-  if (fy < -1.0f) fy = -1.0f;
+  if (fy > 1.0f)
+    fy = 1.0f;
+  if (fy < -1.0f)
+    fy = -1.0f;
   float pitch = asin(fy);
 
   const float eps = 1e-4f;

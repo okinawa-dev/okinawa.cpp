@@ -4,32 +4,32 @@
 #include "../utils/assets.hpp"
 #include "../utils/logger.hpp"
 
-GLuint OkPostProcess::_fbo       = 0;
-GLuint OkPostProcess::_colorTex  = 0;
-GLuint OkPostProcess::_depthTex  = 0;
-int    OkPostProcess::_width     = 0;
-int    OkPostProcess::_height    = 0;
-GLuint OkPostProcess::_program   = 0;
+GLuint OkPostProcess::_fbo           = 0;
+GLuint OkPostProcess::_colorTex      = 0;
+GLuint OkPostProcess::_depthTex      = 0;
+int    OkPostProcess::_width         = 0;
+int    OkPostProcess::_height        = 0;
+GLuint OkPostProcess::_program       = 0;
 GLuint OkPostProcess::_brightProgram = 0;
 GLuint OkPostProcess::_blurProgram   = 0;
 GLuint OkPostProcess::_bloomFbo[2]   = {0, 0};
 GLuint OkPostProcess::_bloomTex[2]   = {0, 0};
-int    OkPostProcess::_bloomW = 0;
-int    OkPostProcess::_bloomH = 0;
-GLuint OkPostProcess::_quadVao   = 0;
-float  OkPostProcess::_time      = 0.0f;
-float  OkPostProcess::_motion[3] = {0.0f, 0.0f, 0.0f};
-GLuint OkPostProcess::_focusPbo     = 0;
-bool   OkPostProcess::_focusPending = false;
-float  OkPostProcess::_focusMetres  = 30.0f;
-bool   OkPostProcess::_active    = false;
+int    OkPostProcess::_bloomW        = 0;
+int    OkPostProcess::_bloomH        = 0;
+GLuint OkPostProcess::_quadVao       = 0;
+float  OkPostProcess::_time          = 0.0f;
+float  OkPostProcess::_motion[3]     = {0.0f, 0.0f, 0.0f};
+GLuint OkPostProcess::_focusPbo      = 0;
+bool   OkPostProcess::_focusPending  = false;
+float  OkPostProcess::_focusMetres   = 30.0f;
+bool   OkPostProcess::_active        = false;
 
 void OkPostProcess::initialize() {
   // Master switch and per-effect toggles/parameters. All console-reachable.
   // NOLINTBEGIN(readability-magic-numbers)
   OkConfig::setBool("render.post", true);
   OkConfig::setBool("post.dof", true);
-  OkConfig::setFloat("post.dof.focus", 30.0f);    // metres, sharp centre
+  OkConfig::setFloat("post.dof.focus", 30.0f);  // metres, sharp centre
   // Autofocus: the focus distance follows whatever is under the middle
   // of the screen, so a camera that can climb is not permanently out of
   // focus. "max" caps it, since past a point the whole distance is one
@@ -41,12 +41,12 @@ void OkPostProcess::initialize() {
   // band suits a fixed camera a few metres from the subject, but the
   // moment the viewpoint climbs, everything on screen is hundreds of
   // metres away and a tight band blurs the entire frame.
-  OkConfig::setFloat("post.dof.range", 200.0f);   // +/- fully sharp band
-  OkConfig::setFloat("post.dof.maxblur", 2.0f);   // max blur radius (px)
-  OkConfig::setFloat("post.dof.falloff", 600.0f); // metres to reach max
+  OkConfig::setFloat("post.dof.range", 200.0f);    // +/- fully sharp band
+  OkConfig::setFloat("post.dof.maxblur", 2.0f);    // max blur radius (px)
+  OkConfig::setFloat("post.dof.falloff", 600.0f);  // metres to reach max
   OkConfig::setBool("post.grain", true);
   OkConfig::setFloat("post.grain.strength", 0.015f);
-  OkConfig::setBool("post.motionblur", true);     // needs a motion vector
+  OkConfig::setBool("post.motionblur", true);  // needs a motion vector
   OkConfig::setBool("post.bloom", true);
   // High enough that only actual light sources glow -- lit windows,
   // lamps, the sun's disc. A daytime sky is bright over most of its
@@ -124,14 +124,13 @@ void OkPostProcess::ensureTarget(int width, int height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glGenFramebuffers(1, &_bloomFbo[i]);
     glBindFramebuffer(GL_FRAMEBUFFER, _bloomFbo[i]);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                           GL_TEXTURE_2D, _bloomTex[i], 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                           _bloomTex[i], 0);
   }
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  OkLogger::info("PostProcess",
-                 "Offscreen target " + std::to_string(width) + "x" +
-                     std::to_string(height));
+  OkLogger::info("PostProcess", "Offscreen target " + std::to_string(width) +
+                                    "x" + std::to_string(height));
 }
 
 void OkPostProcess::ensureProgram() {
@@ -191,8 +190,8 @@ void OkPostProcess::renderBloom() {
   glUseProgram(_blurProgram);
   glUniform1i(glGetUniformLocation(_blurProgram, "frameTex"), 0);
   for (int pass = 0; pass < 2; pass++) {
-    int src = pass;        // 0 then 1
-    int dst = 1 - pass;    // 1 then 0
+    int src = pass;      // 0 then 1
+    int dst = 1 - pass;  // 1 then 0
     glBindFramebuffer(GL_FRAMEBUFFER, _bloomFbo[dst]);
     glViewport(0, 0, _bloomW, _bloomH);
     glBindTexture(GL_TEXTURE_2D, _bloomTex[src]);
@@ -303,7 +302,7 @@ void OkPostProcess::end(float nearPlane, float farPlane, float dt) {
   glUniform2f(glGetUniformLocation(_program, "planes"), nearPlane, farPlane);
   glUniform1f(glGetUniformLocation(_program, "timeSec"), _time);
 
-  bool dof = OkConfig::getBool("post.dof");
+  bool dof       = OkConfig::getBool("post.dof");
   bool autoFocus = OkConfig::getBool("post.dof.autofocus");
   if (dof && autoFocus) {
     updateAutoFocus(nearPlane, farPlane);

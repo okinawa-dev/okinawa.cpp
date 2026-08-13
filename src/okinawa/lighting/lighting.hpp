@@ -62,15 +62,15 @@ public:
   static void  setTimeOfDay(float hours);
 
   // Current interpolated atmosphere values.
-  static const float *getSceneTint() { return _tint; }      // rgb
-  static const float *getFogColor() { return _fogColor; }   // rgb
+  static const float *getSceneTint() { return _tint; }     // rgb
+  static const float *getFogColor() { return _fogColor; }  // rgb
   // 0 while lighting.fog is disabled (the console/game fog toggle).
   static float        getFogDensity();
-  static const float *getSunColor() { return _sunColor; }   // rgb
-  static const float *getSunDirection() { return _sunDir; } // xyz, normalized
-  static const float *getSkyZenith() { return _zenith; }    // rgb, sky top
+  static const float *getSunColor() { return _sunColor; }    // rgb
+  static const float *getSunDirection() { return _sunDir; }  // xyz, normalized
+  static const float *getSkyZenith() { return _zenith; }     // rgb, sky top
   // Flat ambient floor under the Gouraud sun (L3).
-  static float        getAmbientLight() { return _ambient; }
+  static float getAmbientLight() { return _ambient; }
 
   // --- Point lights (L4) ---------------------------------------------
   // Small registry of point lights. Each item is lit by its nearest
@@ -83,27 +83,25 @@ public:
 
   // Register an OMNI light (radiates equally in every direction);
   // returns its id, or -1 when the registry is full.
-  static int  registerLight(float x, float y, float z, float r, float g,
-                            float b, float radius);
+  static int registerLight(float x, float y, float z, float r, float g, float b,
+                           float radius);
   // Register a SPOT light: same as registerLight plus a direction, a
   // cone half-angle (degrees) with a soft edge, and an intensity
   // multiplier over the colour. A spot aimed downward pools its light
   // on the surface below.
   static int  registerSpotLight(float x, float y, float z, float r, float g,
-                                float b, float radius, float dirX,
-                                float dirY, float dirZ, float coneDeg,
-                                float intensity);
+                                float b, float radius, float dirX, float dirY,
+                                float dirZ, float coneDeg, float intensity);
   static void clearLights();
   static long getLightGeneration();
   static int  getLightCount();
 
   // Fill `outIdx` with up to `maxN` indices of the most relevant lights
   // for a point (nearest by distance/radius); returns how many.
-  static int getNearestLights(float x, float y, float z, int *outIdx,
-                              int maxN);
+  static int getNearestLights(float x, float y, float z, int *outIdx, int maxN);
   // Accessors for the shader uniforms (index from getNearestLights).
-  static const float *getLightPosition(int idx);   // xyz
-  static const float *getLightColor(int idx);      // rgb
+  static const float *getLightPosition(int idx);  // xyz
+  static const float *getLightColor(int idx);     // rgb
   static float        getLightRadius(int idx);
   static const float *getLightDirection(int idx);  // xyz (spots)
   static float        getLightCosCone(int idx);    // <= -1.5 for omni
@@ -138,7 +136,7 @@ private:
   static float _lightColor[MAX_LIGHTS][3];
   static float _lightRadius[MAX_LIGHTS];
   static float _lightDir[MAX_LIGHTS][3];
-  static float _lightCosCone[MAX_LIGHTS];   // cos(half-angle); -2 = omni
+  static float _lightCosCone[MAX_LIGHTS];  // cos(half-angle); -2 = omni
   static float _lightIntensity[MAX_LIGHTS];
   static float _pointLightLevel;
   static int   _lightCount;

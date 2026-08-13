@@ -9,7 +9,7 @@
 
 // Per-instance attribute layout, starting after the mesh attributes
 // (0 position, 1 uv, 2 normal): 3 = position+scale, 4 = orientation.
-static const int OK_INST_ATTR_POS   = 3;
+static const int OK_INST_ATTR_POS    = 3;
 static const int OK_INST_ATTR_ORIENT = 4;
 static const int OK_INST_FLOATS      = 8;
 
@@ -126,8 +126,7 @@ void OkInstancedItem::drawSelf() {
       float cx = inst.x + sphereCenter[0] * inst.scale;
       float cy = inst.y + sphereCenter[1] * inst.scale;
       float cz = inst.z + sphereCenter[2] * inst.scale;
-      if (OkFrustum::isBeyondDrawDistance(cx, cy, cz,
-                                          radius * inst.scale) ||
+      if (OkFrustum::isBeyondDrawDistance(cx, cy, cz, radius * inst.scale) ||
           !frustum->containsSphere(cx, cy, cz, radius * inst.scale)) {
         OkFrustum::addCulled();
         continue;
@@ -176,8 +175,8 @@ void OkInstancedItem::drawSelf() {
     }
   }
 
-  bool drawTexture = OkConfig::getBool("graphics.textures") && texture &&
-                     texture->isLoaded();
+  bool drawTexture =
+      OkConfig::getBool("graphics.textures") && texture && texture->isLoaded();
   GLint hasTexLoc = glGetUniformLocation(currentProgram, "hasTexture");
   GLint tintLoc   = glGetUniformLocation(currentProgram, "tintColor");
   if (tintLoc != -1) {
@@ -193,8 +192,7 @@ void OkInstancedItem::drawSelf() {
     if (fadeLoc != -1) {
       glUniform1f(fadeLoc, fade);
     }
-    GLint fadeInvLoc = glGetUniformLocation(currentProgram,
-                                            "itemFadeInvert");
+    GLint fadeInvLoc = glGetUniformLocation(currentProgram, "itemFadeInvert");
     if (fadeInvLoc != -1) {
       glUniform1f(fadeInvLoc, fadeInverted ? 1.0f : 0.0f);
     }

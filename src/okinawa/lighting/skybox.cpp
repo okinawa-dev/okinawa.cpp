@@ -1,8 +1,8 @@
 #include "skybox.hpp"
 #include "../handlers/textures.hpp"
+#include "../item/billboard.hpp"
 #include "../item/item.hpp"
 #include "../item/texture.hpp"
-#include "../item/billboard.hpp"
 #include "../math/point.hpp"
 #include "lighting.hpp"
 #include <cmath>
@@ -72,8 +72,8 @@ void OkSkybox::ensure() {
     }
   }
 
-  _dome = new OkItem("ok_skybox", verts.data(), (long)verts.size(),
-                     idx.data(), (long)idx.size());
+  _dome = new OkItem("ok_skybox", verts.data(), (long)verts.size(), idx.data(),
+                     (long)idx.size());
   // The sky is not an occluder; it is the light.
   _dome->setCastsShadow(false);
   refreshGradient();
@@ -101,7 +101,7 @@ void OkSkybox::refreshGradient() {
     // v=0 (texture bottom) is the horizon row.
     float t = (float)i / (float)(SKY_GRAD_H - 1);
     for (int c = 0; c < 3; c++) {
-      float col = fog[c] + (zenith[c] - fog[c]) * t;
+      float col       = fog[c] + (zenith[c] - fog[c]) * t;
       rgba[i * 4 + c] = (unsigned char)(col * 255.0f);
     }
     rgba[i * 4 + 3] = 255;
@@ -167,11 +167,11 @@ void OkSkybox::ensureSunDisc() {
   // that small reads as a dot, so the core is drawn slightly larger and
   // the corona around it carries the perceived size. At the dome
   // distance below, this quad spans ~4 degrees with a ~1.7 degree core.
-  const float S = 28.0f;
-  float verts[20] = {-S, -S, 0.0f, 0.0f, 0.0f, S,  -S, 0.0f, 1.0f, 0.0f,
-                     S,  S,  0.0f, 1.0f, 1.0f, -S, S,  0.0f, 0.0f, 1.0f};
-  unsigned int idx[6] = {0, 1, 2, 0, 2, 3};
-  _sunDisc = new OkItem("ok_sun_disc", verts, 20, idx, 6);
+  const float  S         = 28.0f;
+  float        verts[20] = {-S, -S, 0.0f, 0.0f, 0.0f, S,  -S, 0.0f, 1.0f, 0.0f,
+                            S,  S,  0.0f, 1.0f, 1.0f, -S, S,  0.0f, 0.0f, 1.0f};
+  unsigned int idx[6]    = {0, 1, 2, 0, 2, 3};
+  _sunDisc               = new OkItem("ok_sun_disc", verts, 20, idx, 6);
   _sunDisc->setCastsShadow(false);
   if (_sunTex != nullptr) {
     _sunDisc->setTexture("ok_sun", _sunTex);
@@ -206,14 +206,14 @@ void OkSkybox::drawSun(float camX, float camY, float camZ) {
 
   float horizon = sy + 0.06f;
   if (horizon <= 0.0f) {
-    return;               // below the horizon: nothing to draw
+    return;  // below the horizon: nothing to draw
   }
   float fade = horizon / 0.20f;
   if (fade > 1.0f) {
     fade = 1.0f;
   }
 
-  const float DIST = 820.0f;   // inside the dome
+  const float DIST = 820.0f;  // inside the dome
   OkPoint     pos(camX + sx * DIST, camY + sy * DIST, camZ + sz * DIST);
   _sunDisc->setPosition(pos.x(), pos.y(), pos.z());
   _sunDisc->setRotation(

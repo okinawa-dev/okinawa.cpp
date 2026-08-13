@@ -56,9 +56,8 @@ public:
 private:
   // Opaque objects sorted near-to-far, refreshed periodically (see the
   // note in draw()).
-  std::vector<std::pair<float, OkObject *> > _drawOrder;
-  unsigned int                               _sortTimer = 0;
-
+  std::vector<std::pair<float, OkObject *>> _drawOrder;
+  unsigned int                              _sortTimer = 0;
 
   std::string             name;
   bool                    _isActive;

@@ -111,9 +111,9 @@ private:
   // Query the current logical window size (window coordinates).
   static void getLogicalSize(float &outW, float &outH);
 
-  static bool    _initialized;
-  static std::vector<OkGuiLayer *> _layers;  // owned, kept sorted by order
-  static OkItem *_gridMinor;  // one line per cell (owned)
+  static bool                      _initialized;
+  static std::vector<OkGuiLayer *> _layers;     // owned, kept sorted by order
+  static OkItem                   *_gridMinor;  // one line per cell (owned)
   static OkItem *_gridMajor;  // stronger line every 5 cells (owned)
   static OkItem *_gridAxes;   // the two 0,0 axes (owned)
 

@@ -49,9 +49,9 @@ public:
   void draw();
 
 private:
-  std::string           _name;
-  int                   _order;
-  bool                  _visible;
+  std::string             _name;
+  int                     _order;
+  bool                    _visible;
   std::vector<OkObject *> _items;  // owned
 };
 

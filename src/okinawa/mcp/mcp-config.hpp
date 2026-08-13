@@ -14,11 +14,11 @@
 //
 // Include this header before any `#ifdef OKINAWA_WITH_MCP` check.
 #if defined(OKINAWA_MCP_FORCE)
-#  if OKINAWA_MCP_FORCE
-#    define OKINAWA_WITH_MCP
-#  endif
+#if OKINAWA_MCP_FORCE
+#define OKINAWA_WITH_MCP
+#endif
 #elif !defined(NDEBUG)
-#  define OKINAWA_WITH_MCP
+#define OKINAWA_WITH_MCP
 #endif
 
 #endif  // OK_MCP_CONFIG_HPP

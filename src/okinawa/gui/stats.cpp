@@ -30,23 +30,23 @@ float              OkGuiStats::_worst   = 0.0f;
 bool               OkGuiStats::_visible = false;
 // Several seconds even at a high frame rate: long enough to judge a
 // change rather than catch a lucky frame.
-int                OkGuiStats::_historyMax = 600;
+int OkGuiStats::_historyMax = 600;
 
 namespace {
 
-// Panel geometry, in grid cells.
-const float PANEL_X    = 1.0f;
-const float PANEL_Y    = -1.0f;
-const float LINE_H     = 0.85f;
-const int   GRAPH_W    = 96;    // history samples kept and drawn
-const int   GRAPH_H    = 32;    // graph texture height in pixels
-// Top of the graph. It adapts to the worst sample in the window, with a
-// floor of two 60Hz frames, so the strip stays informative whether the
-// project runs at 200 fps or struggles at 20.
-const float GRAPH_MS_MIN = 33.4f;
-// Readings are refreshed a few times a second: text that changes every
-// frame is unreadable, and rebuilding the meshes has its own cost.
-const float REFRESH_MS = 180.0f;
+  // Panel geometry, in grid cells.
+  const float PANEL_X = 1.0f;
+  const float PANEL_Y = -1.0f;
+  const float LINE_H  = 0.85f;
+  const int   GRAPH_W = 96;  // history samples kept and drawn
+  const int   GRAPH_H = 32;  // graph texture height in pixels
+  // Top of the graph. It adapts to the worst sample in the window, with a
+  // floor of two 60Hz frames, so the strip stays informative whether the
+  // project runs at 200 fps or struggles at 20.
+  const float GRAPH_MS_MIN = 33.4f;
+  // Readings are refreshed a few times a second: text that changes every
+  // frame is unreadable, and rebuilding the meshes has its own cost.
+  const float REFRESH_MS = 180.0f;
 
 }  // namespace
 
@@ -119,9 +119,8 @@ void OkGuiStats::rebuildGraph() {
   }
   // The graph shows the most recent GRAPH_W samples; the history behind
   // it is longer and is there for callers asking for a series.
-  size_t from = _history.size() > (size_t)GRAPH_W
-                    ? _history.size() - (size_t)GRAPH_W
-                    : 0;
+  size_t from =
+      _history.size() > (size_t)GRAPH_W ? _history.size() - (size_t)GRAPH_W : 0;
   float top = GRAPH_MS_MIN;
   for (size_t i = from; i < _history.size(); i++) {
     if (_history[i] > top) {
@@ -146,8 +145,8 @@ void OkGuiStats::rebuildGraph() {
   for (int i = 0; i < n && i < GRAPH_W; i++) {
     float ms = _history[(size_t)(n - 1 - i)];
     (void)from;
-    int   x  = GRAPH_W - 1 - i;
-    float t  = ms / top;
+    int   x = GRAPH_W - 1 - i;
+    float t = ms / top;
     if (t > 1.0f) {
       t = 1.0f;
     }
@@ -214,26 +213,25 @@ void OkGuiStats::update(float dtMs) {
 
   // Averages over the whole window, not the last frame: a single frame
   // bounces too much to read.
-  size_t avgFrom = _history.size() > (size_t)GRAPH_W
-                       ? _history.size() - (size_t)GRAPH_W
-                       : 0;
-  float  sum     = 0.0f;
+  size_t avgFrom =
+      _history.size() > (size_t)GRAPH_W ? _history.size() - (size_t)GRAPH_W : 0;
+  float sum = 0.0f;
   for (size_t i = avgFrom; i < _history.size(); i++) {
     sum += _history[i];
   }
   size_t avgN = _history.size() - avgFrom;
   float  avg  = avgN == 0 ? 0.0f : sum / (float)avgN;
-  float fps = avg > 0.0001f ? 1000.0f / avg : 0.0f;
+  float  fps  = avg > 0.0001f ? 1000.0f / avg : 0.0f;
 
-  OkSceneHandler *sh    = OkCore::getSceneHandler();
-  OkScene        *scene = sh ? sh->getCurrentScene() : nullptr;
-  long objects = scene ? (long)scene->getObjectCount() : 0;
-  long culled  = OkFrustum::getCulledCount();
-  long draws   = OkFrustum::getDrawCalls();
-  long tris    = OkFrustum::getTriangles();
-  int  texes   = (int)OkTextureHandler::getInstance()->getTextureNames().size();
+  OkSceneHandler *sh      = OkCore::getSceneHandler();
+  OkScene        *scene   = sh ? sh->getCurrentScene() : nullptr;
+  long            objects = scene ? (long)scene->getObjectCount() : 0;
+  long            culled  = OkFrustum::getCulledCount();
+  long            draws   = OkFrustum::getDrawCalls();
+  long            tris    = OkFrustum::getTriangles();
+  int texes = (int)OkTextureHandler::getInstance()->getTextureNames().size();
 
-  char buf[128];
+  char        buf[128];
   const char *text[6];
   char        store[6][128];
   // Draw time next to frame time on purpose: where vsync is enforced,
@@ -254,10 +252,9 @@ void OkGuiStats::update(float dtMs) {
                 avg);
   std::snprintf(store[1], sizeof(store[1]), "DRAW %.2f MS  WORST %.2f MS",
                 drawAvg, _worst);
-  std::snprintf(store[2], sizeof(store[2]), "DRAWS %ld  TRIS %ld", draws,
-                tris);
-  std::snprintf(store[3], sizeof(store[3]), "OBJECTS %ld  CULLED %ld",
-                objects, culled);
+  std::snprintf(store[2], sizeof(store[2]), "DRAWS %ld  TRIS %ld", draws, tris);
+  std::snprintf(store[3], sizeof(store[3]), "OBJECTS %ld  CULLED %ld", objects,
+                culled);
   std::snprintf(store[4], sizeof(store[4]), "TEXTURES %d", texes);
   std::snprintf(store[5], sizeof(store[5]), "TIME %.2f H",
                 OkLighting::getTimeOfDay());
@@ -278,7 +275,9 @@ void OkGuiStats::update(float dtMs) {
   _worst *= 0.96f;
 }
 
-const std::vector<float> &OkGuiStats::getHistory() { return _history; }
+const std::vector<float> &OkGuiStats::getHistory() {
+  return _history;
+}
 
 void OkGuiStats::setHistoryLength(int samples) {
   _historyMax = samples < 2 ? 2 : samples;
@@ -346,7 +345,9 @@ void OkGuiStats::setVisible(bool visible) {
   }
 }
 
-bool OkGuiStats::isVisible() { return _visible; }
+bool OkGuiStats::isVisible() {
+  return _visible;
+}
 
 void OkGuiStats::shutdown() {
   // The layer owns its elements; the GUI owns the layer.

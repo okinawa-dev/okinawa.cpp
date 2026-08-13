@@ -1,8 +1,8 @@
 #include "lighting.hpp"
-#include "../handlers/textures.hpp"
-#include "../item/texture.hpp"
 #include "../config/config.hpp"
 #include "../gui/console.hpp"
+#include "../handlers/textures.hpp"
+#include "../item/texture.hpp"
 #include "../utils/logger.hpp"
 #include <cmath>
 #include <cstdlib>
@@ -38,33 +38,73 @@ long  OkLighting::_lightGeneration = 0;
 // NOLINTBEGIN(readability-magic-numbers)
 static const OkAtmosphereKey ATMO_DEFAULT[] = {
     // night
-    {0.0f, {0.34f, 0.38f, 0.46f}, {0.08f, 0.10f, 0.15f}, 0.0040f,
-     {0.0f, 0.0f, 0.0f}, {0.03f, 0.05f, 0.10f}, 0.30f},
-    {5.0f, {0.34f, 0.38f, 0.46f}, {0.08f, 0.10f, 0.15f}, 0.0040f,
-     {0.0f, 0.0f, 0.0f}, {0.03f, 0.05f, 0.10f}, 0.30f},
+    {0.0f,
+     {0.34f, 0.38f, 0.46f},
+     {0.08f, 0.10f, 0.15f},
+     0.0040f,
+     {0.0f, 0.0f, 0.0f},
+     {0.03f, 0.05f, 0.10f},
+     0.30f},
+    {5.0f,
+     {0.34f, 0.38f, 0.46f},
+     {0.08f, 0.10f, 0.15f},
+     0.0040f,
+     {0.0f, 0.0f, 0.0f},
+     {0.03f, 0.05f, 0.10f},
+     0.30f},
     // dawn
-    {7.0f, {0.88f, 0.84f, 0.80f}, {0.66f, 0.63f, 0.62f}, 0.0028f,
-     {1.0f, 0.86f, 0.72f}, {0.32f, 0.42f, 0.60f}, 0.50f},
+    {7.0f,
+     {0.88f, 0.84f, 0.80f},
+     {0.66f, 0.63f, 0.62f},
+     0.0028f,
+     {1.0f, 0.86f, 0.72f},
+     {0.32f, 0.42f, 0.60f},
+     0.50f},
     // day
-    {9.0f, {1.00f, 1.00f, 1.00f}, {0.72f, 0.80f, 0.90f}, 0.0012f,
-     {1.0f, 0.98f, 0.94f}, {0.26f, 0.50f, 0.85f}, 0.55f},
-    {17.0f, {1.00f, 1.00f, 1.00f}, {0.72f, 0.80f, 0.90f}, 0.0012f,
-     {1.0f, 0.98f, 0.94f}, {0.26f, 0.50f, 0.85f}, 0.55f},
+    {9.0f,
+     {1.00f, 1.00f, 1.00f},
+     {0.72f, 0.80f, 0.90f},
+     0.0012f,
+     {1.0f, 0.98f, 0.94f},
+     {0.26f, 0.50f, 0.85f},
+     0.55f},
+    {17.0f,
+     {1.00f, 1.00f, 1.00f},
+     {0.72f, 0.80f, 0.90f},
+     0.0012f,
+     {1.0f, 0.98f, 0.94f},
+     {0.26f, 0.50f, 0.85f},
+     0.55f},
     // sunset
-    {20.0f, {1.00f, 0.82f, 0.68f}, {0.74f, 0.58f, 0.50f}, 0.0026f,
-     {1.0f, 0.70f, 0.45f}, {0.28f, 0.30f, 0.48f}, 0.50f},
+    {20.0f,
+     {1.00f, 0.82f, 0.68f},
+     {0.74f, 0.58f, 0.50f},
+     0.0026f,
+     {1.0f, 0.70f, 0.45f},
+     {0.28f, 0.30f, 0.48f},
+     0.50f},
     // dusk
-    {22.0f, {0.46f, 0.50f, 0.58f}, {0.16f, 0.20f, 0.28f}, 0.0036f,
-     {0.2f, 0.18f, 0.20f}, {0.06f, 0.10f, 0.18f}, 0.38f},
-    {23.0f, {0.34f, 0.38f, 0.46f}, {0.08f, 0.10f, 0.15f}, 0.0040f,
-     {0.0f, 0.0f, 0.0f}, {0.03f, 0.05f, 0.10f}, 0.30f},
+    {22.0f,
+     {0.46f, 0.50f, 0.58f},
+     {0.16f, 0.20f, 0.28f},
+     0.0036f,
+     {0.2f, 0.18f, 0.20f},
+     {0.06f, 0.10f, 0.18f},
+     0.38f},
+    {23.0f,
+     {0.34f, 0.38f, 0.46f},
+     {0.08f, 0.10f, 0.15f},
+     0.0040f,
+     {0.0f, 0.0f, 0.0f},
+     {0.03f, 0.05f, 0.10f},
+     0.30f},
 };
 // NOLINTEND(readability-magic-numbers)
 
 // The curve in use: the default until a project replaces it.
-static const int              ATMO_MAX_KEYS = 32;
-static OkAtmosphereKey        ATMO_KEYS[ATMO_MAX_KEYS];
-static int                    ATMO_KEY_COUNT = 0;
+static const int       ATMO_MAX_KEYS = 32;
+static OkAtmosphereKey ATMO_KEYS[ATMO_MAX_KEYS];
+static int             ATMO_KEY_COUNT = 0;
 
 static void ensureCurve() {
   if (ATMO_KEY_COUNT > 0) {
@@ -77,8 +117,7 @@ static void ensureCurve() {
   ATMO_KEY_COUNT = n;
 }
 
-void OkLighting::setAtmosphereCurve(const OkAtmosphereKey *keys,
-                                    int count) {
+void OkLighting::setAtmosphereCurve(const OkAtmosphereKey *keys, int count) {
   if (keys == nullptr || count < 2) {
     return;
   }
@@ -121,16 +160,13 @@ void OkLighting::initialize() {
       "timescale [x]: how much faster than real time the clock runs",
       [](const std::vector<std::string> &args) {
         if (args.empty()) {
-          OkConsole::print(
-              "timescale = " +
-              std::to_string(OkConfig::getFloat("lighting.timescale")));
+          OkConsole::print("timescale = " + std::to_string(OkConfig::getFloat(
+                                                "lighting.timescale")));
           return;
         }
-        OkConfig::setFloat("lighting.timescale",
-                           (float)atof(args[0].c_str()));
-        OkConsole::print(
-            "timescale = " +
-            std::to_string(OkConfig::getFloat("lighting.timescale")));
+        OkConfig::setFloat("lighting.timescale", (float)atof(args[0].c_str()));
+        OkConsole::print("timescale = " + std::to_string(OkConfig::getFloat(
+                                              "lighting.timescale")));
       });
 
   update(0.0f);
@@ -175,8 +211,8 @@ void OkLighting::update(float dt) {
   // Point-light level: sin(sun elevation) is -_sunDir[1]; ramp 0 -> 1
   // as it falls from +0.05 to -0.05 (through the sunset).
   {
-    float sinElev    = -_sunDir[1];
-    float level      = (0.05f - sinElev) / 0.10f;
+    float sinElev = -_sunDir[1];
+    float level   = (0.05f - sinElev) / 0.10f;
     if (level < 0.0f) {
       level = 0.0f;
     }
@@ -205,8 +241,8 @@ void OkLighting::evaluate(float hours, float outTint[3], float outFogColor[3],
   // Find the surrounding keyframes (wrapping around midnight).
   const OkAtmosphereKey *prev = &ATMO_KEYS[ATMO_KEY_COUNT - 1];
   const OkAtmosphereKey *next = &ATMO_KEYS[0];
-  float            span = (24.0f - prev->hour) + next->hour;
-  float            frac = 0.0f;
+  float                  span = (24.0f - prev->hour) + next->hour;
+  float                  frac = 0.0f;
   if (h < ATMO_KEYS[0].hour) {
     frac = (h + (24.0f - prev->hour)) / span;
   } else {
@@ -234,7 +270,8 @@ void OkLighting::evaluate(float hours, float outTint[3], float outFogColor[3],
           prev->zenith[c] + (next->zenith[c] - prev->zenith[c]) * frac;
     }
   }
-  outFogDensity = prev->fogDensity + (next->fogDensity - prev->fogDensity) * frac;
+  outFogDensity =
+      prev->fogDensity + (next->fogDensity - prev->fogDensity) * frac;
   if (outAmbient != nullptr) {
     *outAmbient = prev->ambient + (next->ambient - prev->ambient) * frac;
   }
@@ -243,19 +280,18 @@ void OkLighting::evaluate(float hours, float outTint[3], float outFogColor[3],
   // arc (below the horizon at night), azimuth sweeps east to west. The
   // vector points FROM the sun TOWARD the scene (ready for lighting).
   // NOLINTBEGIN(readability-magic-numbers)
-  float dayFrac  = (h - 6.0f) / 15.0f;  // 0 at 6h, 1 at 21h
-  float elev     = std::sin(dayFrac * 3.14159265f) * 1.2f;  // radians, peak ~69 deg
-  float azim     = (dayFrac - 0.5f) * 3.14159265f;          // -90..+90 deg
+  float dayFrac = (h - 6.0f) / 15.0f;                   // 0 at 6h, 1 at 21h
+  float elev = std::sin(dayFrac * 3.14159265f) * 1.2f;  // radians, peak ~69 deg
+  float azim = (dayFrac - 0.5f) * 3.14159265f;          // -90..+90 deg
   if (dayFrac < 0.0f || dayFrac > 1.0f) {
     elev = -0.3f;  // parked below the horizon at night
   }
   // NOLINTEND(readability-magic-numbers)
-  float cosE = std::cos(elev);
+  float cosE   = std::cos(elev);
   outSunDir[0] = -std::sin(azim) * cosE;
   outSunDir[1] = -std::sin(elev);
   outSunDir[2] = -std::cos(azim) * cosE;
 }
-
 
 // --- Point lights (L4) -----------------------------------------------
 
@@ -265,13 +301,13 @@ int OkLighting::registerLight(float x, float y, float z, float r, float g,
     OkLogger::warning("Lighting", "Point light registry full");
     return -1;
   }
-  int id             = _lightCount;
-  _lightPos[id][0]   = x;
-  _lightPos[id][1]   = y;
-  _lightPos[id][2]   = z;
-  _lightColor[id][0] = r;
-  _lightColor[id][1] = g;
-  _lightColor[id][2] = b;
+  int id              = _lightCount;
+  _lightPos[id][0]    = x;
+  _lightPos[id][1]    = y;
+  _lightPos[id][2]    = z;
+  _lightColor[id][0]  = r;
+  _lightColor[id][1]  = g;
+  _lightColor[id][2]  = b;
   _lightRadius[id]    = radius;
   _lightDir[id][0]    = 0.0f;
   _lightDir[id][1]    = -1.0f;
@@ -283,10 +319,9 @@ int OkLighting::registerLight(float x, float y, float z, float r, float g,
   return id;
 }
 
-int OkLighting::registerSpotLight(float x, float y, float z, float r,
-                                  float g, float b, float radius,
-                                  float dirX, float dirY, float dirZ,
-                                  float coneDeg, float intensity) {
+int OkLighting::registerSpotLight(float x, float y, float z, float r, float g,
+                                  float b, float radius, float dirX, float dirY,
+                                  float dirZ, float coneDeg, float intensity) {
   int id = registerLight(x, y, z, r, g, b, radius);
   if (id < 0) {
     return id;
@@ -310,9 +345,13 @@ void OkLighting::clearLights() {
   _lightGeneration++;
 }
 
-long OkLighting::getLightGeneration() { return _lightGeneration; }
+long OkLighting::getLightGeneration() {
+  return _lightGeneration;
+}
 
-int OkLighting::getLightCount() { return _lightCount; }
+int OkLighting::getLightCount() {
+  return _lightCount;
+}
 
 /**
  * @brief The most relevant lights for a point: sorted by distance
@@ -334,7 +373,7 @@ int OkLighting::getNearestLights(float x, float y, float z, int *outIdx,
     float d  = std::sqrt(dx * dx + dy * dy + dz * dz);
     float s  = d / (_lightRadius[i] > 1.0f ? _lightRadius[i] : 1.0f);
     // insertion into the small sorted best list
-    int   at = n;
+    int at = n;
     for (int j = 0; j < n; j++) {
       if (s < bestScore[j]) {
         at = j;
@@ -357,19 +396,29 @@ int OkLighting::getNearestLights(float x, float y, float z, int *outIdx,
   return n;
 }
 
-const float *OkLighting::getLightPosition(int idx) { return _lightPos[idx]; }
+const float *OkLighting::getLightPosition(int idx) {
+  return _lightPos[idx];
+}
 
-const float *OkLighting::getLightColor(int idx) { return _lightColor[idx]; }
+const float *OkLighting::getLightColor(int idx) {
+  return _lightColor[idx];
+}
 
-float OkLighting::getLightRadius(int idx) { return _lightRadius[idx]; }
+float OkLighting::getLightRadius(int idx) {
+  return _lightRadius[idx];
+}
 
 const float *OkLighting::getLightDirection(int idx) {
   return _lightDir[idx];
 }
 
-float OkLighting::getLightCosCone(int idx) { return _lightCosCone[idx]; }
+float OkLighting::getLightCosCone(int idx) {
+  return _lightCosCone[idx];
+}
 
-float OkLighting::getLightIntensity(int idx) { return _lightIntensity[idx]; }
+float OkLighting::getLightIntensity(int idx) {
+  return _lightIntensity[idx];
+}
 
 /**
  * @brief Shared radial halo texture: a soft white disc whose alpha
@@ -392,12 +441,12 @@ OkTexture *OkLighting::getHaloTexture() {
       if (a < 0.0f) {
         a = 0.0f;
       }
-      a               = a * a;  // quadratic falloff, soft rim
-      int off         = (y * SIZE + x) * 4;
-      rgba[off]       = 255;
-      rgba[off + 1]   = 255;
-      rgba[off + 2]   = 255;
-      rgba[off + 3]   = (unsigned char)(a * 255.0f);
+      a             = a * a;  // quadratic falloff, soft rim
+      int off       = (y * SIZE + x) * 4;
+      rgba[off]     = 255;
+      rgba[off + 1] = 255;
+      rgba[off + 2] = 255;
+      rgba[off + 3] = (unsigned char)(a * 255.0f);
     }
   }
   return OkTextureHandler::getInstance()->createTextureFromRawData(

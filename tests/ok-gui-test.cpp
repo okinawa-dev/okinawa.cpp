@@ -203,13 +203,13 @@ TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
     OkLighting::evaluate(12.0f, tint, fog, density, sun, dir);
     REQUIRE(dir[1] < -0.5f);  // high above: the light points down
     OkLighting::evaluate(2.0f, tint, fog, density, sun, dir);
-    REQUIRE(dir[1] > 0.0f);   // parked below the horizon
+    REQUIRE(dir[1] > 0.0f);  // parked below the horizon
   }
   SECTION("Night is darker than midday") {
     float dayTint[3], dayFog[3], dayDensity, daySun[3], dayDir[3];
     OkLighting::evaluate(12.0f, dayTint, dayFog, dayDensity, daySun, dayDir);
     OkLighting::evaluate(2.0f, tint, fog, density, sun, dir);
-    float dayLum = dayTint[0] + dayTint[1] + dayTint[2];
+    float dayLum   = dayTint[0] + dayTint[1] + dayTint[2];
     float nightLum = tint[0] + tint[1] + tint[2];
     REQUIRE(nightLum < dayLum);
     // and no directional light is left at night
@@ -233,10 +233,20 @@ TEST_CASE("OkLighting atmosphere curve", "[lighting]") {
     // Two keys are enough to describe a world: the engine must take
     // them and interpolate between them, wrapping around midnight.
     const OkAtmosphereKey CUSTOM[] = {
-        {0.0f, {0.10f, 0.10f, 0.10f}, {0.0f, 0.0f, 0.0f}, 0.0100f,
-         {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 0.10f},
-        {12.0f, {0.90f, 0.90f, 0.90f}, {1.0f, 1.0f, 1.0f}, 0.0000f,
-         {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, 0.90f},
+        {0.0f,
+         {0.10f, 0.10f, 0.10f},
+         {0.0f, 0.0f, 0.0f},
+         0.0100f,
+         {0.0f, 0.0f, 0.0f},
+         {0.0f, 0.0f, 0.0f},
+         0.10f},
+        {12.0f,
+         {0.90f, 0.90f, 0.90f},
+         {1.0f, 1.0f, 1.0f},
+         0.0000f,
+         {1.0f, 1.0f, 1.0f},
+         {1.0f, 1.0f, 1.0f},
+         0.90f},
     };
     OkLighting::setAtmosphereCurve(CUSTOM, 2);
     REQUIRE(OkLighting::getAtmosphereKeyCount() == 2);

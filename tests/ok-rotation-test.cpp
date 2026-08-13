@@ -1,7 +1,7 @@
 // NOLINTBEGIN(readability-magic-numbers)
 
-#include "okinawa/math/rotation.hpp"
 #include "okinawa/math/point.hpp"
+#include "okinawa/math/rotation.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>

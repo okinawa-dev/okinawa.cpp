@@ -77,7 +77,7 @@ private:
   static float  _time;
   static float  _motion[3];  // dx, dy, strength
   static bool   _active;
-  static GLuint _focusPbo;    // async depth readback, avoids a GPU stall
+  static GLuint _focusPbo;  // async depth readback, avoids a GPU stall
   static bool   _focusPending;
   static float  _focusMetres;  // the eased focus distance
 };

@@ -7,8 +7,8 @@ class OkObject;
 
 /**
  * @brief Camera that orbits behind/above the target and looks at it. The mouse
- *        (look) orbits it (yaw free, pitch clamped). Because it looks toward the
- *        target, a camera-relative controller using this as its reference moves
+ *        (look) orbits it (yaw free, pitch clamped). Because it looks toward
+ * the target, a camera-relative controller using this as its reference moves
  *        the avatar "into the screen".
  */
 class OkThirdPersonCamera : public OkCamera {
@@ -22,7 +22,8 @@ public:
 
   void setDistance(float distance) { _distance = distance; }
 
-  // Orbit interface (driven by the MCP `view` tool): absolute yaw/pitch/distance.
+  // Orbit interface (driven by the MCP `view` tool): absolute
+  // yaw/pitch/distance.
   bool  isOrbit() const override { return true; }
   void  setOrbit(float yawDeg, float pitchDeg, float distance) override;
   float orbitYawDeg() const override;

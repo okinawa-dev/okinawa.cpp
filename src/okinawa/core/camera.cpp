@@ -240,7 +240,9 @@ void OkCamera::look(float yawDeg, float pitchDeg) {
   float       pitch    = rot.getPitch() + glm::radians(pitchDeg);
   float       yaw      = rot.getYaw() - glm::radians(yawDeg);
   const float maxPitch = glm::radians(89.0f);
-  if (pitch > maxPitch) pitch = maxPitch;
-  if (pitch < -maxPitch) pitch = -maxPitch;
+  if (pitch > maxPitch)
+    pitch = maxPitch;
+  if (pitch < -maxPitch)
+    pitch = -maxPitch;
   setRotation(pitch, yaw, rot.getRoll());
 }

@@ -8,8 +8,8 @@ class OkObject;
 
 /**
  * @brief Static, "Resident Evil"-style camera: stays at a fixed world position
- *        and optionally re-aims at the target each frame (so the avatar stays in
- *        view as it moves through the room). Ignores the mouse. Use several of
+ *        and optionally re-aims at the target each frame (so the avatar stays
+ * in view as it moves through the room). Ignores the mouse. Use several of
  *        these, switching between them per area; a controller referencing the
  *        active camera then makes control room-relative.
  */

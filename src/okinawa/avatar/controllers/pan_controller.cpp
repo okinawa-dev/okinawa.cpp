@@ -52,7 +52,7 @@ void OkPanController::update(float dt, const OkInputState &input,
   }
 
   float   scale = _speedPerPixel * distance;
-  OkPoint step  = rightGround * (input.panX * scale) +
-                 upGround * (input.panY * scale);
+  OkPoint step =
+      rightGround * (input.panX * scale) + upGround * (input.panY * scale);
   controlled.move(step.x(), 0.0f, step.z());
 }

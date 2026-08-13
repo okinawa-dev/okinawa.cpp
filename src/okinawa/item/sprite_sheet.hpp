@@ -17,10 +17,10 @@ class OkTexture;
  */
 struct OkSpriteRegion {
   std::string name;
-  int         x, y, w, h;    // pixels in the sheet, origin top-left
+  int         x, y, w, h;      // pixels in the sheet, origin top-left
   float       u0, v0, u1, v1;  // ready to hand to a quad
-  bool        rotated;       // packed rotated 90 degrees (rare)
-  int         durationMs;    // animation hint, 0 when not applicable
+  bool        rotated;         // packed rotated 90 degrees (rare)
+  int         durationMs;      // animation hint, 0 when not applicable
 };
 
 /**
@@ -50,16 +50,15 @@ public:
   // Load `jsonPath` (Aseprite/TexturePacker JSON) plus the image it
   // names. `imageOverride` wins over the JSON's meta.image when given.
   // Returns false and logs on failure.
-  bool load(const std::string &jsonPath,
-            const std::string &imageOverride = "");
+  bool load(const std::string &jsonPath, const std::string &imageOverride = "");
 
   // The shared GPU texture. Hand it to items with setTexture().
   OkTexture         *getTexture() const { return _texture; }
   const std::string &getTextureName() const { return _textureName; }
 
   // Region lookup by name; null when missing.
-  const OkSpriteRegion *getRegion(const std::string &name) const;
-  bool                  hasRegion(const std::string &name) const;
+  const OkSpriteRegion    *getRegion(const std::string &name) const;
+  bool                     hasRegion(const std::string &name) const;
   std::vector<std::string> getRegionNames() const;
   int                      getRegionCount() const;
 
@@ -77,9 +76,9 @@ private:
   std::string _textureName;
   int         _width, _height;
 
-  std::map<std::string, OkSpriteRegion>            _regions;
-  std::vector<std::string>                         _order;
-  std::map<std::string, std::vector<std::string> > _groups;
+  std::map<std::string, OkSpriteRegion>           _regions;
+  std::vector<std::string>                        _order;
+  std::map<std::string, std::vector<std::string>> _groups;
 };
 
 #endif

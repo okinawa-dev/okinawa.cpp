@@ -17,24 +17,24 @@ protected:
   // subclasses issue their own draws with the same state: OkBillboard
   // modulates the tint per frame, OkInstancedItem replaces the draw call
   // with an instanced one.
-  bool   visible;
-  bool   drawWireframe;  // Flag to control wireframe rendering
+  bool visible;
+  bool drawWireframe;  // Flag to control wireframe rendering
   // Whether the global `graphics.wireframe` switch reaches this item.
   // It is a way of looking at the scene, so the interface drawn over
   // the scene stays out of it: a wireframed font atlas is a screenful
   // of empty boxes, and the console that turns the switch back off is
   // the first thing to become unreadable.
-  bool   wireframeGlobal;
+  bool wireframeGlobal;
   // Whether this item is drawn into the shadow maps. Most things are;
   // the ones that are not are the ones that are light rather than
   // matter -- a lamp's corona, an emissive pane, the sky itself. They
   // have geometry, so without this they are recorded as occluders and
   // a glow ends up casting a shadow.
   bool   castsShadow;
-  GLenum drawMode;       // GL_TRIANGLES, GL_LINES, etc.
+  GLenum drawMode;  // GL_TRIANGLES, GL_LINES, etc.
 
   // Flat fill colour when untextured, and wireframe line colour (RGB, white).
-  float fillColor[4];       // RGBA: alpha honoured by blended passes (GUI)
+  float fillColor[4];  // RGBA: alpha honoured by blended passes (GUI)
   float wireframeColor[3];
 
   // Geometry
@@ -42,13 +42,13 @@ protected:
   unsigned int *indices;
   long          numVertices;
   long          numIndices;
-  float         radius;        // bounding-sphere radius (half bbox diagonal)
+  float         radius;           // bounding-sphere radius (half bbox diagonal)
   float         sphereCenter[3];  // bounding-sphere centre, local coords
-  bool          additive;      // additive blending (light halos)
-  bool          unlit;         // skip Gouraud light and the scene tint
+  bool          additive;         // additive blending (light halos)
+  bool          unlit;            // skip Gouraud light and the scene tint
   int           nearLights[8];    // cached nearest point-light indices
   int           nearLightCount;
-  long          nearLightGen;     // registry generation of the cache
+  long          nearLightGen;  // registry generation of the cache
 
   // OpenGL objects
   GLuint VAO, VBO, EBO;
@@ -74,13 +74,13 @@ protected:
     std::string textureName;
   };
   std::vector<MaterialRange> materials;
-  OkTexture  *texture;
+  OkTexture                 *texture;
 
   // Multiplies the texture in the fill pass.
   float tintColor[4];
   bool  maskedMaterials;
-  float fade;                // 1 = solid; below that, dithered away
-  bool  fadeInverted;        // use the opposite half of the pattern
+  float fade;          // 1 = solid; below that, dithered away
+  bool  fadeInverted;  // use the opposite half of the pattern
   float matTint[3][3];
   float matLuma[3];
 
@@ -142,29 +142,27 @@ public:
   void   clearMaterials();
   size_t getMaterialCount() const { return materials.size(); }
 
-  void   setWireframe(bool wireframe) { drawWireframe = wireframe; }
-  bool   getWireframe() const { return drawWireframe; }
+  void setWireframe(bool wireframe) { drawWireframe = wireframe; }
+  bool getWireframe() const { return drawWireframe; }
   // Opt this item out of (or back into) the global wireframe switch.
   // Its own setWireframe still applies either way.
-  void   setWireframeGlobal(bool on) { wireframeGlobal = on; }
+  void setWireframeGlobal(bool on) { wireframeGlobal = on; }
   // Take this item out of (or back into) the shadow maps. Light does
   // not cast shadows; matter does.
-  void   setCastsShadow(bool on) { castsShadow = on; }
-  bool   getCastsShadow() const { return castsShadow; }
+  void setCastsShadow(bool on) { castsShadow = on; }
+  bool getCastsShadow() const { return castsShadow; }
   // Set by the shadow map around its own pass, so an item can tell
   // which pass is drawing it.
   static void setShadowPass(bool on);
   static bool inShadowPass();
-  bool   getWireframeGlobal() const { return wireframeGlobal; }
-  void   setWireframeColor(float r, float g, float b) {
+  bool        getWireframeGlobal() const { return wireframeGlobal; }
+  void        setWireframeColor(float r, float g, float b) {
     wireframeColor[0] = r;
     wireframeColor[1] = g;
     wireframeColor[2] = b;
   }
-  void   setFillColor(float r, float g, float b) {
-    setFillColor(r, g, b, 1.0f);
-  }
-  void   setFillColor(float r, float g, float b, float a) {
+  void setFillColor(float r, float g, float b) { setFillColor(r, g, b, 1.0f); }
+  void setFillColor(float r, float g, float b, float a) {
     fillColor[0] = r;
     fillColor[1] = g;
     fillColor[2] = b;
@@ -203,7 +201,7 @@ public:
     matTint[slot][2] = b;
   }
 
-  void   setTintColor(float r, float g, float b, float a) {
+  void setTintColor(float r, float g, float b, float a) {
     tintColor[0] = r;
     tintColor[1] = g;
     tintColor[2] = b;
@@ -214,8 +212,8 @@ public:
   // pixels on an ordered pattern. Two versions of the same object can
   // therefore trade places gradually while both stay in the opaque
   // pass -- no blending, no sorting, depth buffer intact.
-  void   setFade(float f) { fade = f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f); }
-  float  getFade() const { return fade; }
+  void  setFade(float f) { fade = f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f); }
+  float getFade() const { return fade; }
   // The two sides of a handover must drop opposite pixels, or each
   // keeps the same half and the rest shows through to the background.
   // Set this on one of the pair, not on both.

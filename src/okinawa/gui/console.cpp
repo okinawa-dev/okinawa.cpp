@@ -11,15 +11,15 @@
 #include <cstdlib>
 #include <sstream>
 
-bool                              OkConsole::_open = false;
-std::vector<OkConsole::Command>   OkConsole::_commands;
-std::vector<std::string>          OkConsole::_output;
-std::vector<std::string>          OkConsole::_history;
-int                               OkConsole::_historyPos = -1;
-unsigned long                     OkConsole::_printed    = 0;
-std::string                       OkConsole::_input;
-float                             OkConsole::_blinkT  = 0.0f;
-bool                              OkConsole::_uiBuilt = false;
+bool                            OkConsole::_open = false;
+std::vector<OkConsole::Command> OkConsole::_commands;
+std::vector<std::string>        OkConsole::_output;
+std::vector<std::string>        OkConsole::_history;
+int                             OkConsole::_historyPos = -1;
+unsigned long                   OkConsole::_printed    = 0;
+std::string                     OkConsole::_input;
+float                           OkConsole::_blinkT  = 0.0f;
+bool                            OkConsole::_uiBuilt = false;
 
 // UI constants: layer order (over everything), visible output lines, text
 // height and margins in grid cells, scrollback cap and cursor blink rate.
@@ -57,26 +57,26 @@ void OkConsole::initialize() {
                     (void)args;
                     OkCore::askForExit();
                   });
-  registerCommand(
-      "set", "set <config-key> <value>: write an engine config value",
-      [](const std::vector<std::string> &args) {
-        if (args.size() != 2) {
-          OkConsole::print("usage: set <config-key> <value>");
-          // "set key" with no value: also show the current value, like
-          // a get -- handy when checking before changing.
-          if (args.size() == 1 && OkConfig::hasKey(args[0])) {
-            OkConsole::print(args[0] + " = " +
-                             OkConfig::getValueAsString(args[0]));
-          }
-          return;
-        }
-        const std::string &key = args[0];
-        const std::string &val = args[1];
-        // Typed write: an existing key keeps its type ("set x 0" on a
-        // float key stores 0.0f, not an int in a different map).
-        OkConfig::setFromString(key, val);
-        OkConsole::print(key + " = " + val);
-      });
+  registerCommand("set",
+                  "set <config-key> <value>: write an engine config value",
+                  [](const std::vector<std::string> &args) {
+                    if (args.size() != 2) {
+                      OkConsole::print("usage: set <config-key> <value>");
+                      // "set key" with no value: also show the current value,
+                      // like a get -- handy when checking before changing.
+                      if (args.size() == 1 && OkConfig::hasKey(args[0])) {
+                        OkConsole::print(args[0] + " = " +
+                                         OkConfig::getValueAsString(args[0]));
+                      }
+                      return;
+                    }
+                    const std::string &key = args[0];
+                    const std::string &val = args[1];
+                    // Typed write: an existing key keeps its type ("set x 0" on
+                    // a float key stores 0.0f, not an int in a different map).
+                    OkConfig::setFromString(key, val);
+                    OkConsole::print(key + " = " + val);
+                  });
   registerCommand(
       "get", "get <key-or-prefix>: read config values (prefix lists names)",
       [](const std::vector<std::string> &args) {
@@ -88,12 +88,10 @@ void OkConsole::initialize() {
         // An exact key always wins, even when it is also a prefix of
         // other keys.
         if (OkConfig::hasKey(prefix)) {
-          OkConsole::print(prefix + " = " +
-                           OkConfig::getValueAsString(prefix));
+          OkConsole::print(prefix + " = " + OkConfig::getValueAsString(prefix));
           return;
         }
-        std::vector<std::string> keys =
-            OkConfig::getKeysWithPrefix(prefix);
+        std::vector<std::string> keys = OkConfig::getKeysWithPrefix(prefix);
         if (keys.empty()) {
           OkConsole::print("no config keys match: " + prefix);
         } else if (keys.size() == 1) {
@@ -187,9 +185,8 @@ void OkConsole::print(const std::string &line) {
   _output.push_back(line);
   _printed++;
   if ((int)_output.size() > CONSOLE_SCROLLBACK) {
-    _output.erase(_output.begin(),
-                  _output.begin() +
-                      ((long)_output.size() - CONSOLE_SCROLLBACK));
+    _output.erase(_output.begin(), _output.begin() + ((long)_output.size() -
+                                                      CONSOLE_SCROLLBACK));
   }
 }
 
@@ -212,7 +209,7 @@ std::vector<std::string> OkConsole::getOutputTail(int maxLines) {
 }
 
 void OkConsole::toggle() {
-  _open = !_open;
+  _open          = !_open;
   OkInput *input = OkCore::getInput();
   if (input != nullptr) {
     input->setTextCapture(_open);
@@ -278,15 +275,14 @@ void OkConsole::refreshUi() {
       OkGui::screenToGridY(OkGui::anchorOriginY(OK_GUI_ANCHOR_TOP) * 2.0f);
 
   float lineStep = CONSOLE_TEXT_CELLS + 0.2f;
-  float plateH   = (float)(CONSOLE_LINES + 1) * lineStep + CONSOLE_MARGIN * 3.0f;
+  float plateH = (float)(CONSOLE_LINES + 1) * lineStep + CONSOLE_MARGIN * 3.0f;
 
   // The half-screen classic: never taller than half the window.
   if (plateH > logicalH * 0.5f) {
     plateH = logicalH * 0.5f;
   }
 
-  OkGuiImage *plate =
-      (OkGuiImage *)layer->getItemByName("ok_console_plate");
+  OkGuiImage *plate = (OkGuiImage *)layer->getItemByName("ok_console_plate");
   if (plate != nullptr) {
     plate->setGridSize(logicalW, plateH);
     plate->setGridPosition(0.0f, -plateH * 0.5f);
@@ -308,37 +304,33 @@ void OkConsole::refreshUi() {
       rows.push_back("");
       continue;
     }
-    for (std::size_t at = 0; at < full.size();
-         at += (std::size_t)maxChars) {
+    for (std::size_t at = 0; at < full.size(); at += (std::size_t)maxChars) {
       rows.push_back(full.substr(at, (std::size_t)maxChars));
     }
   }
 
   int total = (int)rows.size();
   for (int i = 0; i < CONSOLE_LINES; i++) {
-    OkGuiText *line = (OkGuiText *)layer->getItemByName(
-        "ok_console_line" + std::to_string(i));
+    OkGuiText *line = (OkGuiText *)layer->getItemByName("ok_console_line" +
+                                                        std::to_string(i));
     if (line == nullptr) {
       continue;
     }
-    int src = total - CONSOLE_LINES + i;
+    int         src  = total - CONSOLE_LINES + i;
     std::string text = (src >= 0) ? rows[(std::size_t)src] : "";
     line->setText(text);
-    float y = -CONSOLE_MARGIN - (float)i * lineStep -
-              CONSOLE_TEXT_CELLS * 0.5f;
+    float y = -CONSOLE_MARGIN - (float)i * lineStep - CONSOLE_TEXT_CELLS * 0.5f;
     line->setGridPosition(CONSOLE_MARGIN + line->getGridWidth() * 0.5f, y);
   }
 
-  OkGuiText *prompt =
-      (OkGuiText *)layer->getItemByName("ok_console_input");
+  OkGuiText *prompt = (OkGuiText *)layer->getItemByName("ok_console_input");
   if (prompt != nullptr) {
     bool        cursorOn = ((int)(_blinkT / CONSOLE_BLINK_S) % 2) == 0;
     std::string text     = "> " + _input + (cursorOn ? "_" : " ");
     prompt->setText(text);
     float y = -CONSOLE_MARGIN - (float)CONSOLE_LINES * lineStep -
               CONSOLE_TEXT_CELLS * 0.5f;
-    prompt->setGridPosition(CONSOLE_MARGIN + prompt->getGridWidth() * 0.5f,
-                            y);
+    prompt->setGridPosition(CONSOLE_MARGIN + prompt->getGridWidth() * 0.5f, y);
   }
 }
 

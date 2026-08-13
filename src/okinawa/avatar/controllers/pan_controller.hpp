@@ -25,7 +25,8 @@ public:
   // distance. 0.002 ~= a screen-height mouse sweep crosses the visible area.
   explicit OkPanController(float speedPerPixel = 0.002f);
 
-  void update(float dt, const OkInputState &input, OkObject &controlled) override;
+  void update(float dt, const OkInputState &input,
+              OkObject &controlled) override;
 
   void  setSpeedPerPixel(float speed) { _speedPerPixel = speed; }
   float getSpeedPerPixel() const { return _speedPerPixel; }

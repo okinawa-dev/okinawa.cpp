@@ -133,8 +133,8 @@ OkTexture *OkFont::bake(const std::string &name, const std::string &text,
                         int scale, const unsigned char fg[4],
                         const unsigned char bg[4]) {
   int nd = (int)text.size();
-  int fw = nd * ADVANCE + 1;   // glyphs + 1px gap each, 1px left margin
-  int fh = GLYPH_H + 2;        // 1px margin top and bottom
+  int fw = nd * ADVANCE + 1;  // glyphs + 1px gap each, 1px left margin
+  int fh = GLYPH_H + 2;       // 1px margin top and bottom
   int w  = fw * scale;
   int h  = fh * scale;
 
@@ -196,13 +196,13 @@ OkTexture *OkFont::atlas() {
           continue;
         }
         // Store bottom-up (GL convention): row 0 of the glyph is its top.
-        int px = cellX + col;
-        int py = h - 1 - (cellY + fy);
-        std::size_t o = ((std::size_t)py * w + px) * 4;
-        rgba[o]       = 255;
-        rgba[o + 1]   = 255;
-        rgba[o + 2]   = 255;
-        rgba[o + 3]   = 255;
+        int         px = cellX + col;
+        int         py = h - 1 - (cellY + fy);
+        std::size_t o  = ((std::size_t)py * w + px) * 4;
+        rgba[o]        = 255;
+        rgba[o + 1]    = 255;
+        rgba[o + 2]    = 255;
+        rgba[o + 3]    = 255;
       }
     }
   }

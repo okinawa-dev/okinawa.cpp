@@ -10,44 +10,44 @@
 
 namespace {
 
-struct Job {
-  OkAsyncLoader::PrepareFn prepare;
-  OkAsyncLoader::FinishFn  finish;
-};
+  struct Job {
+    OkAsyncLoader::PrepareFn prepare;
+    OkAsyncLoader::FinishFn  finish;
+  };
 
-std::vector<std::thread> g_workers;
-std::deque<Job>          g_queued;   // waiting for a worker
-std::deque<Job>          g_ready;    // prepared, waiting for the main thread
-std::mutex               g_mutex;
-std::condition_variable  g_wake;
-bool                     g_running = false;
-int                      g_inFlight = 0;   // taken by a worker, not yet ready
+  std::vector<std::thread> g_workers;
+  std::deque<Job>          g_queued;  // waiting for a worker
+  std::deque<Job>          g_ready;   // prepared, waiting for the main thread
+  std::mutex               g_mutex;
+  std::condition_variable  g_wake;
+  bool                     g_running  = false;
+  int                      g_inFlight = 0;  // taken by a worker, not yet ready
 
-void workerLoop() {
-  for (;;) {
-    Job job;
-    {
-      std::unique_lock<std::mutex> lock(g_mutex);
-      g_wake.wait(lock, [] { return !g_running || !g_queued.empty(); });
-      if (!g_running && g_queued.empty()) {
-        return;
+  void workerLoop() {
+    for (;;) {
+      Job job;
+      {
+        std::unique_lock<std::mutex> lock(g_mutex);
+        g_wake.wait(lock, [] { return !g_running || !g_queued.empty(); });
+        if (!g_running && g_queued.empty()) {
+          return;
+        }
+        job = g_queued.front();
+        g_queued.pop_front();
+        g_inFlight++;
       }
-      job = g_queued.front();
-      g_queued.pop_front();
-      g_inFlight++;
-    }
 
-    if (job.prepare) {
-      job.prepare();
-    }
+      if (job.prepare) {
+        job.prepare();
+      }
 
-    {
-      std::lock_guard<std::mutex> lock(g_mutex);
-      g_inFlight--;
-      g_ready.push_back(job);
+      {
+        std::lock_guard<std::mutex> lock(g_mutex);
+        g_inFlight--;
+        g_ready.push_back(job);
+      }
     }
   }
-}
 
 }  // namespace
 
@@ -59,7 +59,7 @@ void OkAsyncLoader::initialize(int workers) {
     // Leave the main thread its core, and do not flood a small machine:
     // this service exists to hide latency, not to saturate the CPU.
     unsigned int hw = std::thread::hardware_concurrency();
-    workers = (int)(hw > 2 ? hw - 1 : 1);
+    workers         = (int)(hw > 2 ? hw - 1 : 1);
     if (workers > 4) {
       workers = 4;
     }

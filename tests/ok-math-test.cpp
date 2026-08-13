@@ -247,7 +247,7 @@ TEST_CASE("OkMath forward/angle round-trip", "[math]") {
   for (int i = 0; i < 5; i++) {
     for (int j = 0; j < 7; j++) {
       OkRotation source(pitches[i], yaws[j], 0.0f);
-      OkPoint     f = source.getForwardVector();
+      OkPoint    f = source.getForwardVector();
 
       // directionVectorToAngles -> rebuild forward -> must match.
       float p, y;

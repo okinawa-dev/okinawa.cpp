@@ -1,16 +1,17 @@
 #include "core.hpp"
-#include "../gui/console.hpp"
-#include "../lighting/lighting.hpp"
-#include "../lighting/light_clusters.hpp"
-#include "../lighting/shadow_map.hpp"
-#include "../math/frustum.hpp"
-#include "../render/postprocess.hpp"
-#include "../lighting/skybox.hpp"
-#include "../gui/gui.hpp"
-#include "../gui/stats.hpp"
 #include "../avatar/avatar.hpp"
 #include "../config/config.hpp"
+#include "../gui/console.hpp"
+#include "../gui/gui.hpp"
+#include "../gui/stats.hpp"
 #include "../input/input.hpp"
+#include "../lighting/light_clusters.hpp"
+#include "../lighting/lighting.hpp"
+#include "../lighting/shadow_map.hpp"
+#include "../lighting/skybox.hpp"
+#include "../math/frustum.hpp"
+#include "../mcp/mcp-config.hpp"  // resolves OKINAWA_WITH_MCP (NDEBUG / force)
+#include "../render/postprocess.hpp"
 #include "../shaders/shaders.hpp"
 #include "../utils/assets.hpp"
 #include "../utils/async_loader.hpp"
@@ -20,7 +21,6 @@
 #include "handlers/scenes.hpp"
 #include "math/rotation.hpp"
 #include "scene/scene.hpp"
-#include "../mcp/mcp-config.hpp"  // resolves OKINAWA_WITH_MCP (NDEBUG / force)
 #ifdef OKINAWA_WITH_MCP
 #include "../mcp/mcp-server.hpp"
 #endif
@@ -127,11 +127,13 @@ bool OkCore::initialize() {
   _input = new OkInput(_window, &OkCore::mouseCallback);
   // Mouse-wheel zoom (camera distance / height); routed like the look callback.
   glfwSetScrollCallback(_window, &OkCore::scrollCallback);
-  // Release the captured cursor when the window loses focus, so switching/moving
-  // windows frees the OS pointer (recapture happens on the next click in-view).
+  // Release the captured cursor when the window loses focus, so
+  // switching/moving windows frees the OS pointer (recapture happens on the
+  // next click in-view).
   glfwSetWindowFocusCallback(_window, &OkCore::focusCallback);
   // Click inside the render area captures the cursor for mouse-look (pointer
-  // lock); clicks on OS chrome (title bar) are not delivered here, so they work.
+  // lock); clicks on OS chrome (title bar) are not delivered here, so they
+  // work.
   glfwSetMouseButtonCallback(_window, &OkCore::mouseButtonCallback);
 
   OkLogger::info("Core", "Engine initialized successfully");
@@ -494,8 +496,7 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
           glUniform1f(ambLoc, OkLighting::getAmbientLight());
         }
         OkShadowMap::bind(_shaderProgram);
-        GLint plvLoc = glGetUniformLocation(_shaderProgram,
-                                            "pointLightLevel");
+        GLint plvLoc = glGetUniformLocation(_shaderProgram, "pointLightLevel");
         if (plvLoc != -1) {
           glUniform1f(plvLoc, OkLighting::getPointLightLevel());
         }
@@ -503,15 +504,15 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
         // Clustered forward: assign the registry's lights to the frame's
         // cluster grid and bind the buffers the shader reads.
         {
-          OkCamera *cam = _cameras[_currentCamera];
+          OkCamera *cam   = _cameras[_currentCamera];
           glm::mat4 viewM = glm::make_mat4(cam->getViewPtr());
           glm::mat4 projM = glm::make_mat4(cam->getProjectionPtr());
-          int fbw = 0, fbh = 0;
+          int       fbw = 0, fbh = 0;
           glfwGetFramebufferSize(_window, &fbw, &fbh);
           OkLightClusters::update(viewM, projM, cam->getNearPlane(),
                                   cam->getFarPlane());
-          OkLightClusters::bind(_shaderProgram, fbw, fbh,
-                                cam->getNearPlane(), cam->getFarPlane());
+          OkLightClusters::bind(_shaderProgram, fbw, fbh, cam->getNearPlane(),
+                                cam->getFarPlane());
         }
       }
 
@@ -564,10 +565,9 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       }
 
       OkFrustum::setActive(nullptr);
-      OkGuiStats::recordDraw(
-          std::chrono::duration<float, std::milli>(
-              std::chrono::steady_clock::now() - drawT0)
-              .count());
+      OkGuiStats::recordDraw(std::chrono::duration<float, std::milli>(
+                                 std::chrono::steady_clock::now() - drawT0)
+                                 .count());
 
       // Composite the offscreen frame to the window (no-op when
       // render.post is off).
@@ -659,7 +659,8 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
   yoffset *= sensitivity;
 
   // Route the look delta to the current camera: it orbits (third-person),
-  // free-flies (base/spectator) or ignores it (top-down/fixed), and repositions.
+  // free-flies (base/spectator) or ignores it (top-down/fixed), and
+  // repositions.
   applyLook(xoffset, yoffset);
 }
 
@@ -719,7 +720,8 @@ OkCamera *OkCore::activateOrbitCamera() {
  *        input is disabled (--no-input) or the window is not focused, matching
  *        mouseCallback, so scrolling in another app does not zoom the view.
  */
-void OkCore::scrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
+void OkCore::scrollCallback(GLFWwindow *window, double xoffset,
+                            double yoffset) {
   (void)xoffset;
   if ((_input != nullptr && !_input->isPhysicalInputEnabled()) ||
       (window != nullptr && glfwGetWindowAttrib(window, GLFW_FOCUSED) == 0)) {

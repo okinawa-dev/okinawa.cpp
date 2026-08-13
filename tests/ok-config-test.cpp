@@ -7,11 +7,9 @@
 // fixture resets it to defaults before each case so the tests are isolated
 // and independent of the (randomised) execution order.
 namespace {
-struct ConfigTestFixture {
-  ConfigTestFixture() {
-    OkConfig::reset();
-  }
-};
+  struct ConfigTestFixture {
+    ConfigTestFixture() { OkConfig::reset(); }
+  };
 }  // namespace
 
 TEST_CASE_METHOD(ConfigTestFixture,
@@ -38,7 +36,8 @@ TEST_CASE_METHOD(ConfigTestFixture,
   }
 }
 
-TEST_CASE_METHOD(ConfigTestFixture, "OkConfig value modifications", "[config]") {
+TEST_CASE_METHOD(ConfigTestFixture, "OkConfig value modifications",
+                 "[config]") {
   SECTION("Modify integer values") {
     OkConfig::setInt("window.width", 1024);
     REQUIRE(OkConfig::getInt("window.width") == 1024);

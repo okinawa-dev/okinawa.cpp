@@ -6,36 +6,36 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <utility>
 #include <glm/gtc/matrix_transform.hpp>
+#include <utility>
 #include <vector>
 
 namespace {
 
-// GPU-side light record: 3 vec4 per light (see the shader struct).
-const int LIGHT_FLOATS = 12;
+  // GPU-side light record: 3 vec4 per light (see the shader struct).
+  const int LIGHT_FLOATS = 12;
 
-GLuint g_lightTex     = 0;   // buffer texture: light records
-GLuint g_lightTbo     = 0;
-GLuint g_indexTex     = 0;   // buffer texture: light indices per cluster
-GLuint g_indexTbo     = 0;
-GLuint g_gridTex      = 0;   // buffer texture: (offset, count) per cluster
-GLuint g_gridTbo      = 0;
+  GLuint g_lightTex = 0;  // buffer texture: light records
+  GLuint g_lightTbo = 0;
+  GLuint g_indexTex = 0;  // buffer texture: light indices per cluster
+  GLuint g_indexTbo = 0;
+  GLuint g_gridTex  = 0;  // buffer texture: (offset, count) per cluster
+  GLuint g_gridTbo  = 0;
 
-std::vector<float>        g_lightData;
-std::vector<int>          g_indexData;
-std::vector<int>          g_gridData;
-std::vector<std::vector<int> > g_clusterLists;
+  std::vector<float>            g_lightData;
+  std::vector<int>              g_indexData;
+  std::vector<int>              g_gridData;
+  std::vector<std::vector<int>> g_clusterLists;
 
-int g_visibleLights = 0;
-int g_lightRefs     = 0;
+  int g_visibleLights = 0;
+  int g_lightRefs     = 0;
 
-// View-space depth of a slice boundary. Exponential distribution:
-// z(k) = near * (far/near)^(k / SLICES).
-float sliceDepth(int k, float nearPlane, float farPlane) {
-  float t = (float)k / (float)OkLightClusters::CLUSTERS_Z;
-  return nearPlane * std::pow(farPlane / nearPlane, t);
-}
+  // View-space depth of a slice boundary. Exponential distribution:
+  // z(k) = near * (far/near)^(k / SLICES).
+  float sliceDepth(int k, float nearPlane, float farPlane) {
+    float t = (float)k / (float)OkLightClusters::CLUSTERS_Z;
+    return nearPlane * std::pow(farPlane / nearPlane, t);
+  }
 
 }  // namespace
 
@@ -71,9 +71,8 @@ void OkLightClusters::ensureBuffers() {
  *        extent. This over-estimates slightly (a box around a sphere),
  *        which is the standard trade-off: cheap and conservative.
  */
-void OkLightClusters::update(const glm::mat4 &view,
-                             const glm::mat4 &projection, float nearPlane,
-                             float farPlane) {
+void OkLightClusters::update(const glm::mat4 &view, const glm::mat4 &projection,
+                             float nearPlane, float farPlane) {
   if (!OkConfig::getBool("lighting.clustered")) {
     g_visibleLights = 0;
     g_lightRefs     = 0;
@@ -96,8 +95,8 @@ void OkLightClusters::update(const glm::mat4 &view,
   // per-cluster cap, and filling it with far lights would starve the
   // near ones that actually model the scene (the lamp overhead losing
   // to a dozen lamps in a row).
-  int total = OkLighting::getLightCount();
-  std::vector<std::pair<float, int> > ordered;
+  int                                total = OkLighting::getLightCount();
+  std::vector<std::pair<float, int>> ordered;
   ordered.reserve((size_t)total);
   for (int li = 0; li < total; li++) {
     const float *lp = OkLighting::getLightPosition(li);
@@ -149,12 +148,16 @@ void OkLightClusters::update(const glm::mat4 &view,
       if (!any) {
         minX = maxX = ndcX;
         minY = maxY = ndcY;
-        any  = true;
+        any         = true;
       } else {
-        if (ndcX < minX) minX = ndcX;
-        if (ndcX > maxX) maxX = ndcX;
-        if (ndcY < minY) minY = ndcY;
-        if (ndcY > maxY) maxY = ndcY;
+        if (ndcX < minX)
+          minX = ndcX;
+        if (ndcX > maxX)
+          maxX = ndcX;
+        if (ndcY < minY)
+          minY = ndcY;
+        if (ndcY > maxY)
+          maxY = ndcY;
       }
     }
     if (!any) {
@@ -168,26 +171,34 @@ void OkLightClusters::update(const glm::mat4 &view,
     int x1 = (int)std::floor((maxX * 0.5f + 0.5f) * CLUSTERS_X);
     int y0 = (int)std::floor((minY * 0.5f + 0.5f) * CLUSTERS_Y);
     int y1 = (int)std::floor((maxY * 0.5f + 0.5f) * CLUSTERS_Y);
-    if (x0 < 0) x0 = 0;
-    if (y0 < 0) y0 = 0;
-    if (x1 >= CLUSTERS_X) x1 = CLUSTERS_X - 1;
-    if (y1 >= CLUSTERS_Y) y1 = CLUSTERS_Y - 1;
+    if (x0 < 0)
+      x0 = 0;
+    if (y0 < 0)
+      y0 = 0;
+    if (x1 >= CLUSTERS_X)
+      x1 = CLUSTERS_X - 1;
+    if (y1 >= CLUSTERS_Y)
+      y1 = CLUSTERS_Y - 1;
 
     // Depth slice range from the sphere's z extent.
     float zNear = vz - lr;
     float zFar  = vz + lr;
-    if (zNear < nearPlane) zNear = nearPlane;
-    if (zFar > farPlane) zFar = farPlane;
+    if (zNear < nearPlane)
+      zNear = nearPlane;
+    if (zFar > farPlane)
+      zFar = farPlane;
     int z0 = (int)std::floor(std::log(zNear / nearPlane) /
                              std::log(farPlane / nearPlane) * CLUSTERS_Z);
     int z1 = (int)std::floor(std::log(zFar / nearPlane) /
                              std::log(farPlane / nearPlane) * CLUSTERS_Z);
-    if (z0 < 0) z0 = 0;
-    if (z1 >= CLUSTERS_Z) z1 = CLUSTERS_Z - 1;
+    if (z0 < 0)
+      z0 = 0;
+    if (z1 >= CLUSTERS_Z)
+      z1 = CLUSTERS_Z - 1;
 
-    int slot = g_visibleLights++;
-    const float *lc = OkLighting::getLightColor(li);
-    const float *ld = OkLighting::getLightDirection(li);
+    int          slot = g_visibleLights++;
+    const float *lc   = OkLighting::getLightColor(li);
+    const float *ld   = OkLighting::getLightDirection(li);
     g_lightData.push_back(lp[0]);
     g_lightData.push_back(lp[1]);
     g_lightData.push_back(lp[2]);
@@ -205,8 +216,7 @@ void OkLightClusters::update(const glm::mat4 &view,
       for (int y = y0; y <= y1; y++) {
         for (int x = x0; x <= x1; x++) {
           int ci = (z * CLUSTERS_Y + y) * CLUSTERS_X + x;
-          if ((int)g_clusterLists[(size_t)ci].size() <
-              MAX_LIGHTS_PER_CLUSTER) {
+          if ((int)g_clusterLists[(size_t)ci].size() < MAX_LIGHTS_PER_CLUSTER) {
             g_clusterLists[(size_t)ci].push_back(slot);
           }
         }
@@ -220,9 +230,9 @@ void OkLightClusters::update(const glm::mat4 &view,
   g_gridData.clear();
   g_gridData.reserve(CLUSTER_COUNT * 2);
   for (int i = 0; i < CLUSTER_COUNT; i++) {
-    const std::vector<int> &list = g_clusterLists[(size_t)i];
-    int offset = (int)g_indexData.size();
-    int count  = (int)list.size();
+    const std::vector<int> &list   = g_clusterLists[(size_t)i];
+    int                     offset = (int)g_indexData.size();
+    int                     count  = (int)list.size();
     if (offset + count > MAX_LIGHT_REFS) {
       count = MAX_LIGHT_REFS - offset;
       if (count < 0) {
@@ -253,15 +263,14 @@ void OkLightClusters::update(const glm::mat4 &view,
                (GLsizeiptr)(g_indexData.size() * sizeof(int)),
                g_indexData.data(), GL_DYNAMIC_DRAW);
   glBindBuffer(GL_TEXTURE_BUFFER, g_gridTbo);
-  glBufferData(GL_TEXTURE_BUFFER,
-               (GLsizeiptr)(g_gridData.size() * sizeof(int)),
+  glBufferData(GL_TEXTURE_BUFFER, (GLsizeiptr)(g_gridData.size() * sizeof(int)),
                g_gridData.data(), GL_DYNAMIC_DRAW);
   glBindBuffer(GL_TEXTURE_BUFFER, 0);
 }
 
 void OkLightClusters::bind(GLuint program, int screenWidth, int screenHeight,
                            float nearPlane, float farPlane) {
-  bool on = OkConfig::getBool("lighting.clustered") && g_lightTbo != 0;
+  bool  on    = OkConfig::getBool("lighting.clustered") && g_lightTbo != 0;
   GLint onLoc = glGetUniformLocation(program, "clusteredOn");
   if (onLoc != -1) {
     glUniform1f(onLoc, on ? 1.0f : 0.0f);
@@ -282,11 +291,14 @@ void OkLightClusters::bind(GLuint program, int screenWidth, int screenHeight,
   glActiveTexture(GL_TEXTURE0);
 
   GLint loc = glGetUniformLocation(program, "clusterLights");
-  if (loc != -1) glUniform1i(loc, 4);
+  if (loc != -1)
+    glUniform1i(loc, 4);
   loc = glGetUniformLocation(program, "clusterIndices");
-  if (loc != -1) glUniform1i(loc, 5);
+  if (loc != -1)
+    glUniform1i(loc, 5);
   loc = glGetUniformLocation(program, "clusterGrid");
-  if (loc != -1) glUniform1i(loc, 6);
+  if (loc != -1)
+    glUniform1i(loc, 6);
   loc = glGetUniformLocation(program, "clusterDims");
   if (loc != -1) {
     glUniform3i(loc, CLUSTERS_X, CLUSTERS_Y, CLUSTERS_Z);
@@ -305,9 +317,13 @@ void OkLightClusters::bind(GLuint program, int screenWidth, int screenHeight,
   }
 }
 
-int OkLightClusters::getVisibleLightCount() { return g_visibleLights; }
+int OkLightClusters::getVisibleLightCount() {
+  return g_visibleLights;
+}
 
-int OkLightClusters::getLightRefCount() { return g_lightRefs; }
+int OkLightClusters::getLightRefCount() {
+  return g_lightRefs;
+}
 
 void OkLightClusters::shutdown() {
   if (g_lightTbo != 0) {

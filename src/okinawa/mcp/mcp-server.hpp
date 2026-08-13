@@ -6,8 +6,8 @@
  *
  * Lets an external agent connect to a running okinawa app over local HTTP
  * and drive it through MCP tools such as view_frame, which returns the
- * rendered frame as an image. The public surface deliberately exposes no HTTP or
- * JSON types: all of that lives behind the Impl pimpl in the .cpp, so
+ * rendered frame as an image. The public surface deliberately exposes no HTTP
+ * or JSON types: all of that lives behind the Impl pimpl in the .cpp, so
  * consumers do not inherit those dependencies.
  *
  * Compiled only when OKINAWA_WITH_MCP is defined (xmake option "mcp").

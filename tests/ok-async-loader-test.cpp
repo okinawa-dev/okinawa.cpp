@@ -19,25 +19,25 @@
 
 namespace {
 
-// Wait until every submitted job has been drained, or give up. Returns
-// false on timeout so a hung service fails the test instead of hanging
-// the suite.
-bool drainUntilIdle(int timeoutMs = 5000) {
-  std::chrono::steady_clock::time_point start =
-      std::chrono::steady_clock::now();
-  for (;;) {
-    OkAsyncLoader::drain(1000.0f);
-    if (OkAsyncLoader::getPendingCount() == 0) {
-      return true;
+  // Wait until every submitted job has been drained, or give up. Returns
+  // false on timeout so a hung service fails the test instead of hanging
+  // the suite.
+  bool drainUntilIdle(int timeoutMs = 5000) {
+    std::chrono::steady_clock::time_point start =
+        std::chrono::steady_clock::now();
+    for (;;) {
+      OkAsyncLoader::drain(1000.0f);
+      if (OkAsyncLoader::getPendingCount() == 0) {
+        return true;
+      }
+      if (std::chrono::duration_cast<std::chrono::milliseconds>(
+              std::chrono::steady_clock::now() - start)
+              .count() > timeoutMs) {
+        return false;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - start)
-            .count() > timeoutMs) {
-      return false;
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
-}
 
 }  // namespace
 
@@ -50,14 +50,13 @@ TEST_CASE("OkAsyncLoader runs both halves of a job", "[async]") {
     // Order matters: finish must never run before its own prepare.
     std::atomic<bool> orderKept(true);
 
-    OkAsyncLoader::submit(
-        [&] { prepared++; },
-        [&] {
-          if (prepared.load() == 0) {
-            orderKept = false;
-          }
-          finished++;
-        });
+    OkAsyncLoader::submit([&] { prepared++; },
+                          [&] {
+                            if (prepared.load() == 0) {
+                              orderKept = false;
+                            }
+                            finished++;
+                          });
 
     REQUIRE(drainUntilIdle());
     REQUIRE(prepared.load() == 1);
@@ -119,10 +118,10 @@ TEST_CASE("OkAsyncLoader finishes on the calling thread", "[async]") {
   // This is the service's core promise: whatever creates engine objects
   // must run on the thread that drains, because a rendering context
   // belongs to one thread.
-  std::thread::id                drainThread = std::this_thread::get_id();
-  std::atomic<bool>              finishOnDrainThread(true);
-  std::atomic<bool>              prepareOffThread(true);
-  std::atomic<int>               finished(0);
+  std::thread::id   drainThread = std::this_thread::get_id();
+  std::atomic<bool> finishOnDrainThread(true);
+  std::atomic<bool> prepareOffThread(true);
+  std::atomic<int>  finished(0);
 
   for (int i = 0; i < 50; i++) {
     OkAsyncLoader::submit(
@@ -206,9 +205,9 @@ TEST_CASE("OkAsyncLoader counters track the queue", "[async]") {
 TEST_CASE("OkAsyncLoader without initialize runs jobs inline", "[async]") {
   // Callers should not have to care whether the service is up: a tool,
   // a test or an early startup path gets the same result, just blocking.
-  std::atomic<int> prepared(0);
-  std::atomic<int> finished(0);
-  std::thread::id  here = std::this_thread::get_id();
+  std::atomic<int>  prepared(0);
+  std::atomic<int>  finished(0);
+  std::thread::id   here = std::this_thread::get_id();
   std::atomic<bool> ranHere(true);
 
   OkAsyncLoader::submit(
@@ -280,8 +279,7 @@ TEST_CASE("OkAsyncLoader tolerates a double initialize", "[async]") {
   OkAsyncLoader::shutdown();  // and a double shutdown is harmless
 }
 
-TEST_CASE("OkAsyncLoader handles jobs queued from a finish half",
-          "[async]") {
+TEST_CASE("OkAsyncLoader handles jobs queued from a finish half", "[async]") {
   // Chaining is how a caller gets ordering out of a service that has
   // none: each step queues the next from its own main-thread half.
   OkAsyncLoader::initialize(2);
@@ -290,8 +288,7 @@ TEST_CASE("OkAsyncLoader handles jobs queued from a finish half",
   std::vector<int> order;
 
   struct Chain {
-    static void step(int n, std::atomic<int> *steps,
-                     std::vector<int> *order) {
+    static void step(int n, std::atomic<int> *steps, std::vector<int> *order) {
       if (n > 4) {
         return;
       }

@@ -35,13 +35,13 @@ public:
 
   // Grid dimensions. Depth slices are distributed exponentially so near
   // clusters are short and far ones long (matching perspective).
-  static const int CLUSTERS_X = 16;
-  static const int CLUSTERS_Y = 9;
-  static const int CLUSTERS_Z = 24;
+  static const int CLUSTERS_X    = 16;
+  static const int CLUSTERS_Y    = 9;
+  static const int CLUSTERS_Z    = 24;
   static const int CLUSTER_COUNT = CLUSTERS_X * CLUSTERS_Y * CLUSTERS_Z;
   // Cap on light references across all clusters (a light in N clusters
   // costs N references) and per single cluster.
-  static const int MAX_LIGHT_REFS        = 262144;
+  static const int MAX_LIGHT_REFS         = 262144;
   static const int MAX_LIGHTS_PER_CLUSTER = 16;
   // Clustering depth range lives in the config (lighting.cluster.near /
   // lighting.cluster.far) rather than here, because it depends on the

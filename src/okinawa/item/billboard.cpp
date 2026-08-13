@@ -96,8 +96,8 @@ void OkBillboard::stepSelf(float dt) {
   // the camera distance so a quad near the lens vanishes instead of
   // filling the screen.
   if (proximityFade > 0.0f) {
-    OkPoint p  = anchorValid ? OkPoint(anchor[0], anchor[1], anchor[2])
-                             : getPosition();
+    OkPoint p =
+        anchorValid ? OkPoint(anchor[0], anchor[1], anchor[2]) : getPosition();
     OkPoint c  = cam->getPosition();
     float   dx = p.x() - c.x();
     float   dy = p.y() - c.y();
@@ -122,8 +122,7 @@ void OkBillboard::stepSelf(float dt) {
  * (third column of OkRotation::_updateMatrix), so solving
  * +Z = normalize(to - from) gives pitch and yaw directly. Roll is 0.
  */
-OkRotation OkBillboard::facingRotation(const OkPoint &from,
-                                       const OkPoint &to) {
+OkRotation OkBillboard::facingRotation(const OkPoint &from, const OkPoint &to) {
   float dx = to.x() - from.x();
   float dy = to.y() - from.y();
   float dz = to.z() - from.z();

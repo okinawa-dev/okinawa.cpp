@@ -28,13 +28,14 @@ void OkThirdPersonCamera::look(float yawDeg, float pitchDeg) {
 }
 
 void OkThirdPersonCamera::zoom(float delta) {
-  // Multiplicative so it feels even at any distance: each notch scales the orbit
-  // radius by ~0.88, clamped to a sane gameplay range.
+  // Multiplicative so it feels even at any distance: each notch scales the
+  // orbit radius by ~0.88, clamped to a sane gameplay range.
   _distance *= std::pow(0.88f, delta);
   _distance = std::max(2.0f, std::min(80.0f, _distance));
 }
 
-void OkThirdPersonCamera::setOrbit(float yawDeg, float pitchDeg, float distance) {
+void OkThirdPersonCamera::setOrbit(float yawDeg, float pitchDeg,
+                                   float distance) {
   // Absolute placement for the MCP `view` tool. Distance range is generous so a
   // top-down (pitch ~ -89, distance = height) can sit high above the avatar.
   _yaw      = glm::radians(yawDeg);
@@ -42,8 +43,12 @@ void OkThirdPersonCamera::setOrbit(float yawDeg, float pitchDeg, float distance)
   _distance = std::max(1.0f, std::min(2000.0f, distance));
 }
 
-float OkThirdPersonCamera::orbitYawDeg() const { return glm::degrees(_yaw); }
-float OkThirdPersonCamera::orbitPitchDeg() const { return glm::degrees(_pitch); }
+float OkThirdPersonCamera::orbitYawDeg() const {
+  return glm::degrees(_yaw);
+}
+float OkThirdPersonCamera::orbitPitchDeg() const {
+  return glm::degrees(_pitch);
+}
 
 void OkThirdPersonCamera::updateForTarget(const OkObject *target, float dt) {
   (void)dt;
@@ -58,6 +63,7 @@ void OkThirdPersonCamera::updateForTarget(const OkObject *target, float dt) {
   OkPoint look(std::sin(_yaw) * cp, sp, std::cos(_yaw) * cp);
   OkPoint eye = focus + look * (-_distance);
   setPosition(eye);
-  setRotation(OkMath::lookAt(eye, focus));  // forward == look -> get_state matches
+  setRotation(
+      OkMath::lookAt(eye, focus));  // forward == look -> get_state matches
   setSpeed(0.0f, 0.0f, 0.0f);
 }

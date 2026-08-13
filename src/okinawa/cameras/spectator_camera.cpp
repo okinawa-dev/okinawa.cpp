@@ -22,14 +22,18 @@ void OkSpectatorCamera::updateForTarget(const OkObject *target, float dt) {
   OkPoint forward = getRotation().getForwardVector();
   OkPoint right   = getRotation().getRightVector();
   OkPoint dir(0.0f, 0.0f, 0.0f);
-  if (state.forward) dir += forward;
-  if (state.backward) dir -= forward;
-  if (state.strafeRight) dir += right;
-  if (state.strafeLeft) dir -= right;
+  if (state.forward)
+    dir += forward;
+  if (state.backward)
+    dir -= forward;
+  if (state.strafeRight)
+    dir += right;
+  if (state.strafeLeft)
+    dir -= right;
 
   if (dir.magnitude() > 1e-4f) {
-    dir            = dir.normalize();
-    OkPoint step   = dir * (_moveSpeed * (dt / 1000.0f));
+    dir          = dir.normalize();
+    OkPoint step = dir * (_moveSpeed * (dt / 1000.0f));
     move(step.x(), step.y(), step.z());
   }
 }

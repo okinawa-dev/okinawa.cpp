@@ -71,17 +71,17 @@ public:
 private:
   static void ensureTarget(int size, int layers);
 
-  static GLuint    _fbo;
-  static GLuint    _depthTex;   // GL_TEXTURE_2D_ARRAY, one layer per cascade
-  static GLuint    _program;    // depth-only pass
-  static int       _size;
-  static int       _layers;     // layers the array was built with
+  static GLuint _fbo;
+  static GLuint _depthTex;  // GL_TEXTURE_2D_ARRAY, one layer per cascade
+  static GLuint _program;   // depth-only pass
+  static int    _size;
+  static int    _layers;  // layers the array was built with
   // State of the last draw, per cascade, so an identical one is skipped.
-  static bool      _neverDrawn;
-  static float     _lastDir[3];
-  static float     _lastCx[MAX_CASCADES];
-  static float     _lastCz[MAX_CASCADES];
-  static float     _lastExtent[MAX_CASCADES];
+  static bool  _neverDrawn;
+  static float _lastDir[3];
+  static float _lastCx[MAX_CASCADES];
+  static float _lastCz[MAX_CASCADES];
+  static float _lastExtent[MAX_CASCADES];
   // An empty 1x1x1 depth array, kept for the frames when there is no
   // real map to bind -- with the sun down, say. The world shader
   // declares a sampler2DArray whether or not anything is shadowing, and
@@ -94,9 +94,9 @@ private:
   static glm::mat4 _lightSpace[MAX_CASCADES];
   // Where each cascade stops, as a view-space distance. The world pass
   // picks a cascade by comparing the fragment's depth against these.
-  static float     _splitFar[MAX_CASCADES];
-  static int       _count;      // cascades actually in use
-  static float     _strength;
+  static float _splitFar[MAX_CASCADES];
+  static int   _count;  // cascades actually in use
+  static float _strength;
 };
 
 #endif

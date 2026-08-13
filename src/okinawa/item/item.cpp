@@ -1,9 +1,9 @@
 #include "item.hpp"
 #include "../config/config.hpp"
-#include "../lighting/lighting.hpp"
-#include "../math/frustum.hpp"
 #include "../core/gl_config.hpp"
 #include "../handlers/textures.hpp"
+#include "../lighting/lighting.hpp"
+#include "../math/frustum.hpp"
 #include "../utils/logger.hpp"
 #include "core/object.hpp"
 #include "item/texture.hpp"
@@ -48,9 +48,9 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   wireframeColor[1] = 1.0f;
   wireframeColor[2] = 1.0f;
 
-  numIndices  = indexCount;
-  texture     = nullptr;
-  textureName = "";
+  numIndices      = indexCount;
+  texture         = nullptr;
+  textureName     = "";
   sphereCenter[0] = 0.0f;
   sphereCenter[1] = 0.0f;
   sphereCenter[2] = 0.0f;
@@ -65,8 +65,8 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
     matTint[i][2] = 1.0f;
     matLuma[i]    = 0.0f;
   }
-  nearLightCount  = 0;
-  nearLightGen    = -1;
+  nearLightCount = 0;
+  nearLightGen   = -1;
 
   _adoptVertexData(vertexData, vertexCount, indexData, indexCount,
                    vertexStride);
@@ -104,8 +104,8 @@ void OkItem::_adoptVertexData(float *vertexData, long vertexCount,
     long vcount = vertexCount / 5;
     vertices    = new float[vcount * 8];
     for (long i = 0; i < vcount; i++) {
-      long src = i * 5;
-      long dst = i * 8;
+      long src          = i * 5;
+      long dst          = i * 8;
       vertices[dst]     = vertexData[src];
       vertices[dst + 1] = vertexData[src + 1];
       vertices[dst + 2] = vertexData[src + 2];
@@ -378,8 +378,12 @@ void OkItem::loadTextureFromFile(const std::string &texturePath) {
  * @param dt The delta time since the last update.
  */
 static bool g_shadowPass = false;
-void OkItem::setShadowPass(bool on) { g_shadowPass = on; }
-bool OkItem::inShadowPass() { return g_shadowPass; }
+void        OkItem::setShadowPass(bool on) {
+  g_shadowPass = on;
+}
+bool OkItem::inShadowPass() {
+  return g_shadowPass;
+}
 
 void OkItem::stepSelf(float dt) {
   // Call parent class step function first
@@ -416,8 +420,8 @@ void OkItem::drawSelf() {
   // World-space bounding-sphere centre: used by the frustum test and by
   // the point-light selection below.
   glm::mat4 tm = getTransformMatrix();
-  glm::vec4 wc = tm * glm::vec4(sphereCenter[0], sphereCenter[1],
-                                sphereCenter[2], 1.0f);
+  glm::vec4 wc =
+      tm * glm::vec4(sphereCenter[0], sphereCenter[1], sphereCenter[2], 1.0f);
 
   // Frustum culling: skip the draw when the item's bounding sphere is
   // fully outside the frame's view frustum (world pass only; the GUI and
@@ -429,8 +433,7 @@ void OkItem::drawSelf() {
     // more than the frustum test in an open world.
     float sx0 = std::sqrt(tm[0][0] * tm[0][0] + tm[0][1] * tm[0][1] +
                           tm[0][2] * tm[0][2]);
-    if (OkFrustum::isBeyondDrawDistance(wc.x, wc.y, wc.z,
-                                        radius * sx0)) {
+    if (OkFrustum::isBeyondDrawDistance(wc.x, wc.y, wc.z, radius * sx0)) {
       OkFrustum::addCulled();
       return;
     }
@@ -489,19 +492,19 @@ void OkItem::drawSelf() {
     if (cntLoc != -1) {
       glUniform1i(cntLoc, nearLightCount);
       for (int i = 0; i < nearLightCount; i++) {
-        const float *lp = OkLighting::getLightPosition(nearLights[i]);
-        const float *lc = OkLighting::getLightColor(nearLights[i]);
-        const float *ld = OkLighting::getLightDirection(nearLights[i]);
-        float        lr = OkLighting::getLightRadius(nearLights[i]);
-        float        cc = OkLighting::getLightCosCone(nearLights[i]);
-        float        li = OkLighting::getLightIntensity(nearLights[i]);
+        const float *lp   = OkLighting::getLightPosition(nearLights[i]);
+        const float *lc   = OkLighting::getLightColor(nearLights[i]);
+        const float *ld   = OkLighting::getLightDirection(nearLights[i]);
+        float        lr   = OkLighting::getLightRadius(nearLights[i]);
+        float        cc   = OkLighting::getLightCosCone(nearLights[i]);
+        float        li   = OkLighting::getLightIntensity(nearLights[i]);
         std::string  base = "pointLights[" + std::to_string(i) + "]";
         GLint        pLoc = glGetUniformLocation(current_program,
                                                  (base + ".posRadius").c_str());
-        GLint        cLoc = glGetUniformLocation(current_program,
-                                                 (base + ".color").c_str());
-        GLint        sLoc = glGetUniformLocation(current_program,
-                                                 (base + ".spot").c_str());
+        GLint        cLoc =
+            glGetUniformLocation(current_program, (base + ".color").c_str());
+        GLint sLoc =
+            glGetUniformLocation(current_program, (base + ".spot").c_str());
         if (pLoc != -1) {
           glUniform4f(pLoc, lp[0], lp[1], lp[2], lr);
         }
@@ -556,8 +559,7 @@ void OkItem::drawSelf() {
       glUniform4f(tintLoc, tintColor[0], tintColor[1], tintColor[2],
                   tintColor[3]);
     }
-    GLint maskLoc = glGetUniformLocation(current_program,
-                                         "maskedMaterials");
+    GLint maskLoc = glGetUniformLocation(current_program, "maskedMaterials");
     if (maskLoc != -1) {
       glUniform1f(maskLoc, maskedMaterials ? 1.0f : 0.0f);
     }
@@ -572,8 +574,7 @@ void OkItem::drawSelf() {
       if (cachedProgram != current_program) {
         cachedProgram = current_program;
         cachedFade    = glGetUniformLocation(current_program, "itemFade");
-        cachedInvert  = glGetUniformLocation(current_program,
-                                             "itemFadeInvert");
+        cachedInvert  = glGetUniformLocation(current_program, "itemFadeInvert");
       }
       if (cachedFade != -1) {
         glUniform1f(cachedFade, fade);
@@ -587,18 +588,16 @@ void OkItem::drawSelf() {
       for (int i = 0; i < 3; i++) {
         GLint loc = glGetUniformLocation(current_program, names[i]);
         if (loc != -1) {
-          glUniform4f(loc, matTint[i][0], matTint[i][1], matTint[i][2],
-                      1.0f);
+          glUniform4f(loc, matTint[i][0], matTint[i][1], matTint[i][2], 1.0f);
         }
       }
-      GLint lumaLoc = glGetUniformLocation(current_program,
-                                           "matLuminance");
+      GLint lumaLoc = glGetUniformLocation(current_program, "matLuminance");
       if (lumaLoc != -1) {
         glUniform3f(lumaLoc, matLuma[0], matLuma[1], matLuma[2]);
       }
     }
-    GLint texLoc   = glGetUniformLocation(current_program, "texture0");
-    GLint colorLoc = glGetUniformLocation(current_program, "wireframeColor");
+    GLint texLoc     = glGetUniformLocation(current_program, "texture0");
+    GLint colorLoc   = glGetUniformLocation(current_program, "wireframeColor");
     bool  texturesOn = OkConfig::getBool("graphics.textures");
 
     // One pass per material slot, over the same buffers: the transform,
@@ -608,9 +607,9 @@ void OkItem::drawSelf() {
     // is the common case.
     size_t passes = materials.empty() ? 1 : materials.size();
     for (size_t mi = 0; mi < passes; mi++) {
-      OkTexture *tex   = materials.empty() ? texture : materials[mi].texture;
-      long       first = materials.empty() ? 0 : materials[mi].first;
-      long       count = materials.empty() ? numIndices : materials[mi].count;
+      OkTexture *tex    = materials.empty() ? texture : materials[mi].texture;
+      long       first  = materials.empty() ? 0 : materials[mi].first;
+      long       count  = materials.empty() ? numIndices : materials[mi].count;
       bool       useTex = texturesOn && tex && tex->isLoaded();
       if (useTex) {
         glActiveTexture(GL_TEXTURE0);
@@ -683,9 +682,9 @@ void OkItem::drawSelf() {
     glDisable(GL_BLEND);
   }
   if (unlit) {
-    GLint litLoc  = glGetUniformLocation(current_program, "lightingOn");
-    GLint tintLoc = glGetUniformLocation(current_program, "sceneTint");
-    const float *wt = OkLighting::getSceneTint();
+    GLint        litLoc  = glGetUniformLocation(current_program, "lightingOn");
+    GLint        tintLoc = glGetUniformLocation(current_program, "sceneTint");
+    const float *wt      = OkLighting::getSceneTint();
     if (litLoc != -1) {
       glUniform1f(litLoc, 1.0f);
     }

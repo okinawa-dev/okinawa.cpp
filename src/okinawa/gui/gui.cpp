@@ -1,9 +1,9 @@
 #include "gui.hpp"
-#include "gui_layer.hpp"
 #include "../config/config.hpp"
 #include "../core/core.hpp"
 #include "../item/item.hpp"
 #include "../utils/logger.hpp"
+#include "gui_layer.hpp"
 #include <GLFW/glfw3.h>
 #include <cmath>
 #include <glm/ext/matrix_clip_space.hpp>
@@ -11,14 +11,14 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 
-bool    OkGui::_initialized = false;
+bool                      OkGui::_initialized = false;
 std::vector<OkGuiLayer *> OkGui::_layers;
-OkItem *OkGui::_gridMinor   = nullptr;
-OkItem *OkGui::_gridMajor   = nullptr;
-OkItem *OkGui::_gridAxes    = nullptr;
-float   OkGui::_builtW      = 0.0f;
-float   OkGui::_builtH      = 0.0f;
-float   OkGui::_builtStep   = 0.0f;
+OkItem                   *OkGui::_gridMinor = nullptr;
+OkItem                   *OkGui::_gridMajor = nullptr;
+OkItem                   *OkGui::_gridAxes  = nullptr;
+float                     OkGui::_builtW    = 0.0f;
+float                     OkGui::_builtH    = 0.0f;
+float                     OkGui::_builtStep = 0.0f;
 
 // Grid line colours (minor cell lines, stronger every-5 lines, 0,0 axes).
 // NOLINTBEGIN(readability-magic-numbers)
@@ -112,10 +112,16 @@ float OkGui::getScale() {
 /**
  * @brief Grid cell size in logical pixels, before scaling.
  */
-float OkGui::getCellSize() { return (float)OkConfig::getInt("gui.grid.size"); }
+float OkGui::getCellSize() {
+  return (float)OkConfig::getInt("gui.grid.size");
+}
 
-float OkGui::gridToScreenX(float gx) { return gx * getCellSize() * getScale(); }
-float OkGui::gridToScreenY(float gy) { return gy * getCellSize() * getScale(); }
+float OkGui::gridToScreenX(float gx) {
+  return gx * getCellSize() * getScale();
+}
+float OkGui::gridToScreenY(float gy) {
+  return gy * getCellSize() * getScale();
+}
 
 float OkGui::screenToGridX(float px) {
   float step = getCellSize() * getScale();
@@ -152,16 +158,16 @@ float OkGui::getCameraDistance() {
  */
 float OkGui::anchorOriginXFor(OkGuiAnchor anchor, float logicalW) {
   switch (anchor) {
-  case OK_GUI_ANCHOR_LEFT:
-  case OK_GUI_ANCHOR_TOP_LEFT:
-  case OK_GUI_ANCHOR_BOTTOM_LEFT:
-    return -logicalW * 0.5f;
-  case OK_GUI_ANCHOR_RIGHT:
-  case OK_GUI_ANCHOR_TOP_RIGHT:
-  case OK_GUI_ANCHOR_BOTTOM_RIGHT:
-    return logicalW * 0.5f;
-  default:
-    return 0.0f;
+    case OK_GUI_ANCHOR_LEFT:
+    case OK_GUI_ANCHOR_TOP_LEFT:
+    case OK_GUI_ANCHOR_BOTTOM_LEFT:
+      return -logicalW * 0.5f;
+    case OK_GUI_ANCHOR_RIGHT:
+    case OK_GUI_ANCHOR_TOP_RIGHT:
+    case OK_GUI_ANCHOR_BOTTOM_RIGHT:
+      return logicalW * 0.5f;
+    default:
+      return 0.0f;
   }
 }
 
@@ -171,16 +177,16 @@ float OkGui::anchorOriginXFor(OkGuiAnchor anchor, float logicalW) {
  */
 float OkGui::anchorOriginYFor(OkGuiAnchor anchor, float logicalH) {
   switch (anchor) {
-  case OK_GUI_ANCHOR_TOP:
-  case OK_GUI_ANCHOR_TOP_LEFT:
-  case OK_GUI_ANCHOR_TOP_RIGHT:
-    return logicalH * 0.5f;
-  case OK_GUI_ANCHOR_BOTTOM:
-  case OK_GUI_ANCHOR_BOTTOM_LEFT:
-  case OK_GUI_ANCHOR_BOTTOM_RIGHT:
-    return -logicalH * 0.5f;
-  default:
-    return 0.0f;
+    case OK_GUI_ANCHOR_TOP:
+    case OK_GUI_ANCHOR_TOP_LEFT:
+    case OK_GUI_ANCHOR_TOP_RIGHT:
+      return logicalH * 0.5f;
+    case OK_GUI_ANCHOR_BOTTOM:
+    case OK_GUI_ANCHOR_BOTTOM_LEFT:
+    case OK_GUI_ANCHOR_BOTTOM_RIGHT:
+      return -logicalH * 0.5f;
+    default:
+      return 0.0f;
   }
 }
 
@@ -238,13 +244,17 @@ bool OkGui::removeLayer(const std::string &name) {
   return false;
 }
 
-int OkGui::getLayerCount() { return (int)_layers.size(); }
+int OkGui::getLayerCount() {
+  return (int)_layers.size();
+}
 
 void OkGui::setDebugGrid(bool show) {
   OkConfig::setBool("gui.debug.grid", show);
 }
 
-bool OkGui::getDebugGrid() { return OkConfig::getBool("gui.debug.grid"); }
+bool OkGui::getDebugGrid() {
+  return OkConfig::getBool("gui.debug.grid");
+}
 
 /**
  * @brief Build (or rebuild) the three debug grid line items for the given
@@ -324,28 +334,28 @@ void OkGui::updateDebugGrid(float logicalW, float logicalH) {
   }
 
   if (!minorIdx.empty()) {
-    _gridMinor = new OkItem("gui_grid_minor", minorVerts.data(),
-                            (long)minorVerts.size(), minorIdx.data(),
-                            (long)minorIdx.size());
-    _gridMinor->setWireframeGlobal(false);   // interface, not scene
+    _gridMinor =
+        new OkItem("gui_grid_minor", minorVerts.data(), (long)minorVerts.size(),
+                   minorIdx.data(), (long)minorIdx.size());
+    _gridMinor->setWireframeGlobal(false);  // interface, not scene
     _gridMinor->setDrawMode(GL_LINES);
     _gridMinor->setFillColor(GRID_MINOR_COLOR[0], GRID_MINOR_COLOR[1],
                              GRID_MINOR_COLOR[2]);
   }
   if (!majorIdx.empty()) {
-    _gridMajor = new OkItem("gui_grid_major", majorVerts.data(),
-                            (long)majorVerts.size(), majorIdx.data(),
-                            (long)majorIdx.size());
-    _gridMajor->setWireframeGlobal(false);   // interface, not scene
+    _gridMajor =
+        new OkItem("gui_grid_major", majorVerts.data(), (long)majorVerts.size(),
+                   majorIdx.data(), (long)majorIdx.size());
+    _gridMajor->setWireframeGlobal(false);  // interface, not scene
     _gridMajor->setDrawMode(GL_LINES);
     _gridMajor->setFillColor(GRID_MAJOR_COLOR[0], GRID_MAJOR_COLOR[1],
                              GRID_MAJOR_COLOR[2]);
   }
   if (!axesIdx.empty()) {
-    _gridAxes = new OkItem("gui_grid_axes", axesVerts.data(),
-                           (long)axesVerts.size(), axesIdx.data(),
-                           (long)axesIdx.size());
-    _gridAxes->setWireframeGlobal(false);   // interface, not scene
+    _gridAxes =
+        new OkItem("gui_grid_axes", axesVerts.data(), (long)axesVerts.size(),
+                   axesIdx.data(), (long)axesIdx.size());
+    _gridAxes->setWireframeGlobal(false);  // interface, not scene
     _gridAxes->setDrawMode(GL_LINES);
     _gridAxes->setFillColor(GRID_AXES_COLOR[0], GRID_AXES_COLOR[1],
                             GRID_AXES_COLOR[2]);
