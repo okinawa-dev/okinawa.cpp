@@ -18,7 +18,6 @@ OkConfig::OkConfig() {
  * @brief Populate the configuration with its default values.
  */
 void OkConfig::setDefaults() {
-  // NOLINTBEGIN(readability-magic-numbers)
   // Graphics settings
   boolValues["graphics.wireframe"]   = false;
   boolValues["graphics.textures"]    = true;
@@ -68,7 +67,6 @@ void OkConfig::setDefaults() {
   floatValues["gui.scale"]           = 0.0f;
   floatValues["gui.fov"]             = 35.0f;
   boolValues["gui.debug.grid"]       = false;
-  // NOLINTEND(readability-magic-numbers)
 }
 
 /**

@@ -79,7 +79,6 @@ std::array<float, OkShadowMap::MAX_CASCADES> OkShadowMap::_splitFar = {0.0f};
 float                                        OkShadowMap::_strength = 0.0f;
 
 void OkShadowMap::initialize() {
-  // NOLINTBEGIN(readability-magic-numbers)
   OkConfig::setBool("shadows", true);
   OkConfig::setInt("shadows.size", 2048);       // depth map resolution
   OkConfig::setFloat("shadows.extent", 90.0f);  // metres covered, half-width
@@ -154,7 +153,6 @@ void OkShadowMap::initialize() {
   // box's depth range before it reaches the shader, so every cascade
   // gets the same margin on the ground.
   OkConfig::setFloat("shadows.bias", 0.045f);
-  // NOLINTEND(readability-magic-numbers)
   OkLogger::info("ShadowMap", "Config defaults registered");
 }
 

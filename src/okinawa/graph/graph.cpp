@@ -7,13 +7,6 @@
 #include <cmath>
 #include <vector>
 
-// NOLINTBEGIN(readability-magic-numbers)
-//
-// The numbers here are the look of a debug overlay: line widths, marker sizes,
-// colours. Naming each one yields a constant that repeats the number and
-// explains nothing; the ones that do carry meaning are named and
-// commented where they are used.
-
 OkGraph::OkGraph(const std::string &name) : OkObject(name) {
   _edgesItem    = nullptr;
   _nodesItem    = nullptr;
@@ -265,5 +258,3 @@ void OkGraph::drawSelf() {
   // Children (the nodes item) draw right after this; set their point size here.
   glPointSize(_nodeSize);
 }
-
-// NOLINTEND(readability-magic-numbers)

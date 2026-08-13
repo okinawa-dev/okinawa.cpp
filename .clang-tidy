@@ -1,8 +1,3 @@
-# Two checks are off on purpose: modernize-use-auto and
-# modernize-loop-convert. They contradict this project's own style, which is
-# classic hand-managed C++ (see claude.md) -- explicit types for every
-# variable, indexed for loops over vectors. A tool does not get to argue with
-# the house style. If the style changes, they come back.
 Checks: '
   clang-diagnostic-*,
   clang-analyzer-*,
@@ -22,6 +17,7 @@ Checks: '
   -readability-function-cognitive-complexity,
   -readability-implicit-bool-conversion,
   -readability-identifier-length,
+  -readability-magic-numbers,
   -modernize-use-auto,
   -modernize-loop-convert,
   -performance-no-int-to-ptr,

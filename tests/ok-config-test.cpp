@@ -1,5 +1,3 @@
-// NOLINTBEGIN(readability-magic-numbers)
-
 #include "okinawa/config/config.hpp"
 #include <catch2/catch_test_macros.hpp>
 
@@ -79,5 +77,3 @@ TEST_CASE_METHOD(ConfigTestFixture, "OkConfig error handling", "[config]") {
     REQUIRE_FALSE(OkConfig::getBool("test.value"));     // Wrong type
   }
 }
-
-// NOLINTEND(readability-magic-numbers)

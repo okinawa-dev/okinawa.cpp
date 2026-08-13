@@ -10,13 +10,6 @@
 #include <string>
 #include <vector>
 
-// NOLINTBEGIN(readability-magic-numbers)
-//
-// The numbers here are colours, and the curve of a sky through the day.
-// Naming each one yields a constant that repeats the number and
-// explains nothing; the ones that do carry meaning are named and
-// commented where they are used.
-
 // Out of line, because std::min binds its arguments by reference and so
 // takes the constant's address. Declared inside the class it has a value
 // but no storage, and the link fails only where something wants a
@@ -471,5 +464,3 @@ OkTexture *OkLighting::getHaloTexture() {
   return OkTextureHandler::getInstance()->createTextureFromRawData(
       "ok_halo", rgba.data(), SIZE, SIZE, RGBA_CHANNELS);
 }
-
-// NOLINTEND(readability-magic-numbers)

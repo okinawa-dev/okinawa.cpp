@@ -1,5 +1,3 @@
-// NOLINTBEGIN(readability-magic-numbers)
-
 #include "okinawa/item/billboard.hpp"
 #include "okinawa/math/point.hpp"
 #include "okinawa/math/rotation.hpp"
@@ -67,5 +65,3 @@ TEST_CASE("OkBillboard facing rotation", "[billboard]") {
     REQUIRE_THAT(rot.getYaw(), WithinAbs(0.0f, 0.0001f));
   }
 }
-
-// NOLINTEND(readability-magic-numbers)

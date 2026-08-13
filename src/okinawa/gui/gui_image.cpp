@@ -2,13 +2,6 @@
 #include "gui.hpp"
 #include <array>
 
-// NOLINTBEGIN(readability-magic-numbers)
-//
-// The numbers here are interface layout and colour.
-// Naming each one yields a constant that repeats the number and
-// explains nothing; the ones that do carry meaning are named and
-// commented where they are used.
-
 // Unit quad centred on the origin, on the Z=0 plane. Vertex stride is
 // 5 floats (position + UV); v=0 at the bottom (textures load flipped for
 // GL, so this shows the image upright).
@@ -62,5 +55,3 @@ void OkGuiImage::drawSelf() {
   setScaling(OkGui::gridToScreenX(_gridW), OkGui::gridToScreenY(_gridH), 1.0f);
   OkItem::drawSelf();
 }
-
-// NOLINTEND(readability-magic-numbers)

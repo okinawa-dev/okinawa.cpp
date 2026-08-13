@@ -1,5 +1,3 @@
-// NOLINTBEGIN(readability-magic-numbers)
-
 #include "okinawa/math/point.hpp"
 #include "okinawa/math/rotation.hpp"
 #include <catch2/catch_test_macros.hpp>
@@ -210,5 +208,3 @@ TEST_CASE("OkRotation combine operations", "[rotation]") {
     REQUIRE_THAT(forward.z(), WithinAbs(0.0f, 0.0001f));
   }
 }
-
-// NOLINTEND(readability-magic-numbers)

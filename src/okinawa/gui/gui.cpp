@@ -12,13 +12,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 
-// NOLINTBEGIN(readability-magic-numbers)
-//
-// The numbers here are interface layout and colour.
-// Naming each one yields a constant that repeats the number and
-// explains nothing; the ones that do carry meaning are named and
-// commented where they are used.
-
 bool                      OkGui::_initialized = false;
 std::vector<OkGuiLayer *> OkGui::_layers;
 OkItem                   *OkGui::_gridMinor = nullptr;
@@ -467,5 +460,3 @@ void OkGui::draw() {
 
   glEnable(GL_DEPTH_TEST);
 }
-
-// NOLINTEND(readability-magic-numbers)

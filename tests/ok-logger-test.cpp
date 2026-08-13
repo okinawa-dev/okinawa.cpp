@@ -1,5 +1,3 @@
-// NOLINTBEGIN(readability-magic-numbers)
-
 #include "okinawa/utils/logger.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
@@ -239,5 +237,3 @@ TEST_CASE("OkLogger mixed typed and untyped logging", "[logger]") {
     OkLogger::enableLogType("Core");
   }
 }
-
-// NOLINTEND(readability-magic-numbers)

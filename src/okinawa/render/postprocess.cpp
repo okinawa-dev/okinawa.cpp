@@ -48,7 +48,6 @@ bool                 OkPostProcess::_active       = false;
 
 void OkPostProcess::initialize() {
   // Master switch and per-effect toggles/parameters. All console-reachable.
-  // NOLINTBEGIN(readability-magic-numbers)
   OkConfig::setBool("render.post", true);
   OkConfig::setBool("post.dof", true);
   OkConfig::setFloat("post.dof.focus", 30.0f);  // metres, sharp centre
@@ -77,7 +76,6 @@ void OkPostProcess::initialize() {
   OkConfig::setFloat("post.bloom.threshold", 0.85f);
   OkConfig::setFloat("post.bloom.knee", 0.30f);
   OkConfig::setFloat("post.bloom.strength", 1.00f);
-  // NOLINTEND(readability-magic-numbers)
   OkLogger::info("PostProcess", "Config defaults registered");
 }
 

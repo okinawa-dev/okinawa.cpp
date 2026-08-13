@@ -4,13 +4,6 @@
 #include <array>
 #include <vector>
 
-// NOLINTBEGIN(readability-magic-numbers)
-//
-// The numbers here are glyph metrics and the atlas they are packed into.
-// Naming each one yields a constant that repeats the number and
-// explains nothing; the ones that do carry meaning are named and
-// commented where they are used.
-
 // 5x7 glyphs, 7 row bitmasks per character, bit 4 = left column.
 static const std::array<std::array<unsigned char, OkFont::GLYPH_H>, 10>
     DIGIT_FONT = {{
@@ -249,5 +242,3 @@ void OkFont::glyphUV(char c, float &u0, float &v0, float &u1, float &v1) {
   v1 = (h - static_cast<float>(cellY)) / h;
   v0 = (h - static_cast<float>(cellY + GLYPH_H)) / h;
 }
-
-// NOLINTEND(readability-magic-numbers)

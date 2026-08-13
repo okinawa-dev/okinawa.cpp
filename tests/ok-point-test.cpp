@@ -1,5 +1,3 @@
-// NOLINTBEGIN(readability-magic-numbers)
-
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -142,5 +140,3 @@ TEST_CASE("OkPoint string operations", "[point]") {
     REQUIRE(zero.toString() == "(0, 0, 0)");
   }
 }
-
-// NOLINTEND(readability-magic-numbers)

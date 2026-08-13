@@ -18,21 +18,10 @@
 #include <array>
 #include <cstdio>
 
-// NOLINTBEGIN(readability-magic-numbers)
-//
-// The numbers here are a panel: type sizes, colours, cell offsets, bytes of a
-// small strip. Naming each one yields a constant that repeats the number and
-// explains nothing; the ones that do carry meaning are named and
-// commented where they are used.
-
-//
 // This whole file is a panel: type sizes, colours, cell offsets, byte
-// values for a 96x32 strip. Giving each of those a name produces a wall
-// of constants that repeat the number and explain nothing -- the meaning
-// of 0.86f here IS "the green the text is drawn in", and it is already
-// next to the call that draws it. The numbers that carry real meaning
-// are named and commented in the block below; the rest are layout, and
-// layout reads better in place.
+// values for a 96x32 strip. The figures that decide something are named
+// in the block below; the rest is layout, and layout reads better in
+// place, next to the call it positions.
 
 OkGuiLayer                                     *OkGuiStats::_layer = nullptr;
 std::array<OkGuiText *, OkGuiStats::LINE_COUNT> OkGuiStats::_lines = {
@@ -375,5 +364,3 @@ void OkGuiStats::shutdown() {
   }
   _history.clear();
 }
-
-// NOLINTEND(readability-magic-numbers)

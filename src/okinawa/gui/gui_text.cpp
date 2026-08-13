@@ -5,13 +5,6 @@
 #include <array>
 #include <vector>
 
-// NOLINTBEGIN(readability-magic-numbers)
-//
-// The numbers here are interface layout and colour.
-// Naming each one yields a constant that repeats the number and
-// explains nothing; the ones that do carry meaning are named and
-// commented where they are used.
-
 namespace {
 
   // Colour components arrive as 0..1 floats and leave as bytes.
@@ -183,5 +176,3 @@ void OkGuiText::drawSelf() {
       OkGui::gridToScreenY(_gridH) / static_cast<float>(OkFont::GLYPH_H);
   setScaling(pxPerFontPx, pxPerFontPx, 1.0f);
 }
-
-// NOLINTEND(readability-magic-numbers)

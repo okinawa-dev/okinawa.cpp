@@ -12,13 +12,6 @@
 #include <cstdlib>
 #include <sstream>
 
-// NOLINTBEGIN(readability-magic-numbers)
-//
-// The numbers here are the console's own look: plate colour, text colour, where
-// things sit. Naming each one yields a constant that repeats the number and
-// explains nothing; the ones that do carry meaning are named and
-// commented where they are used.
-
 bool                            OkConsole::_open = false;
 std::vector<OkConsole::Command> OkConsole::_commands;
 std::vector<std::string>        OkConsole::_output;
@@ -409,5 +402,3 @@ void OkConsole::update(float dt) {
 
   refreshUi();
 }
-
-// NOLINTEND(readability-magic-numbers)

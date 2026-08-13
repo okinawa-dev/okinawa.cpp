@@ -1,5 +1,3 @@
-// NOLINTBEGIN(readability-magic-numbers)
-
 #include "okinawa/math/math.hpp"
 #include "okinawa/math/point.hpp"
 #include "okinawa/math/rotation.hpp"
@@ -276,5 +274,3 @@ TEST_CASE("OkMath forward/angle round-trip", "[math]") {
     }
   }
 }
-
-// NOLINTEND(readability-magic-numbers)

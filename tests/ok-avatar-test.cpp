@@ -5,12 +5,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 
-// NOLINTBEGIN(readability-magic-numbers)
-//
-// The numbers here are fixture values, picked to be distinguishable rather than
-// to mean anything. Naming each one yields a constant that repeats the number
-// and explains nothing; the ones that do carry meaning are named and commented
-// where they are used.
+// The numbers here are fixture values, picked to be distinguishable rather
+// than to mean anything.
 
 // These exercise the pure ground-movement maths (no window/GL needed). They
 // assert convention-independent invariants, so they don't depend on the exact
@@ -81,5 +77,3 @@ TEST_CASE("ground: diagonal movement is normalised (not faster)", "[avatar]") {
   CHECK(m.moved);
   CHECK(near(mag2d(m), 10.0f));
 }
-
-// NOLINTEND(readability-magic-numbers)

@@ -10,13 +10,6 @@
 #include <cmath>
 #include <vector>
 
-// NOLINTBEGIN(readability-magic-numbers)
-//
-// The numbers here are sky colours and the arithmetic that paints them into a
-// texture. Naming each one yields a constant that repeats the number and
-// explains nothing; the ones that do carry meaning are named and
-// commented where they are used.
-
 OkItem              *OkSkybox::_dome        = nullptr;
 OkItem              *OkSkybox::_sunDisc     = nullptr;
 OkTexture           *OkSkybox::_sunTex      = nullptr;
@@ -282,5 +275,3 @@ void OkSkybox::shutdown() {
   _gradient = nullptr;  // owned by the texture handler
   _sunTex   = nullptr;
 }
-
-// NOLINTEND(readability-magic-numbers)
