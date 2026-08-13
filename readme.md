@@ -137,10 +137,27 @@ The tests are located in the `tests` folder and use the [Catch2](https://github.
 
 ### Code checking
 
+Both tools read their configuration from the repository root
+(`.clang-format` and `.clang-tidy`), and `clang-tidy` needs the
+`compile_commands.json` that a build writes there, so run them from
+inside the engine's own directory.
+
 ```bash
-# Run clang-tidy using the generated compile_commands.json
-clang-tidy -p . src/**/*.cpp
+# Format every source and header in place
+clang-format -i $(find src tests -name '*.cpp' -o -name '*.hpp')
+
+# Lint. -p . points at the compile_commands.json a build leaves behind
+clang-tidy -p . $(find src tests -name '*.cpp')
 ```
+
+Point them at the files you touched rather than the whole tree while you
+work; the full sweep above is what has to come out clean.
+
+`clang-tidy` reports on headers as well as on the file you point it at,
+so a change to a header lights up every file that includes it.
+`HeaderFilterRegex` in `.clang-tidy` keeps that to this repository's own
+headers -- without it the dependency headers under `~/.xmake/packages`
+are reported too, and there is nothing to be done about those.
 
 ## Libraries used
 
