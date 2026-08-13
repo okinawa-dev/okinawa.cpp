@@ -8,12 +8,23 @@
 #include "core/object.hpp"
 #include "item/texture.hpp"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
+
+namespace {
+
+  // Half, for midpoints and radii.
+  const float HALF = 0.5f;
+  // Below this a summed normal is noise rather than a direction, and
+  // normalising it would amplify the noise instead.
+  const float MIN_NORMAL_LEN_SQ = 1e-12f;
+
+}  // namespace
 
 /**
  * @brief Create a new item with the given name, vertices, and indices.
@@ -96,24 +107,24 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
 void OkItem::_adoptVertexData(float *vertexData, long vertexCount,
                               const unsigned int *indexData, long indexCount,
                               int vertexStride) {
-  if (vertexStride == 8) {
+  if (vertexStride == VERTEX_STRIDE) {
     vertices = new float[vertexCount];
     std::memcpy(vertices, vertexData, vertexCount * sizeof(float));
     numVertices = vertexCount;
   } else {
-    long vcount = vertexCount / 5;
-    vertices    = new float[vcount * 8];
+    long vcount = vertexCount / VERTEX_STRIDE_IN;
+    vertices    = new float[vcount * VERTEX_STRIDE];
     for (long i = 0; i < vcount; i++) {
-      long src          = i * 5;
-      long dst          = i * 8;
-      vertices[dst]     = vertexData[src];
-      vertices[dst + 1] = vertexData[src + 1];
-      vertices[dst + 2] = vertexData[src + 2];
-      vertices[dst + 3] = vertexData[src + 3];
-      vertices[dst + 4] = vertexData[src + 4];
-      vertices[dst + 5] = 0.0f;
-      vertices[dst + 6] = 0.0f;
-      vertices[dst + 7] = 0.0f;
+      long src                          = i * VERTEX_STRIDE_IN;
+      long dst                          = i * VERTEX_STRIDE;
+      vertices[dst]                     = vertexData[src];
+      vertices[dst + 1]                 = vertexData[src + 1];
+      vertices[dst + 2]                 = vertexData[src + 2];
+      vertices[dst + 3]                 = vertexData[src + 3];
+      vertices[dst + 4]                 = vertexData[src + 4];
+      vertices[dst + VERTEX_NORMAL + 0] = 0.0f;
+      vertices[dst + VERTEX_NORMAL + 1] = 0.0f;
+      vertices[dst + VERTEX_NORMAL + 2] = 0.0f;
     }
     for (long f = 0; f + 2 < indexCount; f += 3) {
       long ia = static_cast<long>(indexData[f]);
@@ -122,33 +133,33 @@ void OkItem::_adoptVertexData(float *vertexData, long vertexCount,
       if (ia >= vcount || ib >= vcount || ic >= vcount) {
         continue;
       }
-      float ax = vertexData[ia * 5];
-      float ay = vertexData[ia * 5 + 1];
-      float az = vertexData[ia * 5 + 2];
-      float ux = vertexData[ib * 5] - ax;
-      float uy = vertexData[ib * 5 + 1] - ay;
-      float uz = vertexData[ib * 5 + 2] - az;
-      float wx = vertexData[ic * 5] - ax;
-      float wy = vertexData[ic * 5 + 1] - ay;
-      float wz = vertexData[ic * 5 + 2] - az;
+      float ax = vertexData[ia * VERTEX_STRIDE_IN];
+      float ay = vertexData[ia * VERTEX_STRIDE_IN + 1];
+      float az = vertexData[ia * VERTEX_STRIDE_IN + 2];
+      float ux = vertexData[ib * VERTEX_STRIDE_IN] - ax;
+      float uy = vertexData[ib * VERTEX_STRIDE_IN + 1] - ay;
+      float uz = vertexData[ib * VERTEX_STRIDE_IN + 2] - az;
+      float wx = vertexData[ic * VERTEX_STRIDE_IN] - ax;
+      float wy = vertexData[ic * VERTEX_STRIDE_IN + 1] - ay;
+      float wz = vertexData[ic * VERTEX_STRIDE_IN + 2] - az;
       // Area-weighted face normal (unnormalized cross product).
-      float nx = uy * wz - uz * wy;
-      float ny = uz * wx - ux * wz;
-      float nz = ux * wy - uy * wx;
-      long  tri[3];
+      float               nx = uy * wz - uz * wy;
+      float               ny = uz * wx - ux * wz;
+      float               nz = ux * wy - uy * wx;
+      std::array<long, 3> tri;
       tri[0] = ia;
       tri[1] = ib;
       tri[2] = ic;
       for (int k = 0; k < 3; k++) {
-        vertices[tri[k] * 8 + 5] += nx;
-        vertices[tri[k] * 8 + 6] += ny;
-        vertices[tri[k] * 8 + 7] += nz;
+        vertices[tri[k] * VERTEX_STRIDE + VERTEX_NORMAL + 0] += nx;
+        vertices[tri[k] * VERTEX_STRIDE + VERTEX_NORMAL + 1] += ny;
+        vertices[tri[k] * VERTEX_STRIDE + VERTEX_NORMAL + 2] += nz;
       }
     }
     for (long i = 0; i < vcount; i++) {
-      float *n  = &vertices[i * 8 + 5];
+      float *n  = &vertices[i * VERTEX_STRIDE + VERTEX_NORMAL];
       float  nl = std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
-      if (nl > 1e-12f) {
+      if (nl > MIN_NORMAL_LEN_SQ) {
         n[0] /= nl;
         n[1] /= nl;
         n[2] /= nl;
@@ -159,7 +170,7 @@ void OkItem::_adoptVertexData(float *vertexData, long vertexCount,
         n[2] = 0.0f;
       }
     }
-    numVertices = vcount * 8;
+    numVertices = vcount * VERTEX_STRIDE;
   }
 }
 
@@ -257,17 +268,19 @@ void OkItem::_initBuffers() {
                GL_STATIC_DRAW);
 
   // Position attribute (3 floats)
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_STRIDE * sizeof(float),
+                        nullptr);
   glEnableVertexAttribArray(0);
 
   // Texture coords attribute (2 floats)
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, VERTEX_STRIDE * sizeof(float),
                         reinterpret_cast<GLvoid *>(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
 
   // Normal attribute (3 floats)
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                        reinterpret_cast<GLvoid *>(5 * sizeof(float)));
+  glVertexAttribPointer(
+      2, 3, GL_FLOAT, GL_FALSE, VERTEX_STRIDE * sizeof(float),
+      reinterpret_cast<GLvoid *>(VERTEX_NORMAL * sizeof(float)));
   glEnableVertexAttribArray(2);
 
   // Generate and set up EBO
@@ -336,13 +349,13 @@ void OkItem::_calculateRadius() {
   float height = maxY - minY;
   float depth  = maxZ - minZ;
   // Calculate radius as half the diagonal of the bounding box
-  radius = sqrt(width * width + height * height + depth * depth) * 0.5f;
+  radius = sqrt(width * width + height * height + depth * depth) * HALF;
   // Bounding-sphere centre in local coords: baked meshes keep their
   // vertices in chunk-local space with the item origin at the chunk
   // corner, so the sphere must be centred on the bbox, not the origin.
-  sphereCenter[0] = (minX + maxX) * 0.5f;
-  sphereCenter[1] = (minY + maxY) * 0.5f;
-  sphereCenter[2] = (minZ + maxZ) * 0.5f;
+  sphereCenter[0] = (minX + maxX) * HALF;
+  sphereCenter[1] = (minY + maxY) * HALF;
+  sphereCenter[2] = (minZ + maxZ) * HALF;
 
   OkLogger::info("Item",
                  "Bounds: (" + std::to_string(minX) + ", " +
@@ -489,7 +502,7 @@ void OkItem::drawSelf() {
   {
     if (nearLightGen != OkLighting::getLightGeneration()) {
       nearLightCount = OkLighting::getNearestLights(
-          wc.x, wc.y, wc.z, nearLights, OkLighting::MAX_LIGHTS_PER_ITEM);
+          wc.x, wc.y, wc.z, nearLights.data(), OkLighting::MAX_LIGHTS_PER_ITEM);
       nearLightGen = OkLighting::getLightGeneration();
     }
     GLint cntLoc = glGetUniformLocation(current_program, "pointLightCount");
@@ -588,7 +601,8 @@ void OkItem::drawSelf() {
       }
     }
     if (maskedMaterials) {
-      const char *names[3] = {"matTintA", "matTintB", "matTintC"};
+      const std::array<const char *, MAT_SLOTS> names = {"matTintA", "matTintB",
+                                                         "matTintC"};
       for (int i = 0; i < 3; i++) {
         GLint loc = glGetUniformLocation(current_program, names[i]);
         if (loc != -1) {
@@ -721,7 +735,8 @@ void OkItem::updateVertexData(float *newVertexData, long newVertexCount) {
 
   // Same stride-5 contract as the constructor: normals recomputed
   // against the item's existing indices.
-  _adoptVertexData(newVertexData, newVertexCount, indices, numIndices, 5);
+  _adoptVertexData(newVertexData, newVertexCount, indices, numIndices,
+                   VERTEX_STRIDE_IN);
 
   // Recalculate radius with new geometry
   _calculateRadius();

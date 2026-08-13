@@ -6,10 +6,29 @@
 #include "../handlers/textures.hpp"
 #include "../item/texture.hpp"
 #include <algorithm>
+#include <array>
 #include <string>
 #include <vector>
 
 class OkItem : public OkObject {
+public:
+  // A vertex as a caller hands it over, and as the item stores it.
+  //
+  // Input carries a position and a texture coordinate; the item keeps
+  // those plus a normal, which it works out from the triangle list when
+  // the caller does not supply one. Every index into the vertex array is
+  // a multiple of one of these, which is why they have names instead of
+  // being written as 5 and 8 in forty places.
+  static const int VERTEX_STRIDE_IN = 5;
+  static const int VERTEX_STRIDE    = 8;
+  // Where the normal begins inside a stored vertex.
+  static const int VERTEX_NORMAL = 5;
+  // A colour, with and without its alpha, and how many material slots an
+  // item can tint independently.
+  static const int RGB       = 3;
+  static const int RGBA      = 4;
+  static const int MAT_SLOTS = 3;
+
 private:
   void _initBuffers();
 
@@ -35,21 +54,25 @@ protected:
   GLenum drawMode;  // GL_TRIANGLES, GL_LINES, etc.
 
   // Flat fill colour when untextured, and wireframe line colour (RGB, white).
-  float fillColor[4];  // RGBA: alpha honoured by blended passes (GUI)
-  float wireframeColor[3];
+  std::array<float, RGBA>
+      fillColor;  // RGBA: alpha honoured by blended passes (GUI)
+  std::array<float, RGB> wireframeColor;
 
   // Geometry
-  float        *vertices;
-  unsigned int *indices;
-  long          numVertices;
-  long          numIndices;
-  float         radius;           // bounding-sphere radius (half bbox diagonal)
-  float         sphereCenter[3];  // bounding-sphere centre, local coords
-  bool          additive;         // additive blending (light halos)
-  bool          unlit;            // skip Gouraud light and the scene tint
-  int           nearLights[8];    // cached nearest point-light indices
-  int           nearLightCount;
-  long          nearLightGen;  // registry generation of the cache
+  float                 *vertices;
+  unsigned int          *indices;
+  long                   numVertices;
+  long                   numIndices;
+  float                  radius;  // bounding-sphere radius (half bbox diagonal)
+  std::array<float, RGB> sphereCenter;  // bounding-sphere centre, local coords
+  bool                   additive;      // additive blending (light halos)
+  bool                   unlit;         // skip Gouraud light and the scene tint
+  // How many point lights an item keeps track of. Beyond this the
+  // nearest ones win and the rest are ignored for that item.
+  static const int                 MAX_NEAR_LIGHTS = 8;
+  std::array<int, MAX_NEAR_LIGHTS> nearLights;  // nearest point lights
+  int                              nearLightCount;
+  long nearLightGen;  // registry generation of the cache
 
   // OpenGL objects
   GLuint VAO, VBO, EBO;
@@ -78,12 +101,12 @@ protected:
   OkTexture                 *texture;
 
   // Multiplies the texture in the fill pass.
-  float tintColor[4];
-  bool  maskedMaterials;
-  float fade;          // 1 = solid; below that, dithered away
-  bool  fadeInverted;  // use the opposite half of the pattern
-  float matTint[3][3];
-  float matLuma[3];
+  std::array<float, RGBA> tintColor;
+  bool                    maskedMaterials;
+  float                   fade;          // 1 = solid; below that, dithered away
+  bool                    fadeInverted;  // use the opposite half of the pattern
+  std::array<std::array<float, RGB>, MAT_SLOTS> matTint;
+  std::array<float, MAT_SLOTS>                  matLuma;
 
   // Geometry
   void _calculateRadius();
@@ -105,7 +128,8 @@ public:
   // ones); 8 = x,y,z,u,v,nx,ny,nz (caller-provided normals, verbatim).
   // Internally vertices are always stored with stride 8.
   OkItem(const std::string &name, float *vertexData, long vertexCount,
-         unsigned int *indexData, long indexCount, int vertexStride = 5);
+         unsigned int *indexData, long indexCount,
+         int vertexStride = VERTEX_STRIDE_IN);
   ~OkItem() override;
 
   // Delete copy constructor and assignment
