@@ -24,6 +24,4 @@ Checks: '
   -performance-no-int-to-ptr,
   -modernize-use-nodiscard,
 '
-CheckOptions:
-  bugprone-exception-escape.IgnoredExceptions: bad_alloc,bad_array_new_length,length_error
 

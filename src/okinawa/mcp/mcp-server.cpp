@@ -23,6 +23,7 @@
 #include "../scene/scene.hpp"
 #include "../utils/logger.hpp"
 
+#include <array>
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 
@@ -653,43 +654,80 @@ struct OkMcpServer::Impl {
     }
 
     if (name == "view") {
-      json out = runOnLoop([args]() -> json {
+      // Every optional field is read here, on the request thread, and
+      // handed over as plain values. The other commands already do this;
+      // this one used to capture the whole request json and look inside
+      // it on the render thread, which put the parsing inside the frame
+      // and gave the closure a json member -- and a closure holding a
+      // json cannot be moved without the move being able to throw.
+      // Types are checked before anything is read. nlohmann's accessors
+      // throw on a mismatch, and here that throw would leave callTool
+      // for the HTTP handler, which answers 500 with an empty body --
+      // the caller learns nothing. Inside the lambda it used to be
+      // caught by runOnLoop; on this side there is nothing to catch it.
+      static const std::array<const char *, 6> NUMBER_FIELDS = {
+          "x", "y", "z", "yaw_deg", "pitch_deg", "distance"};
+      for (const char *const field : NUMBER_FIELDS) {
+        if (args.contains(field) && !args[field].is_number()) {
+          return errorResult(std::string(field) + " must be a number");
+        }
+      }
+      if (args.contains("camera") && !args["camera"].is_string()) {
+        return errorResult("camera must be a string");
+      }
+
+      std::string camName   = args.value("camera", std::string());
+      bool        hasCam    = args.contains("camera");
+      bool        hasX      = args.contains("x");
+      bool        hasY      = args.contains("y");
+      bool        hasZ      = args.contains("z");
+      double      wantX     = args.value("x", 0.0);
+      double      wantY     = args.value("y", 0.0);
+      double      wantZ     = args.value("z", 0.0);
+      bool        hasYaw    = args.contains("yaw_deg");
+      bool        hasPitch  = args.contains("pitch_deg");
+      bool        hasDist   = args.contains("distance");
+      double      wantYaw   = args.value("yaw_deg", 0.0);
+      double      wantPitch = args.value("pitch_deg", 0.0);
+      double      wantDist  = args.value("distance", 0.0);
+
+      json out = runOnLoop([camName, hasCam, hasX, hasY, hasZ, wantX, wantY,
+                            wantZ, hasYaw, hasPitch, hasDist, wantYaw,
+                            wantPitch, wantDist]() -> json {
         // Optional camera selection by name (see get_state.cameras). The
         // tool then drives the active camera -- it no longer force-switches
         // to the orbit camera, so an overhead workflow keeps its framing.
-        if (args.contains("camera")) {
-          std::string camName = args.value("camera", std::string());
-          int         idx     = OkCore::findCamera(camName);
+        if (hasCam) {
+          int idx = OkCore::findCamera(camName);
           if (idx < 0) {
-            return json{{"error", "unknown camera: " + camName}};
+            json e;
+            e["error"] = "unknown camera: " + camName;
+            return e;
           }
           OkCore::switchCamera(idx);
         }
         OkAvatar *avatar = OkCore::getActiveAvatar();
         OkObject *obj    = avatar ? avatar->getControlledObject() : nullptr;
-        if (obj != nullptr &&
-            (args.contains("x") || args.contains("y") || args.contains("z"))) {
+        if (obj != nullptr && (hasX || hasY || hasZ)) {
+          // Whatever the caller left out keeps the value it has now,
+          // which is only knowable here, on the loop thread.
           OkPoint p = obj->getPosition();
-          obj->setPosition(
-              static_cast<float>(args.value("x", static_cast<double>(p.x()))),
-              static_cast<float>(args.value("y", static_cast<double>(p.y()))),
-              static_cast<float>(args.value("z", static_cast<double>(p.z()))));
+          obj->setPosition(hasX ? static_cast<float>(wantX) : p.x(),
+                           hasY ? static_cast<float>(wantY) : p.y(),
+                           hasZ ? static_cast<float>(wantZ) : p.z());
         }
         OkCamera *cam = OkCore::getCamera();
         if (cam != nullptr) {
-          if (cam->isOrbit() &&
-              (args.contains("yaw_deg") || args.contains("pitch_deg") ||
-               args.contains("distance"))) {
-            float yaw = static_cast<float>(
-                args.value("yaw_deg", static_cast<double>(cam->orbitYawDeg())));
-            float pitch = static_cast<float>(args.value(
-                "pitch_deg", static_cast<double>(cam->orbitPitchDeg())));
-            float dist  = static_cast<float>(args.value(
-                "distance", static_cast<double>(cam->orbitDistance())));
+          if (cam->isOrbit() && (hasYaw || hasPitch || hasDist)) {
+            float yaw =
+                hasYaw ? static_cast<float>(wantYaw) : cam->orbitYawDeg();
+            float pitch =
+                hasPitch ? static_cast<float>(wantPitch) : cam->orbitPitchDeg();
+            float dist =
+                hasDist ? static_cast<float>(wantDist) : cam->orbitDistance();
             cam->setOrbit(yaw, pitch, dist);
-          } else if (!cam->isOrbit() && args.contains("distance")) {
-            cam->setViewDistance(
-                static_cast<float>(args.value("distance", 0.0)));
+          } else if (!cam->isOrbit() && hasDist) {
+            cam->setViewDistance(static_cast<float>(wantDist));
           }
           cam->updateForTarget(obj,
                                0.0f);  // apply now; returned view is current
@@ -935,7 +973,18 @@ void OkMcpServer::start() {
       std::string name = params.value("name", std::string());
       json        args =
           params.contains("arguments") ? params["arguments"] : json::object();
-      json result = _impl->callTool(name, args);
+      // A tool reads its arguments with nlohmann's accessors, and those
+      // throw when the caller sends the wrong type for a field. Without
+      // this the throw reaches httplib, which answers 500 with an empty
+      // body: the client is told nothing at all, not even which call
+      // failed. Turned into an ordinary tool error instead, so a
+      // malformed request reads like any other rejected one.
+      json result;
+      try {
+        result = _impl->callTool(name, args);
+      } catch (const std::exception &e) {
+        result = errorResult(std::string("bad arguments: ") + e.what());
+      }
       res.set_content(makeResult(id, result).dump(), "application/json");
     } else if (isNotification || method.rfind("notifications/", 0) == 0) {
       // A notification is acknowledged and not answered. Both ways of

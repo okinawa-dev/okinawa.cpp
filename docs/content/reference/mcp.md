@@ -57,6 +57,20 @@ Two things worth knowing when reading the result:
   can enforce it anyway (macOS does), in which case the readings stay
   quantised and only `samples_ms` tells the full story.
 
+## When a call fails
+
+A tool that cannot do what was asked answers with an ordinary result
+carrying `isError: true` and a line of text saying why — an unknown
+camera name, a key that does not exist, a request that arrived while
+nothing was rendering. The HTTP status stays 200: the call was
+delivered and answered, and what failed is the tool, not the transport.
+
+The same applies to a malformed argument. Sending a string where a
+number belongs is reported as `bad arguments: ...` rather than being
+allowed to reach the JSON library and abort the request, so a client
+that gets a field wrong is told which one instead of receiving an empty
+response.
+
 ## Enabling it
 
 From application code, enable the server after `OkCore::initialize()`:
