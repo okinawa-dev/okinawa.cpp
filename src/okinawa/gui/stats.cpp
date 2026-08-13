@@ -15,11 +15,22 @@
 #include "gui_layer.hpp"
 #include "gui_text.hpp"
 #include <algorithm>
+#include <array>
 #include <cstdio>
 
-OkGuiLayer *OkGuiStats::_layer    = nullptr;
-OkGuiText  *OkGuiStats::_lines[6] = {nullptr, nullptr, nullptr,
-                                     nullptr, nullptr, nullptr};
+// NOLINTBEGIN(readability-magic-numbers)
+//
+// This whole file is a panel: type sizes, colours, cell offsets, byte
+// values for a 96x32 strip. Giving each of those a name produces a wall
+// of constants that repeat the number and explain nothing -- the meaning
+// of 0.86f here IS "the green the text is drawn in", and it is already
+// next to the call that draws it. The numbers that carry real meaning
+// are named and commented in the block below; the rest are layout, and
+// layout reads better in place.
+
+OkGuiLayer                                     *OkGuiStats::_layer = nullptr;
+std::array<OkGuiText *, OkGuiStats::LINE_COUNT> OkGuiStats::_lines = {
+    nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 OkGuiImage *OkGuiStats::_graph    = nullptr;
 OkTexture  *OkGuiStats::_graphTex = nullptr;
 
@@ -72,7 +83,7 @@ void OkGuiStats::initialize() {
                           PANEL_Y - LINE_H * 6.4f);
   _layer->addItem(_graph);
 
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < OkGuiStats::LINE_COUNT; i++) {
     _lines[i] = new OkGuiText("ok-stats-line" + std::to_string(i));
     _lines[i]->setGridAnchor(OK_GUI_ANCHOR_TOP_LEFT);
     _lines[i]->setGridPosition(PANEL_X,
@@ -108,7 +119,7 @@ void OkGuiStats::rebuildGraph() {
   if (_graph == nullptr) {
     return;
   }
-  unsigned char rgba[GRAPH_W * GRAPH_H * 4];
+  std::array<unsigned char, static_cast<size_t>(GRAPH_W) * GRAPH_H * 4> rgba{};
   for (int y = 0; y < GRAPH_H; y++) {
     for (int x = 0; x < GRAPH_W; x++) {
       int off       = (y * GRAPH_W + x) * 4;
@@ -175,13 +186,13 @@ void OkGuiStats::rebuildGraph() {
 
   if (_graphTex == nullptr) {
     _graphTex = OkTextureHandler::getInstance()->createTextureFromRawData(
-        "ok_stats_graph", rgba, GRAPH_W, GRAPH_H, 4);
+        "ok_stats_graph", rgba.data(), GRAPH_W, GRAPH_H, 4);
     if (_graphTex != nullptr) {
       _graphTex->setNearestFiltering();
       _graph->setTexture("ok_stats_graph", _graphTex);
     }
   } else {
-    _graphTex->updateRawData(rgba, GRAPH_W, GRAPH_H);
+    _graphTex->updateRawData(rgba.data(), GRAPH_W, GRAPH_H);
   }
 }
 
@@ -233,9 +244,8 @@ void OkGuiStats::update(float dtMs) {
   int  texes   = static_cast<int>(
       OkTextureHandler::getInstance()->getTextureNames().size());
 
-  char        buf[128];
-  const char *text[6];
-  char        store[6][128];
+  std::array<const char *, OkGuiStats::LINE_COUNT>          text{};
+  std::array<std::array<char, 128>, OkGuiStats::LINE_COUNT> store{};
   // Draw time next to frame time on purpose: where vsync is enforced,
   // FRAME is pinned to the refresh interval and says nothing about the
   // work, while DRAW moves with it.
@@ -250,19 +260,17 @@ void OkGuiStats::update(float dtMs) {
     }
     drawAvg = dSum / static_cast<float>(_drawHistory.size() - dFrom);
   }
-  std::snprintf(store[0], sizeof(store[0]), "FPS %.1f  FRAME %.2f MS", fps,
-                avg);
-  std::snprintf(store[1], sizeof(store[1]), "DRAW %.2f MS  WORST %.2f MS",
-                drawAvg, _worst);
-  std::snprintf(store[2], sizeof(store[2]), "DRAWS %ld  TRIS %ld", draws, tris);
-  std::snprintf(store[3], sizeof(store[3]), "OBJECTS %ld  CULLED %ld", objects,
+  std::snprintf(store[0].data(), 128, "FPS %.1f  FRAME %.2f MS", fps, avg);
+  std::snprintf(store[1].data(), 128, "DRAW %.2f MS  WORST %.2f MS", drawAvg,
+                _worst);
+  std::snprintf(store[2].data(), 128, "DRAWS %ld  TRIS %ld", draws, tris);
+  std::snprintf(store[3].data(), 128, "OBJECTS %ld  CULLED %ld", objects,
                 culled);
-  std::snprintf(store[4], sizeof(store[4]), "TEXTURES %d", texes);
-  std::snprintf(store[5], sizeof(store[5]), "TIME %.2f H",
+  std::snprintf(store[4].data(), 128, "TEXTURES %d", texes);
+  std::snprintf(store[5].data(), 128, "TIME %.2f H",
                 OkLighting::getTimeOfDay());
-  (void)buf;
-  for (int i = 0; i < 6; i++) {
-    text[i] = store[i];
+  for (int i = 0; i < OkGuiStats::LINE_COUNT; i++) {
+    text[i] = store[i].data();
     _lines[i]->setText(text[i]);
     // Text is placed by its centre, so a left-aligned column has to
     // shift each line by half its own width -- which changes as the
@@ -356,8 +364,10 @@ void OkGuiStats::shutdown() {
   _layer    = nullptr;
   _graph    = nullptr;
   _graphTex = nullptr;
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < OkGuiStats::LINE_COUNT; i++) {
     _lines[i] = nullptr;
   }
   _history.clear();
 }
+
+// NOLINTEND(readability-magic-numbers)

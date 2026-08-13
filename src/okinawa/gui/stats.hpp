@@ -1,6 +1,7 @@
 #ifndef OK_GUI_STATS_HPP
 #define OK_GUI_STATS_HPP
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -75,9 +76,12 @@ private:
   static void rebuildGraph();
 
   static OkGuiLayer *_layer;
-  static OkGuiText  *_lines[6];
-  static OkGuiImage *_graph;
-  static OkTexture  *_graphTex;
+  // One text line per reading. The count lives here because it is part
+  // of the array's type.
+  static const int                           LINE_COUNT = 6;
+  static std::array<OkGuiText *, LINE_COUNT> _lines;
+  static OkGuiImage                         *_graph;
+  static OkTexture                          *_graphTex;
 
   static std::vector<float> _history;      // frame times, milliseconds
   static std::vector<float> _drawHistory;  // draw CPU time, milliseconds
