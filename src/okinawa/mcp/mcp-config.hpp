@@ -13,7 +13,7 @@
 // `mcp=auto` defines nothing here, leaving the NDEBUG-based decision.
 //
 // Include this header before any `#ifdef OKINAWA_WITH_MCP` check.
-#if defined(OKINAWA_MCP_FORCE)
+#ifdef OKINAWA_MCP_FORCE
 #if OKINAWA_MCP_FORCE
 #define OKINAWA_WITH_MCP
 #endif

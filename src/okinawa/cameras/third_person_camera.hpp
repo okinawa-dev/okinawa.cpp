@@ -24,12 +24,12 @@ public:
 
   // Orbit interface (driven by the MCP `view` tool): absolute
   // yaw/pitch/distance.
-  bool  isOrbit() const override { return true; }
+  [[nodiscard]] bool  isOrbit() const override { return true; }
   void  setOrbit(float yawDeg, float pitchDeg, float distance) override;
-  float orbitYawDeg() const override;
-  float orbitPitchDeg() const override;
-  float orbitDistance() const override { return _distance; }
-  float viewDistance() const override { return _distance; }
+  [[nodiscard]] float orbitYawDeg() const override;
+  [[nodiscard]] float orbitPitchDeg() const override;
+  [[nodiscard]] float orbitDistance() const override { return _distance; }
+  [[nodiscard]] float viewDistance() const override { return _distance; }
   void  setViewDistance(float d) override {
     _distance = d < 1.0f ? 1.0f : (d > 2000.0f ? 2000.0f : d);
   }

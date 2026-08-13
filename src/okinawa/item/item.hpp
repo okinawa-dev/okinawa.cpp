@@ -90,7 +90,7 @@ protected:
   // Store vertex data with the internal stride-8 layout; stride-5 input
   // gets normals computed from the triangle list (see item.cpp).
   void _adoptVertexData(float *vertexData, long vertexCount,
-                        unsigned int *indexData, long indexCount,
+                        const unsigned int *indexData, long indexCount,
                         int vertexStride);
 
   // Override OkObject's transform update
@@ -105,14 +105,14 @@ public:
   // Internally vertices are always stored with stride 8.
   OkItem(const std::string &name, float *vertexData, long vertexCount,
          unsigned int *indexData, long indexCount, int vertexStride = 5);
-  ~OkItem();
+  ~OkItem() override;
 
   // Delete copy constructor and assignment
   OkItem(const OkItem &)            = delete;
   OkItem &operator=(const OkItem &) = delete;
 
   // Geometry
-  float getRadius() const { return radius; }
+  [[nodiscard]] float getRadius() const { return radius; }
   void  updateVertexData(float *newVertexData, long newVertexCount);
 
   // Texture methods
@@ -140,22 +140,22 @@ public:
   void   addMaterialFromFile(long firstIndex, long indexCount,
                              const std::string &path);
   void   clearMaterials();
-  size_t getMaterialCount() const { return materials.size(); }
+  [[nodiscard]] size_t getMaterialCount() const { return materials.size(); }
 
   void setWireframe(bool wireframe) { drawWireframe = wireframe; }
-  bool getWireframe() const { return drawWireframe; }
+  [[nodiscard]] bool getWireframe() const { return drawWireframe; }
   // Opt this item out of (or back into) the global wireframe switch.
   // Its own setWireframe still applies either way.
   void setWireframeGlobal(bool on) { wireframeGlobal = on; }
   // Take this item out of (or back into) the shadow maps. Light does
   // not cast shadows; matter does.
   void setCastsShadow(bool on) { castsShadow = on; }
-  bool getCastsShadow() const { return castsShadow; }
+  [[nodiscard]] bool getCastsShadow() const { return castsShadow; }
   // Set by the shadow map around its own pass, so an item can tell
   // which pass is drawing it.
   static void setShadowPass(bool on);
   static bool inShadowPass();
-  bool        getWireframeGlobal() const { return wireframeGlobal; }
+  [[nodiscard]] bool        getWireframeGlobal() const { return wireframeGlobal; }
   void        setWireframeColor(float r, float g, float b) {
     wireframeColor[0] = r;
     wireframeColor[1] = g;
@@ -172,7 +172,7 @@ public:
   // Additive blending (glows/halos): drawn with src-alpha one blending
   // and no depth writes. World pass only.
   void setAdditive(bool on) { additive = on; }
-  bool isBlended() const override { return additive; }
+  [[nodiscard]] bool isBlended() const override { return additive; }
   // Unlit: this item ignores the Gouraud sun/point lights and the scene
   // tint (light sources must not be tinted by the atmosphere). World
   // pass only -- the flag restores world-pass uniforms after drawing.
@@ -213,15 +213,15 @@ public:
   // therefore trade places gradually while both stay in the opaque
   // pass -- no blending, no sorting, depth buffer intact.
   void  setFade(float f) { fade = f < 0.0f ? 0.0f : (f > 1.0f ? 1.0f : f); }
-  float getFade() const { return fade; }
+  [[nodiscard]] float getFade() const { return fade; }
   // The two sides of a handover must drop opposite pixels, or each
   // keeps the same half and the rest shows through to the background.
   // Set this on one of the pair, not on both.
   void   setFadeInverted(bool on) { fadeInverted = on; }
   void   setDrawMode(GLenum mode) { drawMode = mode; }
-  GLenum getDrawMode() const { return drawMode; }
+  [[nodiscard]] GLenum getDrawMode() const { return drawMode; }
   void   setVisible(bool visible) { this->visible = visible; }
-  bool   getVisible() const { return visible; }
+  [[nodiscard]] bool   getVisible() const { return visible; }
 
   // Update and render
   void stepSelf(float dt) override;

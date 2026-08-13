@@ -25,12 +25,12 @@ public:
   OkGuiLayer(const OkGuiLayer &)            = delete;
   OkGuiLayer &operator=(const OkGuiLayer &) = delete;
 
-  const std::string &getName() const { return _name; }
+  [[nodiscard]] const std::string &getName() const { return _name; }
 
-  int  getOrder() const { return _order; }
+  [[nodiscard]] int  getOrder() const { return _order; }
   void setOrder(int order) { _order = order; }
 
-  bool getVisible() const { return _visible; }
+  [[nodiscard]] bool getVisible() const { return _visible; }
   void setVisible(bool visible) { _visible = visible; }
 
   // Add an element (takes ownership; any OkObject: items, graphs,
@@ -40,7 +40,7 @@ public:
   // Remove and DELETE the element. True if it was found.
   bool removeItem(OkObject *item);
 
-  int getItemCount() const { return (int)_items.size(); }
+  [[nodiscard]] int getItemCount() const { return static_cast<int>(_items.size()); }
 
   // Find an owned element by its object name (null when missing).
   OkObject *getItemByName(const std::string &name);

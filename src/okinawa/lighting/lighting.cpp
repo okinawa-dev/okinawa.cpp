@@ -4,6 +4,7 @@
 #include "../handlers/textures.hpp"
 #include "../item/texture.hpp"
 #include "../utils/logger.hpp"
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <string>
@@ -110,7 +111,7 @@ static void ensureCurve() {
   if (ATMO_KEY_COUNT > 0) {
     return;
   }
-  int n = (int)(sizeof(ATMO_DEFAULT) / sizeof(ATMO_DEFAULT[0]));
+  int n = static_cast<int>(sizeof(ATMO_DEFAULT) / sizeof(ATMO_DEFAULT[0]));
   for (int i = 0; i < n; i++) {
     ATMO_KEYS[i] = ATMO_DEFAULT[i];
   }
@@ -121,9 +122,7 @@ void OkLighting::setAtmosphereCurve(const OkAtmosphereKey *keys, int count) {
   if (keys == nullptr || count < 2) {
     return;
   }
-  if (count > ATMO_MAX_KEYS) {
-    count = ATMO_MAX_KEYS;
-  }
+  count = std::min(count, ATMO_MAX_KEYS);
   for (int i = 0; i < count; i++) {
     ATMO_KEYS[i] = keys[i];
   }
@@ -151,7 +150,7 @@ void OkLighting::initialize() {
                            std::to_string(OkLighting::getTimeOfDay()));
           return;
         }
-        OkLighting::setTimeOfDay((float)atof(args[0].c_str()));
+        OkLighting::setTimeOfDay(static_cast<float>(atof(args[0].c_str())));
         OkConsole::print("time = " +
                          std::to_string(OkLighting::getTimeOfDay()));
       });
@@ -164,7 +163,7 @@ void OkLighting::initialize() {
                                                 "lighting.timescale")));
           return;
         }
-        OkConfig::setFloat("lighting.timescale", (float)atof(args[0].c_str()));
+        OkConfig::setFloat("lighting.timescale", static_cast<float>(atof(args[0].c_str())));
         OkConsole::print("timescale = " + std::to_string(OkConfig::getFloat(
                                               "lighting.timescale")));
       });
@@ -213,12 +212,8 @@ void OkLighting::update(float dt) {
   {
     float sinElev = -_sunDir[1];
     float level   = (0.05f - sinElev) / 0.10f;
-    if (level < 0.0f) {
-      level = 0.0f;
-    }
-    if (level > 1.0f) {
-      level = 1.0f;
-    }
+    level = std::max(level, 0.0f);
+    level = std::min(level, 1.0f);
     _pointLightLevel = level;
   }
 }
@@ -363,9 +358,7 @@ int OkLighting::getNearestLights(float x, float y, float z, int *outIdx,
                                  int maxN) {
   float bestScore[8];
   int   n = 0;
-  if (maxN > 8) {
-    maxN = 8;
-  }
+  maxN = std::min(maxN, 8);
   for (int i = 0; i < _lightCount; i++) {
     float dx = _lightPos[i][0] - x;
     float dy = _lightPos[i][1] - y;
@@ -438,15 +431,13 @@ OkTexture *OkLighting::getHaloTexture() {
       float dy = (y + 0.5f) / SIZE - 0.5f;
       float d  = std::sqrt(dx * dx + dy * dy) * 2.0f;  // 0 centre, 1 edge
       float a  = 1.0f - d;
-      if (a < 0.0f) {
-        a = 0.0f;
-      }
+      a = std::max(a, 0.0f);
       a             = a * a;  // quadratic falloff, soft rim
       int off       = (y * SIZE + x) * 4;
       rgba[off]     = 255;
       rgba[off + 1] = 255;
       rgba[off + 2] = 255;
-      rgba[off + 3] = (unsigned char)(a * 255.0f);
+      rgba[off + 3] = static_cast<unsigned char>(a * 255.0f);
     }
   }
   return OkTextureHandler::getInstance()->createTextureFromRawData(

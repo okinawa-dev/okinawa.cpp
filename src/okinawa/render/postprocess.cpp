@@ -1,4 +1,6 @@
 #include "postprocess.hpp"
+
+#include <algorithm>
 #include "../config/config.hpp"
 #include "../shaders/shaders.hpp"
 #include "../utils/assets.hpp"
@@ -197,10 +199,10 @@ void OkPostProcess::renderBloom() {
     glBindTexture(GL_TEXTURE_2D, _bloomTex[src]);
     if (pass == 0) {
       glUniform2f(glGetUniformLocation(_blurProgram, "direction"),
-                  1.0f / (float)_bloomW, 0.0f);
+                  1.0f / static_cast<float>(_bloomW), 0.0f);
     } else {
       glUniform2f(glGetUniformLocation(_blurProgram, "direction"), 0.0f,
-                  1.0f / (float)_bloomH);
+                  1.0f / static_cast<float>(_bloomH));
     }
     glDrawArrays(GL_TRIANGLES, 0, 3);
   }
@@ -226,15 +228,15 @@ void OkPostProcess::updateAutoFocus(float nearPlane, float farPlane) {
   if (_focusPbo == 0) {
     glGenBuffers(1, &_focusPbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _focusPbo);
-    glBufferData(GL_PIXEL_PACK_BUFFER, sizeof(float), 0, GL_STREAM_READ);
+    glBufferData(GL_PIXEL_PACK_BUFFER, sizeof(float), nullptr, GL_STREAM_READ);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
   }
 
   glBindBuffer(GL_PIXEL_PACK_BUFFER, _focusPbo);
   if (_focusPending) {
     void *mapped = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
-    if (mapped != 0) {
-      float raw = *(float *)mapped;
+    if (mapped != nullptr) {
+      float raw = *static_cast<float *>(mapped);
       glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
       // Depth 1.0 is the far plane: empty sky, nothing to focus on, so
       // the lens keeps whatever it had.
@@ -243,16 +245,10 @@ void OkPostProcess::updateAutoFocus(float nearPlane, float farPlane) {
         float linear = 2.0f * nearPlane * farPlane /
                        (farPlane + nearPlane - z * (farPlane - nearPlane));
         float target = OkConfig::getFloat("post.dof.autofocus.max");
-        if (linear < target) {
-          target = linear;
-        }
+        target = std::min(linear, target);
         float ease = OkConfig::getFloat("post.dof.autofocus.ease");
-        if (ease < 0.0f) {
-          ease = 0.0f;
-        }
-        if (ease > 1.0f) {
-          ease = 1.0f;
-        }
+        ease = std::max(ease, 0.0f);
+        ease = std::min(ease, 1.0f);
         _focusMetres += (target - _focusMetres) * ease;
       }
     }
@@ -260,7 +256,7 @@ void OkPostProcess::updateAutoFocus(float nearPlane, float farPlane) {
 
   // Queue the next read from the frame just rendered.
   glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo);
-  glReadPixels(_width / 2, _height / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+  glReadPixels(_width / 2, _height / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
   glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
   glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
   _focusPending = true;
@@ -297,8 +293,8 @@ void OkPostProcess::end(float nearPlane, float farPlane, float dt) {
   glUniform1i(glGetUniformLocation(_program, "bloomTex"), 2);
   glUniform1f(glGetUniformLocation(_program, "bloomStrength"),
               bloom ? OkConfig::getFloat("post.bloom.strength") : 0.0f);
-  glUniform2f(glGetUniformLocation(_program, "texelSize"), 1.0f / (float)_width,
-              1.0f / (float)_height);
+  glUniform2f(glGetUniformLocation(_program, "texelSize"), 1.0f / static_cast<float>(_width),
+              1.0f / static_cast<float>(_height));
   glUniform2f(glGetUniformLocation(_program, "planes"), nearPlane, farPlane);
   glUniform1f(glGetUniformLocation(_program, "timeSec"), _time);
 

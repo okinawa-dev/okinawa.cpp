@@ -22,32 +22,32 @@ public:
   OkRotation(const OkRotation &other) = default;
 
   // Getters
-  const glm::mat4 &getMatrix() const { return matrix; }
-  const glm::vec3 &getAngles() const { return angles; }
+  [[nodiscard]] const glm::mat4 &getMatrix() const { return matrix; }
+  [[nodiscard]] const glm::vec3 &getAngles() const { return angles; }
 
-  float getPitch() const;
-  float getYaw() const;
-  float getRoll() const;
+  [[nodiscard]] float getPitch() const;
+  [[nodiscard]] float getYaw() const;
+  [[nodiscard]] float getRoll() const;
 
   // Setters
   void rotate(float dx, float dy, float dz);
   void setRotation(float x, float y, float z);
 
   // Transform methods
-  OkPoint    transformPoint(const OkPoint &point) const;
-  OkRotation combine(const OkRotation &other) const;
+  [[nodiscard]] OkPoint    transformPoint(const OkPoint &point) const;
+  [[nodiscard]] OkRotation combine(const OkRotation &other) const;
 
   // Operators
   OkRotation &operator=(const OkRotation &other) = default;
   bool        operator==(const OkRotation &other) const;
 
   // String representation
-  std::string toString() const;
+  [[nodiscard]] std::string toString() const;
 
   // Direction vectors
-  OkPoint getForwardVector() const;
-  OkPoint getRightVector() const;
-  OkPoint getUpVector() const;
+  [[nodiscard]] OkPoint getForwardVector() const;
+  [[nodiscard]] OkPoint getRightVector() const;
+  [[nodiscard]] OkPoint getUpVector() const;
 };
 
 #endif

@@ -31,7 +31,7 @@ public:
   OkInstancedItem(const std::string &name, float *vertexData, long vertexCount,
                   unsigned int *indexData, long indexCount,
                   int vertexStride = 5);
-  ~OkInstancedItem();
+  ~OkInstancedItem() override;
 
   // Add an instance at a world position with a Y rotation (radians) and
   // a uniform scale; returns its index.
@@ -45,9 +45,9 @@ public:
   void setInstanceVisible(int index, bool visible);
   // Drop every instance.
   void clearInstances();
-  int  getInstanceCount() const { return (int)_instances.size(); }
+  [[nodiscard]] int  getInstanceCount() const { return static_cast<int>(_instances.size()); }
   // Instances actually drawn in the last frame (after frustum culling).
-  int getDrawnCount() const { return _drawnCount; }
+  [[nodiscard]] int getDrawnCount() const { return _drawnCount; }
 
 protected:
   void drawSelf() override;

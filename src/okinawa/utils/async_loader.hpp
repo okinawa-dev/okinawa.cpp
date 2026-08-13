@@ -36,9 +36,9 @@ public:
 
   // Work done on a worker thread. Anything it produces must reach the
   // finish callback through the caller's own captured state.
-  typedef std::function<void()> PrepareFn;
+  using PrepareFn = std::function<void()>;
   // Work done on the main thread once prepare has returned.
-  typedef std::function<void()> FinishFn;
+  using FinishFn = std::function<void()>;
 
   // Start the worker threads. `workers` of 0 picks a sensible number
   // for the machine. Called by OkCore::initialize.

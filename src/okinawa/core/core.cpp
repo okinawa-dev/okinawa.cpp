@@ -328,7 +328,7 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
 
     if (deltaTime >= timePerFrame) {
       lastFrameTime = currentTime;
-      float dt      = (float)deltaTime;
+      float dt      = static_cast<float>(deltaTime);
 
       // Process input
       _input->process();

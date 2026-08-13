@@ -47,7 +47,7 @@ void OkScene::removeObject(OkObject *object) {
   }
   for (size_t i = 0; i < rootObjects.size(); ++i) {
     if (rootObjects[i] == object) {
-      rootObjects.erase(rootObjects.begin() + (long)i);
+      rootObjects.erase(rootObjects.begin() + static_cast<long>(i));
       _drawOrder.clear();
       delete object;
       return;

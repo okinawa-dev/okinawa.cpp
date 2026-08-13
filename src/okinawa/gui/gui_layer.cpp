@@ -31,7 +31,7 @@ bool OkGuiLayer::removeItem(OkObject *item) {
   for (std::size_t i = 0; i < _items.size(); i++) {
     if (_items[i] == item) {
       delete _items[i];
-      _items.erase(_items.begin() + (long)i);
+      _items.erase(_items.begin() + static_cast<long>(i));
       return true;
     }
   }

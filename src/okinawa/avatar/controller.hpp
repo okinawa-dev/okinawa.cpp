@@ -12,7 +12,7 @@ class OkInputState;
  */
 class OkAvatarController {
 public:
-  virtual ~OkAvatarController() {}
+  virtual ~OkAvatarController() = default;
 
   /**
    * @brief Update the avatar for this frame. The controller obtains its own

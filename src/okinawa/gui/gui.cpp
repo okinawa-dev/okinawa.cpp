@@ -71,8 +71,8 @@ void OkGui::getLogicalSize(float &outW, float &outH) {
   if (window != nullptr) {
     glfwGetWindowSize(window, &w, &h);
   }
-  outW = (float)w;
-  outH = (float)h;
+  outW = static_cast<float>(w);
+  outH = static_cast<float>(h);
 }
 
 /**
@@ -106,14 +106,14 @@ float OkGui::getScale() {
     return csx;
   }
 
-  return csx * ((float)ww / (float)fw);
+  return csx * (static_cast<float>(ww) / static_cast<float>(fw));
 }
 
 /**
  * @brief Grid cell size in logical pixels, before scaling.
  */
 float OkGui::getCellSize() {
-  return (float)OkConfig::getInt("gui.grid.size");
+  return static_cast<float>(OkConfig::getInt("gui.grid.size"));
 }
 
 float OkGui::gridToScreenX(float gx) {
@@ -217,7 +217,7 @@ OkGuiLayer *OkGui::addLayer(const std::string &name, int order) {
       break;
     }
   }
-  _layers.insert(_layers.begin() + (long)at, layer);
+  _layers.insert(_layers.begin() + static_cast<long>(at), layer);
   return layer;
 }
 
@@ -237,7 +237,7 @@ bool OkGui::removeLayer(const std::string &name) {
   for (std::size_t i = 0; i < _layers.size(); i++) {
     if (_layers[i]->getName() == name) {
       delete _layers[i];
-      _layers.erase(_layers.begin() + (long)i);
+      _layers.erase(_layers.begin() + static_cast<long>(i));
       return true;
     }
   }
@@ -245,7 +245,7 @@ bool OkGui::removeLayer(const std::string &name) {
 }
 
 int OkGui::getLayerCount() {
-  return (int)_layers.size();
+  return static_cast<int>(_layers.size());
 }
 
 void OkGui::setDebugGrid(bool show) {
@@ -291,7 +291,7 @@ void OkGui::updateDebugGrid(float logicalW, float logicalH) {
   struct Push {
     static void line(std::vector<float> &verts, std::vector<unsigned int> &idx,
                      float x0, float y0, float x1, float y1) {
-      unsigned int base = (unsigned int)(verts.size() / 5);
+      unsigned int base = static_cast<unsigned int>(verts.size() / 5);
       verts.push_back(x0);
       verts.push_back(y0);
       verts.push_back(0.0f);
@@ -308,9 +308,9 @@ void OkGui::updateDebugGrid(float logicalW, float logicalH) {
   };
 
   // Vertical lines every cell from the centre outward, symmetric.
-  int cellsX = (int)std::ceil(halfW / step);
+  int cellsX = static_cast<int>(std::ceil(halfW / step));
   for (int k = -cellsX; k <= cellsX; k++) {
-    float x = (float)k * step;
+    float x = static_cast<float>(k) * step;
     if (k == 0) {
       Push::line(axesVerts, axesIdx, x, -halfH, x, halfH);
     } else if ((k % GRID_MAJOR_EVERY) == 0) {
@@ -321,9 +321,9 @@ void OkGui::updateDebugGrid(float logicalW, float logicalH) {
   }
 
   // Horizontal lines every cell from the centre outward, symmetric.
-  int cellsY = (int)std::ceil(halfH / step);
+  int cellsY = static_cast<int>(std::ceil(halfH / step));
   for (int k = -cellsY; k <= cellsY; k++) {
-    float y = (float)k * step;
+    float y = static_cast<float>(k) * step;
     if (k == 0) {
       Push::line(axesVerts, axesIdx, -halfW, y, halfW, y);
     } else if ((k % GRID_MAJOR_EVERY) == 0) {
@@ -335,8 +335,8 @@ void OkGui::updateDebugGrid(float logicalW, float logicalH) {
 
   if (!minorIdx.empty()) {
     _gridMinor =
-        new OkItem("gui_grid_minor", minorVerts.data(), (long)minorVerts.size(),
-                   minorIdx.data(), (long)minorIdx.size());
+        new OkItem("gui_grid_minor", minorVerts.data(), static_cast<long>(minorVerts.size()),
+                   minorIdx.data(), static_cast<long>(minorIdx.size()));
     _gridMinor->setWireframeGlobal(false);  // interface, not scene
     _gridMinor->setDrawMode(GL_LINES);
     _gridMinor->setFillColor(GRID_MINOR_COLOR[0], GRID_MINOR_COLOR[1],
@@ -344,8 +344,8 @@ void OkGui::updateDebugGrid(float logicalW, float logicalH) {
   }
   if (!majorIdx.empty()) {
     _gridMajor =
-        new OkItem("gui_grid_major", majorVerts.data(), (long)majorVerts.size(),
-                   majorIdx.data(), (long)majorIdx.size());
+        new OkItem("gui_grid_major", majorVerts.data(), static_cast<long>(majorVerts.size()),
+                   majorIdx.data(), static_cast<long>(majorIdx.size()));
     _gridMajor->setWireframeGlobal(false);  // interface, not scene
     _gridMajor->setDrawMode(GL_LINES);
     _gridMajor->setFillColor(GRID_MAJOR_COLOR[0], GRID_MAJOR_COLOR[1],
@@ -353,8 +353,8 @@ void OkGui::updateDebugGrid(float logicalW, float logicalH) {
   }
   if (!axesIdx.empty()) {
     _gridAxes =
-        new OkItem("gui_grid_axes", axesVerts.data(), (long)axesVerts.size(),
-                   axesIdx.data(), (long)axesIdx.size());
+        new OkItem("gui_grid_axes", axesVerts.data(), static_cast<long>(axesVerts.size()),
+                   axesIdx.data(), static_cast<long>(axesIdx.size()));
     _gridAxes->setWireframeGlobal(false);  // interface, not scene
     _gridAxes->setDrawMode(GL_LINES);
     _gridAxes->setFillColor(GRID_AXES_COLOR[0], GRID_AXES_COLOR[1],

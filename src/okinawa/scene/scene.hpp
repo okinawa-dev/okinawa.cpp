@@ -39,15 +39,15 @@ public:
   // then does with them -- visibility, colour, ... -- is the caller's concern).
   // findItem: first root OkItem with this exact name (or null).
   // findItems: every root OkItem whose name starts with `prefix` (empty = all).
-  OkItem               *findItem(const std::string &name) const;
-  std::vector<OkItem *> findItems(const std::string &prefix) const;
+  [[nodiscard]] OkItem               *findItem(const std::string &name) const;
+  [[nodiscard]] std::vector<OkItem *> findItems(const std::string &prefix) const;
 
   // Getters
-  bool               isActive() const { return _isActive; }
-  bool               isPlayable() const { return _isPlayable; }
-  bool               isCurrent() const { return _isCurrent; }
-  const std::string &getName() const { return name; }
-  size_t             getObjectCount() const { return rootObjects.size(); }
+  [[nodiscard]] bool               isActive() const { return _isActive; }
+  [[nodiscard]] bool               isPlayable() const { return _isPlayable; }
+  [[nodiscard]] bool               isCurrent() const { return _isCurrent; }
+  [[nodiscard]] const std::string &getName() const { return name; }
+  [[nodiscard]] size_t             getObjectCount() const { return rootObjects.size(); }
 
   // Force the draw order to be rebuilt on the next frame (after adding
   // or removing objects in bulk).

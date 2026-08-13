@@ -177,7 +177,7 @@ void OkConfig::setFloat(const std::string &key, float value) {
 void OkConfig::setFromString(const std::string &key, const std::string &val) {
   OkConfig &cfg = getConfig();
   if (cfg.floatValues.find(key) != cfg.floatValues.end()) {
-    setFloat(key, (float)atof(val.c_str()));
+    setFloat(key, static_cast<float>(atof(val.c_str())));
     return;
   }
   if (cfg.boolValues.find(key) != cfg.boolValues.end()) {
@@ -196,9 +196,9 @@ void OkConfig::setFromString(const std::string &key, const std::string &val) {
   if (val == "true" || val == "false") {
     setBool(key, val == "true");
   } else if (val.find('.') != std::string::npos) {
-    setFloat(key, (float)atof(val.c_str()));
+    setFloat(key, static_cast<float>(atof(val.c_str())));
   } else if (!val.empty() &&
-             (isdigit((unsigned char)val[0]) || val[0] == '-')) {
+             (isdigit(static_cast<unsigned char>(val[0])) || val[0] == '-')) {
     setInt(key, atoi(val.c_str()));
   } else {
     setString(key, val);

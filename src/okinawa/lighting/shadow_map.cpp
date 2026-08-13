@@ -7,6 +7,7 @@
 #include "../utils/assets.hpp"
 #include "../utils/logger.hpp"
 #include "lighting.hpp"
+#include <algorithm>
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -25,6 +26,12 @@ float     OkShadowMap::_lastCz[OkShadowMap::MAX_CASCADES]     = {0.0f};
 size_t    OkShadowMap::_lastObjects                           = 0;
 int       OkShadowMap::_layers                                = 0;
 int       OkShadowMap::_count                                 = 1;
+// Out of line, because std::min binds its arguments by reference and so
+// takes the constant's address. Declared inside the class it has a value
+// but no storage, and the link fails only where something wants a
+// reference to it.
+const int OkShadowMap::MAX_CASCADES;
+
 glm::mat4 OkShadowMap::_lightSpace[OkShadowMap::MAX_CASCADES];
 float     OkShadowMap::_splitFar[OkShadowMap::MAX_CASCADES] = {0.0f};
 float     OkShadowMap::_strength                            = 0.0f;
@@ -180,18 +187,12 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
   // Fade the shadows in as the light climbs: a source at the horizon
   // throws shadows too long and too hard to be believable.
   float fade = (elev - 0.02f) / 0.18f;
-  if (fade > 1.0f) {
-    fade = 1.0f;
-  }
+  fade = std::min(fade, 1.0f);
   _strength = OkConfig::getFloat("shadows.strength") * fade;
 
   int count = OkConfig::getInt("shadows.cascades");
-  if (count < 1) {
-    count = 1;
-  }
-  if (count > MAX_CASCADES) {
-    count = MAX_CASCADES;
-  }
+  count = std::max(count, 1);
+  count = std::min(count, MAX_CASCADES);
   _count = count;
   ensureTarget(OkConfig::getInt("shadows.size"), count);
 
@@ -209,7 +210,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
   const float NEAR_START = 1.0f;
   float       blend      = OkConfig::getFloat("shadows.cascades.blend");
   for (int c = 0; c < count; c++) {
-    float f      = (float)(c + 1) / (float)count;
+    float f      = static_cast<float>(c + 1) / static_cast<float>(count);
     float lin    = NEAR_START + (shadowFar - NEAR_START) * f;
     float lg     = NEAR_START * std::pow(shadowFar / NEAR_START, f);
     _splitFar[c] = lin + (lg - lin) * blend;
@@ -310,7 +311,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
         glm::ortho(-extent, extent, -extent, extent, 0.1f, depth * 1.5f);
 
     glm::vec4 originLs = (proj * view) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    float     half     = (float)_size * 0.5f;
+    float     half     = static_cast<float>(_size) * 0.5f;
     float     ox       = originLs.x * half;
     float     oy       = originLs.y * half;
     float     dx       = std::floor(ox + 0.5f) - ox;
@@ -395,7 +396,7 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
   if (bound) {
     glDisable(GL_POLYGON_OFFSET_FILL);
     glEnable(GL_CULL_FACE);
-    glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)previousFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, static_cast<GLuint>(previousFbo));
     glViewport(previousViewport[0], previousViewport[1], previousViewport[2],
                previousViewport[3]);
     _neverDrawn  = false;
@@ -462,7 +463,7 @@ void OkShadowMap::bind(GLuint program) {
   }
   loc = glGetUniformLocation(program, "shadowTexel");
   if (loc != -1) {
-    glUniform1f(loc, 1.0f / (float)_size);
+    glUniform1f(loc, 1.0f / static_cast<float>(_size));
   }
   // Depth bias, one per cascade, converted from metres.
   //
@@ -509,7 +510,7 @@ void OkShadowMap::bind(GLuint program) {
   if (loc != -1) {
     float perCascade[MAX_CASCADES];
     for (int c = 0; c < _count; c++) {
-      perCascade[c] = (2.0f * _lastExtent[c]) / (float)_size;
+      perCascade[c] = (2.0f * _lastExtent[c]) / static_cast<float>(_size);
     }
     glUniform1fv(loc, _count, perCascade);
   }

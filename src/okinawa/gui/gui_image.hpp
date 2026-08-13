@@ -24,16 +24,16 @@ public:
   // point, X+ right, Y+ up). The anchor defaults to the screen centre;
   // edge/corner anchors keep the element stable across aspect ratios.
   void  setGridPosition(float gx, float gy);
-  float getGridX() const { return _gridX; }
-  float getGridY() const { return _gridY; }
+  [[nodiscard]] float getGridX() const { return _gridX; }
+  [[nodiscard]] float getGridY() const { return _gridY; }
 
   void        setGridAnchor(OkGuiAnchor anchor) { _anchor = anchor; }
-  OkGuiAnchor getGridAnchor() const { return _anchor; }
+  [[nodiscard]] OkGuiAnchor getGridAnchor() const { return _anchor; }
 
   // Size of the quad in grid cells.
   void  setGridSize(float wCells, float hCells);
-  float getGridWidth() const { return _gridW; }
-  float getGridHeight() const { return _gridH; }
+  [[nodiscard]] float getGridWidth() const { return _gridW; }
+  [[nodiscard]] float getGridHeight() const { return _gridH; }
 
   // OkItem hook: sync the world transform from the grid coordinates (the
   // effective scale can change with the window/monitor), then draw.

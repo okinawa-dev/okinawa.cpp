@@ -45,7 +45,7 @@
 #include <thread>
 #include <vector>
 
-#if defined(__APPLE__)
+#ifdef __APPLE__
 #include <mach/mach.h>
 #endif
 
@@ -149,7 +149,7 @@ namespace {
 
   // Resident set size in MB (macOS), or -1 if unavailable.
   double residentMb() {
-#if defined(__APPLE__)
+#ifdef __APPLE__
     mach_task_basic_info_data_t info;
     mach_msg_type_number_t      count = MACH_TASK_BASIC_INFO_COUNT;
     if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
@@ -252,7 +252,7 @@ struct OkMcpServer::Impl {
         std::make_shared<std::promise<json>>();
     std::future<json> future = promise->get_future();
     {
-      std::lock_guard<std::mutex> lock(queueMutex);
+      std::scoped_lock lock(queueMutex);
       queue.push_back([promise, fn]() {
         json result;
         try {
@@ -274,7 +274,7 @@ struct OkMcpServer::Impl {
 
   // Capture the current framebuffer into a PNG byte buffer (on the loop
   // thread). Returns true on success and fills width/height.
-  bool capturePng(std::shared_ptr<std::vector<unsigned char>> outPng,
+  bool capturePng(const std::shared_ptr<std::vector<unsigned char>>& outPng,
                   int &widthOut, int &heightOut) {
     std::shared_ptr<std::pair<int, int>> wh =
         std::make_shared<std::pair<int, int>>(0, 0);
@@ -317,7 +317,7 @@ struct OkMcpServer::Impl {
   }
 
   // The catalogue of tools, for tools/list.
-  json toolList() {
+  static json toolList() {
     json tools = json::array();
 
     json viewFrame;
@@ -570,7 +570,7 @@ struct OkMcpServer::Impl {
         OkConsole::execute(line);
         unsigned long produced = OkConsole::getPrintedCount() - before;
         // The first of those lines is the echoed "> line", not output.
-        std::vector<std::string> tail = OkConsole::getOutputTail((int)produced);
+        std::vector<std::string> tail = OkConsole::getOutputTail(static_cast<int>(produced));
         json                     out  = json::array();
         for (size_t i = 1; i < tail.size(); i++) {
           out.push_back(tail[i]);
@@ -937,7 +937,7 @@ void OkMcpServer::drainCommands() {
 
   std::deque<std::function<void()>> local;
   {
-    std::lock_guard<std::mutex> lock(_impl->queueMutex);
+    std::scoped_lock lock(_impl->queueMutex);
     local.swap(_impl->queue);
   }
   for (size_t i = 0; i < local.size(); i++) {

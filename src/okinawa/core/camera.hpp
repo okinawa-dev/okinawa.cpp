@@ -16,7 +16,7 @@
 class OkCamera : public OkObject {
 public:
   OkCamera(const std::string &name, int width, int height);
-  virtual ~OkCamera() {}
+  ~OkCamera() override = default;
   void setPerspective(float fovDegrees, float nearPlane, float farPlane);
 
   // Reposition this camera for the frame given the entity it observes (may be
@@ -36,34 +36,34 @@ public:
   // so any viewpoint is set and reproduced with one call. Base camera is not an
   // orbit; subclasses override. pitch is the LOOK pitch in degrees (negative =
   // looking down; -90 ~ top-down).
-  virtual bool isOrbit() const { return false; }
+  [[nodiscard]] virtual bool isOrbit() const { return false; }
   virtual void setOrbit(float yawDeg, float pitchDeg, float distance) {
     (void)yawDeg;
     (void)pitchDeg;
     (void)distance;
   }
-  virtual float orbitYawDeg() const { return 0.0f; }
-  virtual float orbitPitchDeg() const { return 0.0f; }
-  virtual float orbitDistance() const { return 0.0f; }
+  [[nodiscard]] virtual float orbitYawDeg() const { return 0.0f; }
+  [[nodiscard]] virtual float orbitPitchDeg() const { return 0.0f; }
+  [[nodiscard]] virtual float orbitDistance() const { return 0.0f; }
 
   // How far this camera sits from what it observes (orbit distance, overhead
   // height, ...). 0 when the notion does not apply (base/spectator). Lets
   // consumers scale interactions with the visible area -- e.g. the pan
   // controller moves the avatar faster the further the camera is.
-  virtual float viewDistance() const { return 0.0f; }
+  [[nodiscard]] virtual float viewDistance() const { return 0.0f; }
   // Write counterpart of viewDistance(): drive the camera's distance/height
   // directly (MCP `view`). Base ignores it; subclasses apply and clamp.
   virtual void setViewDistance(float d) { (void)d; }
 
   // Projection planes (the post-process depth linearization needs them)
-  float getNearPlane() const { return near; }
-  float getFarPlane() const { return far; }
+  [[nodiscard]] float getNearPlane() const { return near; }
+  [[nodiscard]] float getFarPlane() const { return far; }
 
   // Getters for matrices
-  const glm::mat4 &getView() const { return view; }
-  const glm::mat4 &getProjection() const { return projection; }
-  const float     *getViewPtr() const { return glm::value_ptr(view); }
-  const float *getProjectionPtr() const { return glm::value_ptr(projection); }
+  [[nodiscard]] const glm::mat4 &getView() const { return view; }
+  [[nodiscard]] const glm::mat4 &getProjection() const { return projection; }
+  [[nodiscard]] const float     *getViewPtr() const { return glm::value_ptr(view); }
+  [[nodiscard]] const float *getProjectionPtr() const { return glm::value_ptr(projection); }
 
   // Update and render
   void stepSelf(float dt) override;

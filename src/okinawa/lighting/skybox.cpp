@@ -5,6 +5,7 @@
 #include "../item/texture.hpp"
 #include "../math/point.hpp"
 #include "lighting.hpp"
+#include <algorithm>
 #include <cmath>
 #include <vector>
 
@@ -45,9 +46,9 @@ void OkSkybox::ensure() {
     float elev = SKY_RINGS[r];
     float y    = std::sin(elev) * SKY_RADIUS;
     float rad  = std::cos(elev) * SKY_RADIUS;
-    float v    = (float)r / (float)(SKY_RING_N - 1);
+    float v    = static_cast<float>(r) / static_cast<float>(SKY_RING_N - 1);
     for (int s = 0; s < SKY_SEGMENTS; s++) {
-      float a = (float)s / (float)SKY_SEGMENTS * 6.2831853f;
+      float a = static_cast<float>(s) / static_cast<float>(SKY_SEGMENTS) * 6.2831853f;
       verts.push_back(std::cos(a) * rad);
       verts.push_back(y);
       verts.push_back(std::sin(a) * rad);
@@ -57,11 +58,11 @@ void OkSkybox::ensure() {
   }
   for (int r = 0; r + 1 < SKY_RING_N; r++) {
     for (int s = 0; s < SKY_SEGMENTS; s++) {
-      unsigned int a0 = (unsigned int)(r * SKY_SEGMENTS + s);
+      unsigned int a0 = static_cast<unsigned int>(r * SKY_SEGMENTS + s);
       unsigned int a1 =
-          (unsigned int)(r * SKY_SEGMENTS + (s + 1) % SKY_SEGMENTS);
-      unsigned int b0 = a0 + (unsigned int)SKY_SEGMENTS;
-      unsigned int b1 = a1 + (unsigned int)SKY_SEGMENTS;
+          static_cast<unsigned int>(r * SKY_SEGMENTS + (s + 1) % SKY_SEGMENTS);
+      unsigned int b0 = a0 + static_cast<unsigned int>(SKY_SEGMENTS);
+      unsigned int b1 = a1 + static_cast<unsigned int>(SKY_SEGMENTS);
       // Faces point inward (the camera lives inside the dome).
       idx.push_back(a0);
       idx.push_back(b0);
@@ -72,8 +73,8 @@ void OkSkybox::ensure() {
     }
   }
 
-  _dome = new OkItem("ok_skybox", verts.data(), (long)verts.size(), idx.data(),
-                     (long)idx.size());
+  _dome = new OkItem("ok_skybox", verts.data(), static_cast<long>(verts.size()), idx.data(),
+                     static_cast<long>(idx.size()));
   // The sky is not an occluder; it is the light.
   _dome->setCastsShadow(false);
   refreshGradient();
@@ -99,10 +100,10 @@ void OkSkybox::refreshGradient() {
   unsigned char rgba[SKY_GRAD_H * 4];
   for (int i = 0; i < SKY_GRAD_H; i++) {
     // v=0 (texture bottom) is the horizon row.
-    float t = (float)i / (float)(SKY_GRAD_H - 1);
+    float t = static_cast<float>(i) / static_cast<float>(SKY_GRAD_H - 1);
     for (int c = 0; c < 3; c++) {
       float col       = fog[c] + (zenith[c] - fog[c]) * t;
-      rgba[i * 4 + c] = (unsigned char)(col * 255.0f);
+      rgba[i * 4 + c] = static_cast<unsigned char>(col * 255.0f);
     }
     rgba[i * 4 + 3] = 255;
   }
@@ -142,22 +143,16 @@ void OkSkybox::ensureSunDisc() {
       // A solid core inside a wide soft corona, which is how a bright
       // source reads through atmosphere.
       float core = 1.0f - d / 0.42f;
-      if (core < 0.0f) {
-        core = 0.0f;
-      }
+      core = std::max(core, 0.0f);
       float glow = 1.0f - d;
-      if (glow < 0.0f) {
-        glow = 0.0f;
-      }
+      glow = std::max(glow, 0.0f);
       float a = core + glow * glow * 0.55f;
-      if (a > 1.0f) {
-        a = 1.0f;
-      }
+      a = std::min(a, 1.0f);
       int off       = (y * SUN_TEX + x) * 4;
       rgba[off]     = 255;
       rgba[off + 1] = 255;
       rgba[off + 2] = 255;
-      rgba[off + 3] = (unsigned char)(a * 255.0f);
+      rgba[off + 3] = static_cast<unsigned char>(a * 255.0f);
     }
   }
   _sunTex = OkTextureHandler::getInstance()->createTextureFromRawData(
@@ -209,9 +204,7 @@ void OkSkybox::drawSun(float camX, float camY, float camZ) {
     return;  // below the horizon: nothing to draw
   }
   float fade = horizon / 0.20f;
-  if (fade > 1.0f) {
-    fade = 1.0f;
-  }
+  fade = std::min(fade, 1.0f);
 
   const float DIST = 820.0f;  // inside the dome
   OkPoint     pos(camX + sx * DIST, camY + sy * DIST, camZ + sz * DIST);

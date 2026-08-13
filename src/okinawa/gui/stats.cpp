@@ -67,15 +67,15 @@ void OkGuiStats::initialize() {
 
   _graph = new OkGuiImage("ok-stats-graph");
   _graph->setGridAnchor(OK_GUI_ANCHOR_TOP_LEFT);
-  _graph->setGridSize((float)GRAPH_W / 12.0f, 1.6f);
-  _graph->setGridPosition(PANEL_X + (float)GRAPH_W / 24.0f,
+  _graph->setGridSize(static_cast<float>(GRAPH_W) / 12.0f, 1.6f);
+  _graph->setGridPosition(PANEL_X + static_cast<float>(GRAPH_W) / 24.0f,
                           PANEL_Y - LINE_H * 6.4f);
   _layer->addItem(_graph);
 
   for (int i = 0; i < 6; i++) {
     _lines[i] = new OkGuiText("ok-stats-line" + std::to_string(i));
     _lines[i]->setGridAnchor(OK_GUI_ANCHOR_TOP_LEFT);
-    _lines[i]->setGridPosition(PANEL_X, PANEL_Y - LINE_H * (float)i);
+    _lines[i]->setGridPosition(PANEL_X, PANEL_Y - LINE_H * static_cast<float>(i));
     _lines[i]->setGridHeight(0.8f);
     _lines[i]->setTextColor(0.86f, 0.92f, 0.86f, 1.0f);
     _lines[i]->setText("");
@@ -120,17 +120,15 @@ void OkGuiStats::rebuildGraph() {
   // The graph shows the most recent GRAPH_W samples; the history behind
   // it is longer and is there for callers asking for a series.
   size_t from =
-      _history.size() > (size_t)GRAPH_W ? _history.size() - (size_t)GRAPH_W : 0;
+      _history.size() > static_cast<size_t>(GRAPH_W) ? _history.size() - static_cast<size_t>(GRAPH_W) : 0;
   float top = GRAPH_MS_MIN;
   for (size_t i = from; i < _history.size(); i++) {
-    if (_history[i] > top) {
-      top = _history[i];
-    }
+    top = std::max(_history[i], top);
   }
   top *= 1.1f;
 
   // Reference line at 16.7 ms (60 Hz): the bar to stay under.
-  int refY = GRAPH_H - 1 - (int)((16.7f / top) * (GRAPH_H - 1));
+  int refY = GRAPH_H - 1 - static_cast<int>((16.7f / top) * (GRAPH_H - 1));
   if (refY >= 0 && refY < GRAPH_H) {
     for (int x = 0; x < GRAPH_W; x++) {
       int off       = (refY * GRAPH_W + x) * 4;
@@ -141,16 +139,14 @@ void OkGuiStats::rebuildGraph() {
     }
   }
 
-  int n = (int)_history.size();
+  int n = static_cast<int>(_history.size());
   for (int i = 0; i < n && i < GRAPH_W; i++) {
-    float ms = _history[(size_t)(n - 1 - i)];
+    float ms = _history[static_cast<size_t>(n - 1 - i)];
     (void)from;
     int   x = GRAPH_W - 1 - i;
     float t = ms / top;
-    if (t > 1.0f) {
-      t = 1.0f;
-    }
-    int h = (int)(t * (GRAPH_H - 1));
+    t = std::min(t, 1.0f);
+    int h = static_cast<int>(t * (GRAPH_H - 1));
     // Green while comfortably inside a 60Hz budget, amber past it, red
     // once a frame costs more than two refreshes.
     unsigned char r = 90, g = 200, b = 110;
@@ -192,15 +188,13 @@ void OkGuiStats::update(float dtMs) {
   // The history is kept even while hidden, so opening the panel shows
   // what just happened instead of starting blank.
   _history.push_back(dtMs);
-  if ((int)_history.size() > _historyMax) {
+  if (static_cast<int>(_history.size()) > _historyMax) {
     // Drop the oldest in one go rather than one per frame, so the cost
     // does not fall on every single frame.
     _history.erase(_history.begin(),
                    _history.begin() + (_history.size() - _historyMax));
   }
-  if (dtMs > _worst) {
-    _worst = dtMs;
-  }
+  _worst = std::max(dtMs, _worst);
   if (!_visible) {
     return;
   }
@@ -214,22 +208,22 @@ void OkGuiStats::update(float dtMs) {
   // Averages over the whole window, not the last frame: a single frame
   // bounces too much to read.
   size_t avgFrom =
-      _history.size() > (size_t)GRAPH_W ? _history.size() - (size_t)GRAPH_W : 0;
+      _history.size() > static_cast<size_t>(GRAPH_W) ? _history.size() - static_cast<size_t>(GRAPH_W) : 0;
   float sum = 0.0f;
   for (size_t i = avgFrom; i < _history.size(); i++) {
     sum += _history[i];
   }
   size_t avgN = _history.size() - avgFrom;
-  float  avg  = avgN == 0 ? 0.0f : sum / (float)avgN;
+  float  avg  = avgN == 0 ? 0.0f : sum / static_cast<float>(avgN);
   float  fps  = avg > 0.0001f ? 1000.0f / avg : 0.0f;
 
   OkSceneHandler *sh      = OkCore::getSceneHandler();
   OkScene        *scene   = sh ? sh->getCurrentScene() : nullptr;
-  long            objects = scene ? (long)scene->getObjectCount() : 0;
+  long            objects = scene ? static_cast<long>(scene->getObjectCount()) : 0;
   long            culled  = OkFrustum::getCulledCount();
   long            draws   = OkFrustum::getDrawCalls();
   long            tris    = OkFrustum::getTriangles();
-  int texes = (int)OkTextureHandler::getInstance()->getTextureNames().size();
+  int texes = static_cast<int>(OkTextureHandler::getInstance()->getTextureNames().size());
 
   char        buf[128];
   const char *text[6];
@@ -239,14 +233,14 @@ void OkGuiStats::update(float dtMs) {
   // work, while DRAW moves with it.
   float drawAvg = 0.0f;
   if (!_drawHistory.empty()) {
-    size_t dFrom = _drawHistory.size() > (size_t)GRAPH_W
-                       ? _drawHistory.size() - (size_t)GRAPH_W
+    size_t dFrom = _drawHistory.size() > static_cast<size_t>(GRAPH_W)
+                       ? _drawHistory.size() - static_cast<size_t>(GRAPH_W)
                        : 0;
     float  dSum  = 0.0f;
     for (size_t i = dFrom; i < _drawHistory.size(); i++) {
       dSum += _drawHistory[i];
     }
-    drawAvg = dSum / (float)(_drawHistory.size() - dFrom);
+    drawAvg = dSum / static_cast<float>(_drawHistory.size() - dFrom);
   }
   std::snprintf(store[0], sizeof(store[0]), "FPS %.1f  FRAME %.2f MS", fps,
                 avg);
@@ -266,7 +260,7 @@ void OkGuiStats::update(float dtMs) {
     // shift each line by half its own width -- which changes as the
     // numbers do.
     _lines[i]->setGridPosition(PANEL_X + _lines[i]->getGridWidth() * 0.5f,
-                               PANEL_Y - LINE_H * (float)i);
+                               PANEL_Y - LINE_H * static_cast<float>(i));
   }
 
   rebuildGraph();
@@ -293,7 +287,7 @@ void OkGuiStats::setHistoryLength(int samples) {
  */
 void OkGuiStats::getSummary(int &count, float &minMs, float &maxMs,
                             float &meanMs, float &medianMs) {
-  count = (int)_history.size();
+  count = static_cast<int>(_history.size());
   if (count == 0) {
     return;
   }
@@ -305,13 +299,13 @@ void OkGuiStats::getSummary(int &count, float &minMs, float &maxMs,
   }
   minMs    = sorted.front();
   maxMs    = sorted.back();
-  meanMs   = sum / (float)sorted.size();
+  meanMs   = sum / static_cast<float>(sorted.size());
   medianMs = sorted[sorted.size() / 2];
 }
 
 void OkGuiStats::recordDraw(float ms) {
   _drawHistory.push_back(ms);
-  while ((int)_drawHistory.size() > _historyMax) {
+  while (static_cast<int>(_drawHistory.size()) > _historyMax) {
     _drawHistory.erase(_drawHistory.begin());
   }
 }
@@ -322,7 +316,7 @@ const std::vector<float> &OkGuiStats::getDrawHistory() {
 
 void OkGuiStats::getDrawSummary(int &count, float &minMs, float &maxMs,
                                 float &meanMs, float &medianMs) {
-  count = (int)_drawHistory.size();
+  count = static_cast<int>(_drawHistory.size());
   if (count == 0) {
     return;
   }
@@ -334,7 +328,7 @@ void OkGuiStats::getDrawSummary(int &count, float &minMs, float &maxMs,
   }
   minMs    = sorted.front();
   maxMs    = sorted.back();
-  meanMs   = sum / (float)sorted.size();
+  meanMs   = sum / static_cast<float>(sorted.size());
   medianMs = sorted[sorted.size() / 2];
 }
 

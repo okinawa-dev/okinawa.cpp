@@ -134,12 +134,12 @@ bool OkSpriteSheet::load(const std::string &jsonPath,
       }
       // Textures load flipped for GL, so the region's TOP pixel row maps
       // to the higher v. v0 is the bottom of the region.
-      float fw              = (float)_width;
-      float fh              = (float)_height;
-      region.u0             = (float)region.x / fw;
-      region.u1             = (float)(region.x + region.w) / fw;
-      region.v1             = 1.0f - (float)region.y / fh;
-      region.v0             = 1.0f - (float)(region.y + region.h) / fh;
+      float fw              = static_cast<float>(_width);
+      float fh              = static_cast<float>(_height);
+      region.u0             = static_cast<float>(region.x) / fw;
+      region.u1             = static_cast<float>(region.x + region.w) / fw;
+      region.v1             = 1.0f - static_cast<float>(region.y) / fh;
+      region.v0             = 1.0f - static_cast<float>(region.y + region.h) / fh;
       _regions[region.name] = region;
       _order.push_back(region.name);
     }
@@ -159,9 +159,9 @@ bool OkSpriteSheet::load(const std::string &jsonPath,
         continue;
       }
       std::vector<std::string> members;
-      for (int k = from; k <= to && k < (int)_order.size(); k++) {
+      for (int k = from; k <= to && k < static_cast<int>(_order.size()); k++) {
         if (k >= 0) {
-          members.push_back(_order[(size_t)k]);
+          members.push_back(_order[static_cast<size_t>(k)]);
         }
       }
       _groups[name] = members;
@@ -192,7 +192,7 @@ std::vector<std::string> OkSpriteSheet::getRegionNames() const {
 }
 
 int OkSpriteSheet::getRegionCount() const {
-  return (int)_regions.size();
+  return static_cast<int>(_regions.size());
 }
 
 std::vector<std::string> OkSpriteSheet::getGroup(const std::string &tag) const {

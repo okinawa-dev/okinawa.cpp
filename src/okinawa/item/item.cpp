@@ -94,7 +94,7 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
  *        lights the textured branch, and debug lines are never textured.
  */
 void OkItem::_adoptVertexData(float *vertexData, long vertexCount,
-                              unsigned int *indexData, long indexCount,
+                              const unsigned int *indexData, long indexCount,
                               int vertexStride) {
   if (vertexStride == 8) {
     vertices = new float[vertexCount];
@@ -116,9 +116,9 @@ void OkItem::_adoptVertexData(float *vertexData, long vertexCount,
       vertices[dst + 7] = 0.0f;
     }
     for (long f = 0; f + 2 < indexCount; f += 3) {
-      long ia = (long)indexData[f];
-      long ib = (long)indexData[f + 1];
-      long ic = (long)indexData[f + 2];
+      long ia = static_cast<long>(indexData[f]);
+      long ib = static_cast<long>(indexData[f + 1]);
+      long ic = static_cast<long>(indexData[f + 2]);
       if (ia >= vcount || ib >= vcount || ic >= vcount) {
         continue;
       }
@@ -249,7 +249,7 @@ void OkItem::_initBuffers() {
   // Generate and set up VBO
   glGenBuffers(1, &VBO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(numVertices * sizeof(float)),
+  glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(numVertices * sizeof(float)),
                vertices, GL_STATIC_DRAW);
 
   // Position attribute (3 floats)
@@ -270,7 +270,7 @@ void OkItem::_initBuffers() {
   glGenBuffers(1, &EBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               (GLsizeiptr)(numIndices * sizeof(unsigned int)), indices,
+               static_cast<GLsizeiptr>(numIndices * sizeof(unsigned int)), indices,
                GL_STATIC_DRAW);
 
   // Unbind VAO and VBO (but not EBO while VAO is active)
@@ -445,7 +445,7 @@ void OkItem::drawSelf() {
                          tm[1][2] * tm[1][2]);
     float sz = std::sqrt(tm[2][0] * tm[2][0] + tm[2][1] * tm[2][1] +
                          tm[2][2] * tm[2][2]);
-    float s  = std::max(sx, std::max(sy, sz));
+    float s  = std::max({sx, sy, sz});
     if (!frustum->containsSphere(wc.x, wc.y, wc.z, radius * s)) {
       OkFrustum::addCulled();
       return;
@@ -629,8 +629,8 @@ void OkItem::drawSelf() {
                       fillColor[3]);
         }
       }
-      glDrawElements(drawMode, (GLsizei)count, GL_UNSIGNED_INT,
-                     (const void *)(first * (long)sizeof(unsigned int)));
+      glDrawElements(drawMode, static_cast<GLsizei>(count), GL_UNSIGNED_INT,
+                     (const void *)(first * static_cast<long>(sizeof(unsigned int))));
       OkFrustum::addDraw(count / 3);
     }
   }
@@ -655,7 +655,7 @@ void OkItem::drawSelf() {
                   wireframeColor[2], 1.0f);
     }
 
-    glDrawElements(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(drawMode, static_cast<GLsizei>(numIndices), GL_UNSIGNED_INT, nullptr);
   }
 
   // Reset polygon mode and the lighting flag after the overlay.

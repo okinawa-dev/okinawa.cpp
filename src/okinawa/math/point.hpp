@@ -32,13 +32,13 @@ public:
   OkPoint &operator*=(float scalar);
 
   // Methods
-  float   magnitude() const;
-  OkPoint normalize() const;
-  float   distance(const OkPoint &destination) const;
+  [[nodiscard]] float   magnitude() const;
+  [[nodiscard]] OkPoint normalize() const;
+  [[nodiscard]] float   distance(const OkPoint &destination) const;
 
   // Vector operations
-  float   dot(const OkPoint &other) const;
-  OkPoint cross(const OkPoint &other) const;
+  [[nodiscard]] float   dot(const OkPoint &other) const;
+  [[nodiscard]] OkPoint cross(const OkPoint &other) const;
 
   // Static methods for common points
   static OkPoint Forward() { return OkPoint(0, 0, 1); }
@@ -46,22 +46,22 @@ public:
   static OkPoint Up() { return OkPoint(0, 1, 0); }
 
   // Getters/Setters
-  float x() const { return v.x; }
-  float y() const { return v.y; }
-  float z() const { return v.z; }
+  [[nodiscard]] float x() const { return v.x; }
+  [[nodiscard]] float y() const { return v.y; }
+  [[nodiscard]] float z() const { return v.z; }
   void  setX(float x) { v.x = x; }
   void  setY(float y) { v.y = y; }
   void  setZ(float z) { v.z = z; }
 
   // GLM data access
-  const glm::vec3 &data() const { return v; }
+  [[nodiscard]] const glm::vec3 &data() const { return v; }
   glm::vec3       &data() { return v; }
 
   // String representation
-  std::string toString() const;
+  [[nodiscard]] std::string toString() const;
 
   // Conversion
-  glm::vec3 toVec3() const { return v; }
+  [[nodiscard]] glm::vec3 toVec3() const { return v; }
 };
 
 #endif  // OK_POINT_HPP

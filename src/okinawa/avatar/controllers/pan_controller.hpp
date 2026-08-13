@@ -29,7 +29,7 @@ public:
               OkObject &controlled) override;
 
   void  setSpeedPerPixel(float speed) { _speedPerPixel = speed; }
-  float getSpeedPerPixel() const { return _speedPerPixel; }
+  [[nodiscard]] float getSpeedPerPixel() const { return _speedPerPixel; }
 
 private:
   float _speedPerPixel;

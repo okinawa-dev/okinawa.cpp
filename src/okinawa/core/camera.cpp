@@ -7,6 +7,7 @@
 #include "math/point.hpp"
 #include "math/rotation.hpp"
 #include <GLFW/glfw3.h>
+#include <algorithm>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
@@ -30,7 +31,7 @@ OkCamera::OkCamera(const std::string &name, int width, int height)
   projection = glm::mat4(1.0f);
 
   // Set camera properties
-  aspectRatio = (float)width / (float)height;
+  aspectRatio = static_cast<float>(width) / static_cast<float>(height);
   fov         = 45.0f;
   near        = 0.1f;
   far         = 100.0f;
@@ -240,9 +241,7 @@ void OkCamera::look(float yawDeg, float pitchDeg) {
   float       pitch    = rot.getPitch() + glm::radians(pitchDeg);
   float       yaw      = rot.getYaw() - glm::radians(yawDeg);
   const float maxPitch = glm::radians(89.0f);
-  if (pitch > maxPitch)
-    pitch = maxPitch;
-  if (pitch < -maxPitch)
-    pitch = -maxPitch;
+  pitch = std::min(pitch, maxPitch);
+  pitch = std::max(pitch, -maxPitch);
   setRotation(pitch, yaw, rot.getRoll());
 }

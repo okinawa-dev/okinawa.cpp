@@ -147,7 +147,7 @@ void OkTexture::setNearestFiltering() const {
  *        skybox gradient.
  */
 void OkTexture::updateRawData(const unsigned char *data, int newWidth,
-                              int newHeight) {
+                              int newHeight) const {
   if (!loaded || newWidth != width || newHeight != height) {
     return;
   }

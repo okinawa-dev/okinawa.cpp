@@ -47,8 +47,8 @@ float OkGuiText::getGridWidth() const {
   if (_text.empty()) {
     return 0.0f;
   }
-  float perChar = (float)OkFont::ADVANCE / (float)OkFont::GLYPH_H;
-  return (float)_text.size() * perChar * _gridH;
+  float perChar = static_cast<float>(OkFont::ADVANCE) / static_cast<float>(OkFont::GLYPH_H);
+  return static_cast<float>(_text.size()) * perChar * _gridH;
 }
 
 void OkGuiText::setTextColor(float r, float g, float b, float a) {
@@ -68,10 +68,10 @@ void OkGuiText::setTextColor(float r, float g, float b, float a) {
 OkTexture *OkGuiText::bakeTexture(const std::string &textureName,
                                   int                scale) const {
   unsigned char fg[4];
-  fg[0]               = (unsigned char)(_color[0] * 255.0f);
-  fg[1]               = (unsigned char)(_color[1] * 255.0f);
-  fg[2]               = (unsigned char)(_color[2] * 255.0f);
-  fg[3]               = (unsigned char)(_color[3] * 255.0f);
+  fg[0]               = static_cast<unsigned char>(_color[0] * 255.0f);
+  fg[1]               = static_cast<unsigned char>(_color[1] * 255.0f);
+  fg[2]               = static_cast<unsigned char>(_color[2] * 255.0f);
+  fg[3]               = static_cast<unsigned char>(_color[3] * 255.0f);
   unsigned char bg[4] = {0, 0, 0, 0};
   return OkFont::bake(textureName, _text, scale, fg, bg);
 }
@@ -99,9 +99,9 @@ void OkGuiText::rebuildMesh() {
   verts.reserve(_text.size() * 20);
   idx.reserve(_text.size() * 6);
 
-  float totalW = (float)_text.size() * (float)OkFont::ADVANCE;
+  float totalW = static_cast<float>(_text.size()) * static_cast<float>(OkFont::ADVANCE);
   float halfW  = totalW * 0.5f;
-  float halfH  = (float)OkFont::GLYPH_H * 0.5f;
+  float halfH  = static_cast<float>(OkFont::GLYPH_H) * 0.5f;
 
   for (std::size_t i = 0; i < _text.size(); i++) {
     float u0 = 0.0f;
@@ -110,10 +110,10 @@ void OkGuiText::rebuildMesh() {
     float v1 = 0.0f;
     OkFont::glyphUV(_text[i], u0, v0, u1, v1);
 
-    float x0 = (float)i * (float)OkFont::ADVANCE - halfW;
-    float x1 = x0 + (float)OkFont::GLYPH_W;
+    float x0 = static_cast<float>(i) * static_cast<float>(OkFont::ADVANCE) - halfW;
+    float x1 = x0 + static_cast<float>(OkFont::GLYPH_W);
 
-    unsigned int base     = (unsigned int)(verts.size() / 5);
+    unsigned int base     = static_cast<unsigned int>(verts.size() / 5);
     float        quad[20] = {
         x0, -halfH, 0.0f, u0, v0,  // bottom-left
         x1, -halfH, 0.0f, u1, v0,  // bottom-right
@@ -131,8 +131,8 @@ void OkGuiText::rebuildMesh() {
     idx.push_back(base + 3);
   }
 
-  _mesh = new OkItem(getName() + "_mesh", verts.data(), (long)verts.size(),
-                     idx.data(), (long)idx.size());
+  _mesh = new OkItem(getName() + "_mesh", verts.data(), static_cast<long>(verts.size()),
+                     idx.data(), static_cast<long>(idx.size()));
   _mesh->setWireframeGlobal(false);  // text is interface, not scene
   _mesh->setTexture("okfont_atlas", OkFont::atlas());
   _mesh->setTintColor(_color[0], _color[1], _color[2], _color[3]);
@@ -155,6 +155,6 @@ void OkGuiText::drawSelf() {
   setPosition(OkGui::anchorOriginX(_anchor) + OkGui::gridToScreenX(_gridX),
               OkGui::anchorOriginY(_anchor) + OkGui::gridToScreenY(_gridY),
               0.0f);
-  float pxPerFontPx = OkGui::gridToScreenY(_gridH) / (float)OkFont::GLYPH_H;
+  float pxPerFontPx = OkGui::gridToScreenY(_gridH) / static_cast<float>(OkFont::GLYPH_H);
   setScaling(pxPerFontPx, pxPerFontPx, 1.0f);
 }

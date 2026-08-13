@@ -51,9 +51,9 @@ public:
   }  // RENDER_POLYGONS
 
   // Queries.
-  int getNodeCount() const { return static_cast<int>(_nodes.size()); }
-  int getEdgeCount() const { return static_cast<int>(_edges.size()); }
-  const OkPoint &getNode(int i) const { return _nodes[i]; }
+  [[nodiscard]] int getNodeCount() const { return static_cast<int>(_nodes.size()); }
+  [[nodiscard]] int getEdgeCount() const { return static_cast<int>(_edges.size()); }
+  [[nodiscard]] const OkPoint &getNode(int i) const { return _nodes[i]; }
 
   // OkObject hooks. drawSelf only sets GL point size; the child items draw.
   void drawSelf() override;

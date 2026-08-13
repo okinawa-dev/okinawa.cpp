@@ -2,6 +2,7 @@
 #include "../core/gl_config.hpp"
 #include "../utils/logger.hpp"
 #include "keys.hpp"
+#include <algorithm>
 #include <cstring>
 
 /**
@@ -181,7 +182,7 @@ OkInputState OkInput::getState() const {
  */
 void OkInput::onChar(unsigned int codepoint) {
   if (codepoint >= 32 && codepoint < 127) {
-    _pendingChars.push_back((char)codepoint);
+    _pendingChars.push_back(static_cast<char>(codepoint));
   }
 }
 
@@ -205,23 +206,21 @@ void OkInput::injectKey(OkKey key, double durationSeconds) {
   }
   double until = glfwGetTime() + durationSeconds;
   // Extend, never shorten, an existing injection window for this key.
-  if (until > _injectedUntil[key]) {
-    _injectedUntil[key] = until;
-  }
+  _injectedUntil[key] = std::max(until, _injectedUntil[key]);
   // While the console owns the keyboard, printable injected keys also feed
   // the typed-character buffer (the GLFW char callback only fires for the
   // physical keyboard, so MCP-injected typing would otherwise be silent).
   if (_textCapture) {
     if (key >= OK_KEY_A && key <= OK_KEY_Z) {
-      onChar((unsigned int)('a' + (key - OK_KEY_A)));
+      onChar(static_cast<unsigned int>('a' + (key - OK_KEY_A)));
     } else if (key >= OK_KEY_0 && key <= OK_KEY_9) {
-      onChar((unsigned int)('0' + (key - OK_KEY_0)));
+      onChar(static_cast<unsigned int>('0' + (key - OK_KEY_0)));
     } else if (key == OK_KEY_SPACE) {
-      onChar((unsigned int)' ');
+      onChar(static_cast<unsigned int>(' '));
     } else if (key == OK_KEY_PERIOD) {
-      onChar((unsigned int)'.');
+      onChar(static_cast<unsigned int>('.'));
     } else if (key == OK_KEY_MINUS) {
-      onChar((unsigned int)'-');
+      onChar(static_cast<unsigned int>('-'));
     }
   }
 }

@@ -1,6 +1,7 @@
 #include "async_loader.hpp"
 
 #include "logger.hpp"
+#include <algorithm>
 #include <chrono>
 #include <condition_variable>
 #include <deque>
@@ -42,7 +43,7 @@ namespace {
       }
 
       {
-        std::lock_guard<std::mutex> lock(g_mutex);
+        std::scoped_lock lock(g_mutex);
         g_inFlight--;
         g_ready.push_back(job);
       }
@@ -59,10 +60,8 @@ void OkAsyncLoader::initialize(int workers) {
     // Leave the main thread its core, and do not flood a small machine:
     // this service exists to hide latency, not to saturate the CPU.
     unsigned int hw = std::thread::hardware_concurrency();
-    workers         = (int)(hw > 2 ? hw - 1 : 1);
-    if (workers > 4) {
-      workers = 4;
-    }
+    workers         = static_cast<int>(hw > 2 ? hw - 1 : 1);
+    workers = std::min(workers, 4);
   }
   g_running = true;
   for (int i = 0; i < workers; i++) {
@@ -87,7 +86,7 @@ void OkAsyncLoader::submit(const PrepareFn &prepare, const FinishFn &finish) {
     return;
   }
   {
-    std::lock_guard<std::mutex> lock(g_mutex);
+    std::scoped_lock lock(g_mutex);
     g_queued.push_back(job);
   }
   g_wake.notify_one();
@@ -99,7 +98,7 @@ void OkAsyncLoader::drain(float budgetMs) {
   for (;;) {
     Job job;
     {
-      std::lock_guard<std::mutex> lock(g_mutex);
+      std::scoped_lock lock(g_mutex);
       if (g_ready.empty()) {
         return;
       }
@@ -112,20 +111,20 @@ void OkAsyncLoader::drain(float budgetMs) {
     double spent = std::chrono::duration<double, std::milli>(
                        std::chrono::steady_clock::now() - start)
                        .count();
-    if (spent >= (double)budgetMs) {
+    if (spent >= static_cast<double>(budgetMs)) {
       return;
     }
   }
 }
 
 int OkAsyncLoader::getPendingCount() {
-  std::lock_guard<std::mutex> lock(g_mutex);
-  return (int)g_queued.size() + g_inFlight + (int)g_ready.size();
+  std::scoped_lock lock(g_mutex);
+  return static_cast<int>(g_queued.size()) + g_inFlight + static_cast<int>(g_ready.size());
 }
 
 int OkAsyncLoader::getReadyCount() {
-  std::lock_guard<std::mutex> lock(g_mutex);
-  return (int)g_ready.size();
+  std::scoped_lock lock(g_mutex);
+  return static_cast<int>(g_ready.size());
 }
 
 void OkAsyncLoader::shutdown() {
@@ -133,7 +132,7 @@ void OkAsyncLoader::shutdown() {
     return;
   }
   {
-    std::lock_guard<std::mutex> lock(g_mutex);
+    std::scoped_lock lock(g_mutex);
     g_running = false;
     g_queued.clear();
   }
@@ -145,7 +144,7 @@ void OkAsyncLoader::shutdown() {
   }
   g_workers.clear();
   {
-    std::lock_guard<std::mutex> lock(g_mutex);
+    std::scoped_lock lock(g_mutex);
     g_ready.clear();
     g_inFlight = 0;
   }

@@ -39,7 +39,7 @@ public:
               OkObject &controlled) override;
 
   void  setMoveSpeed(float speed) { _moveSpeed = speed; }
-  float getMoveSpeed() const { return _moveSpeed; }
+  [[nodiscard]] float getMoveSpeed() const { return _moveSpeed; }
 
   // Movement is relative to this camera (independent of what is rendered). Null
   // falls back to the controlled object's own facing.

@@ -39,26 +39,26 @@ int OkInstancedItem::addInstance(float x, float y, float z, float yaw,
   inst.scale   = scale;
   inst.visible = true;
   _instances.push_back(inst);
-  return (int)_instances.size() - 1;
+  return static_cast<int>(_instances.size()) - 1;
 }
 
 void OkInstancedItem::setInstance(int index, float x, float y, float z,
                                   float yaw, float scale) {
-  if (index < 0 || index >= (int)_instances.size()) {
+  if (index < 0 || index >= static_cast<int>(_instances.size())) {
     return;
   }
-  _instances[(size_t)index].x     = x;
-  _instances[(size_t)index].y     = y;
-  _instances[(size_t)index].z     = z;
-  _instances[(size_t)index].yaw   = yaw;
-  _instances[(size_t)index].scale = scale;
+  _instances[static_cast<size_t>(index)].x     = x;
+  _instances[static_cast<size_t>(index)].y     = y;
+  _instances[static_cast<size_t>(index)].z     = z;
+  _instances[static_cast<size_t>(index)].yaw   = yaw;
+  _instances[static_cast<size_t>(index)].scale = scale;
 }
 
 void OkInstancedItem::setInstanceVisible(int index, bool visible) {
-  if (index < 0 || index >= (int)_instances.size()) {
+  if (index < 0 || index >= static_cast<int>(_instances.size())) {
     return;
   }
-  _instances[(size_t)index].visible = visible;
+  _instances[static_cast<size_t>(index)].visible = visible;
 }
 
 void OkInstancedItem::clearInstances() {
@@ -141,7 +141,7 @@ void OkInstancedItem::drawSelf() {
     _uploadScratch.push_back(0.0f);
     _uploadScratch.push_back(0.0f);
   }
-  _drawnCount = (int)(_uploadScratch.size() / OK_INST_FLOATS);
+  _drawnCount = static_cast<int>(_uploadScratch.size() / OK_INST_FLOATS);
   if (_drawnCount == 0) {
     return;
   }
@@ -149,7 +149,7 @@ void OkInstancedItem::drawSelf() {
   ensureInstanceBuffer();
   glBindBuffer(GL_ARRAY_BUFFER, _instanceVbo);
   glBufferData(GL_ARRAY_BUFFER,
-               (GLsizeiptr)(_uploadScratch.size() * sizeof(float)),
+               static_cast<GLsizeiptr>(_uploadScratch.size() * sizeof(float)),
                _uploadScratch.data(), GL_DYNAMIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -220,8 +220,8 @@ void OkInstancedItem::drawSelf() {
 
   glBindVertexArray(VAO);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glDrawElementsInstanced(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT,
-                          nullptr, (GLsizei)_drawnCount);
+  glDrawElementsInstanced(drawMode, static_cast<GLsizei>(numIndices), GL_UNSIGNED_INT,
+                          nullptr, static_cast<GLsizei>(_drawnCount));
   OkFrustum::addDraw((numIndices / 3) * _drawnCount);
 
   // Wireframe overlay, on the same instanced draw. One pass covers
@@ -245,8 +245,8 @@ void OkInstancedItem::drawSelf() {
       glUniform4f(colorLoc, wireframeColor[0], wireframeColor[1],
                   wireframeColor[2], 1.0f);
     }
-    glDrawElementsInstanced(drawMode, (GLsizei)numIndices, GL_UNSIGNED_INT,
-                            nullptr, (GLsizei)_drawnCount);
+    glDrawElementsInstanced(drawMode, static_cast<GLsizei>(numIndices), GL_UNSIGNED_INT,
+                            nullptr, static_cast<GLsizei>(_drawnCount));
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     if (wLitLoc != -1) {
       glUniform1f(wLitLoc, 1.0f);

@@ -101,7 +101,7 @@ static const unsigned char PUNCT_123_126[4][7] = {
 const unsigned char *OkFont::glyphRows(char c) {
   static const unsigned char BLANK[7] = {0, 0, 0, 0, 0, 0, 0};
   if (c >= 'a' && c <= 'z') {
-    c = (char)(c - 'a' + 'A');
+    c = static_cast<char>(c - 'a' + 'A');
   }
   if (c >= '0' && c <= '9') {
     return DIGIT_FONT[c - '0'];
@@ -132,13 +132,13 @@ const unsigned char *OkFont::glyphRows(char c) {
 OkTexture *OkFont::bake(const std::string &name, const std::string &text,
                         int scale, const unsigned char fg[4],
                         const unsigned char bg[4]) {
-  int nd = (int)text.size();
+  int nd = static_cast<int>(text.size());
   int fw = nd * ADVANCE + 1;  // glyphs + 1px gap each, 1px left margin
   int fh = GLYPH_H + 2;       // 1px margin top and bottom
   int w  = fw * scale;
   int h  = fh * scale;
 
-  std::vector<unsigned char> rgba((std::size_t)w * h * 4);
+  std::vector<unsigned char> rgba(static_cast<std::size_t>(w) * h * 4);
   for (int py = 0; py < h; py++) {
     // GL textures load bottom-up: sample the font from the top row.
     int fy = (h - 1 - py) / scale - 1;
@@ -149,12 +149,12 @@ OkTexture *OkFont::bake(const std::string &name, const std::string &text,
         int di  = fx / ADVANCE;
         int col = fx % ADVANCE;
         if (di < nd && col < GLYPH_W) {
-          const unsigned char *rows = glyphRows(text[(std::size_t)di]);
+          const unsigned char *rows = glyphRows(text[static_cast<std::size_t>(di)]);
           on = ((rows[fy] >> (GLYPH_W - 1 - col)) & 1) != 0;
         }
       }
       const unsigned char *src = on ? fg : bg;
-      std::size_t          o   = ((std::size_t)py * w + px) * 4;
+      std::size_t          o   = (static_cast<std::size_t>(py) * w + px) * 4;
       rgba[o]                  = src[0];
       rgba[o + 1]              = src[1];
       rgba[o + 2]              = src[2];
@@ -181,9 +181,9 @@ OkTexture *OkFont::atlas() {
   int w = ATLAS_COLS * ADVANCE;
   int h = ATLAS_ROWS * (GLYPH_H + 1);
 
-  std::vector<unsigned char> rgba((std::size_t)w * h * 4, 0);
+  std::vector<unsigned char> rgba(static_cast<std::size_t>(w) * h * 4, 0);
   for (int ci = 0; ci < ATLAS_COLS * ATLAS_ROWS; ci++) {
-    char c = (char)(' ' + ci);
+    char c = static_cast<char>(' ' + ci);
     if (c > '~') {
       break;
     }
@@ -198,7 +198,7 @@ OkTexture *OkFont::atlas() {
         // Store bottom-up (GL convention): row 0 of the glyph is its top.
         int         px = cellX + col;
         int         py = h - 1 - (cellY + fy);
-        std::size_t o  = ((std::size_t)py * w + px) * 4;
+        std::size_t o  = (static_cast<std::size_t>(py) * w + px) * 4;
         rgba[o]        = 255;
         rgba[o + 1]    = 255;
         rgba[o + 2]    = 255;
@@ -220,18 +220,18 @@ OkTexture *OkFont::atlas() {
  */
 void OkFont::glyphUV(char c, float &u0, float &v0, float &u1, float &v1) {
   if (c >= 'a' && c <= 'z') {
-    c = (char)(c - 'a' + 'A');
+    c = static_cast<char>(c - 'a' + 'A');
   }
   int ci = (c >= ' ' && c <= '~') ? (c - ' ') : 0;
 
   int   cellX = (ci % ATLAS_COLS) * ADVANCE;
   int   cellY = (ci / ATLAS_COLS) * (GLYPH_H + 1);
-  float w     = (float)(ATLAS_COLS * ADVANCE);
-  float h     = (float)(ATLAS_ROWS * (GLYPH_H + 1));
+  float w     = static_cast<float>(ATLAS_COLS * ADVANCE);
+  float h     = static_cast<float>(ATLAS_ROWS * (GLYPH_H + 1));
 
-  u0 = (float)cellX / w;
-  u1 = (float)(cellX + GLYPH_W) / w;
+  u0 = static_cast<float>(cellX) / w;
+  u1 = static_cast<float>(cellX + GLYPH_W) / w;
   // Atlas rows are stored top-down but the texture is bottom-up.
-  v1 = (h - (float)cellY) / h;
-  v0 = (h - (float)(cellY + GLYPH_H)) / h;
+  v1 = (h - static_cast<float>(cellY)) / h;
+  v0 = (h - static_cast<float>(cellY + GLYPH_H)) / h;
 }

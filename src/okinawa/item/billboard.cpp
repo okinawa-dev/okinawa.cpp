@@ -1,6 +1,7 @@
 #include "billboard.hpp"
 
 #include "../core/core.hpp"
+#include <algorithm>
 #include <cmath>
 
 // Quad geometry shared with the OkItem base constructor. OkItem copies
@@ -55,7 +56,7 @@ OkBillboard::OkBillboard(const std::string &name, float width, float height)
 void OkBillboard::stepSelf(float dt) {
   (void)dt;
   OkCamera *cam = OkCore::getCamera();
-  if (cam == NULL) {
+  if (cam == nullptr) {
     return;
   }
   const OkRotation &cr = cam->getRotation();
@@ -104,12 +105,8 @@ void OkBillboard::stepSelf(float dt) {
     float   dz = p.z() - c.z();
     float   d  = std::sqrt(dx * dx + dy * dy + dz * dz);
     float   f  = (d - proximityFade) / proximityFade;  // 0 at near, 1 at 2x
-    if (f < 0.0f) {
-      f = 0.0f;
-    }
-    if (f > 1.0f) {
-      f = 1.0f;
-    }
+    f = std::max(f, 0.0f);
+    f = std::min(f, 1.0f);
     tintColor[3] = baseAlpha * f;
   }
 }

@@ -33,7 +33,7 @@ protected:
 public:
   // Constructors
   explicit OkItemGroup(const std::string &name);
-  ~OkItemGroup();
+  ~OkItemGroup() override;
 
   // Delete copy constructor and assignment
   OkItemGroup(const OkItemGroup &)            = delete;

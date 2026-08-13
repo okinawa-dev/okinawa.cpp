@@ -53,23 +53,23 @@ public:
   bool load(const std::string &jsonPath, const std::string &imageOverride = "");
 
   // The shared GPU texture. Hand it to items with setTexture().
-  OkTexture         *getTexture() const { return _texture; }
-  const std::string &getTextureName() const { return _textureName; }
+  [[nodiscard]] OkTexture         *getTexture() const { return _texture; }
+  [[nodiscard]] const std::string &getTextureName() const { return _textureName; }
 
   // Region lookup by name; null when missing.
-  const OkSpriteRegion    *getRegion(const std::string &name) const;
-  bool                     hasRegion(const std::string &name) const;
-  std::vector<std::string> getRegionNames() const;
-  int                      getRegionCount() const;
+  [[nodiscard]] const OkSpriteRegion    *getRegion(const std::string &name) const;
+  [[nodiscard]] bool                     hasRegion(const std::string &name) const;
+  [[nodiscard]] std::vector<std::string> getRegionNames() const;
+  [[nodiscard]] int                      getRegionCount() const;
 
   // Named region groups from the sheet's tags (Aseprite frameTags): the
   // regions whose name falls in a tag's range, in order. Useful both for
   // animation later and to pick a random member of a family today
   // ("window_tall" -> every tall-window variant).
-  std::vector<std::string> getGroup(const std::string &tag) const;
+  [[nodiscard]] std::vector<std::string> getGroup(const std::string &tag) const;
 
-  int getWidth() const { return _width; }
-  int getHeight() const { return _height; }
+  [[nodiscard]] int getWidth() const { return _width; }
+  [[nodiscard]] int getHeight() const { return _height; }
 
 private:
   OkTexture  *_texture;
