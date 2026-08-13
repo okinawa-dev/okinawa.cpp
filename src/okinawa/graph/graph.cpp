@@ -146,7 +146,7 @@ void OkGraph::buildLines() {
                           static_cast<long>(nodeIdx.size()));
   _nodesItem->setDrawMode(GL_POINTS);
   _nodesItem->setFillColor(_nodeColor[0], _nodeColor[1], _nodeColor[2]);
-    _nodesItem->setUnlit(true);  // debug layer: exact colour
+  _nodesItem->setUnlit(true);  // debug layer: exact colour
   _nodesItem->setVisible(_showNodes);
   attach(_nodesItem);
 }
@@ -168,13 +168,13 @@ void OkGraph::buildPolygons() {
       if (ln < eps) {
         continue;
       }
-      float          nx   = -dz / ln * hw;
-      float          nz   = dx / ln * hw;
-      unsigned int   base = static_cast<unsigned int>(ev.size() / 5);
-      float          quad[4][3] = {{pa.x() + nx, pa.y(), pa.z() + nz},
-                                   {pa.x() - nx, pa.y(), pa.z() - nz},
-                                   {pb.x() - nx, pb.y(), pb.z() - nz},
-                                   {pb.x() + nx, pb.y(), pb.z() + nz}};
+      float        nx         = -dz / ln * hw;
+      float        nz         = dx / ln * hw;
+      unsigned int base       = static_cast<unsigned int>(ev.size() / 5);
+      float        quad[4][3] = {{pa.x() + nx, pa.y(), pa.z() + nz},
+                                 {pa.x() - nx, pa.y(), pa.z() - nz},
+                                 {pb.x() - nx, pb.y(), pb.z() - nz},
+                                 {pb.x() + nx, pb.y(), pb.z() + nz}};
       for (int k = 0; k < 4; k++) {
         ev.push_back(quad[k][0]);
         ev.push_back(quad[k][1]);
@@ -194,10 +194,10 @@ void OkGraph::buildPolygons() {
                               static_cast<long>(ev.size()), ei.data(),
                               static_cast<long>(ei.size()));
       _edgesItem->setFillColor(_edgeColor[0], _edgeColor[1], _edgeColor[2]);
-    _edgesItem->setUnlit(true);  // debug layer: exact colour
+      _edgesItem->setUnlit(true);      // debug layer: exact colour
       _edgesItem->setWireframe(true);  // outline over the fill
-      _edgesItem->setWireframeColor(_edgeColor[0] * 0.35f, _edgeColor[1] * 0.35f,
-                                    _edgeColor[2] * 0.35f);
+      _edgesItem->setWireframeColor(
+          _edgeColor[0] * 0.35f, _edgeColor[1] * 0.35f, _edgeColor[2] * 0.35f);
       _edgesItem->setVisible(_showEdges);
       attach(_edgesItem);
     }
@@ -208,8 +208,8 @@ void OkGraph::buildPolygons() {
   std::vector<unsigned int> ni;
   float                     hm = _nodeMarker * 0.5f;
   for (std::size_t i = 0; i < _nodes.size(); i++) {
-    const OkPoint &p    = _nodes[i];
-    unsigned int   base = static_cast<unsigned int>(nv.size() / 5);
+    const OkPoint &p          = _nodes[i];
+    unsigned int   base       = static_cast<unsigned int>(nv.size() / 5);
     float          quad[4][3] = {{p.x() - hm, p.y(), p.z() - hm},
                                  {p.x() + hm, p.y(), p.z() - hm},
                                  {p.x() + hm, p.y(), p.z() + hm},
@@ -228,11 +228,11 @@ void OkGraph::buildPolygons() {
     ni.push_back(base + 2);
     ni.push_back(base + 3);
   }
-  _nodesItem = new OkItem(getName() + "_nodes", nv.data(),
-                          static_cast<long>(nv.size()), ni.data(),
-                          static_cast<long>(ni.size()));
+  _nodesItem =
+      new OkItem(getName() + "_nodes", nv.data(), static_cast<long>(nv.size()),
+                 ni.data(), static_cast<long>(ni.size()));
   _nodesItem->setFillColor(_nodeColor[0], _nodeColor[1], _nodeColor[2]);
-    _nodesItem->setUnlit(true);  // debug layer: exact colour
+  _nodesItem->setUnlit(true);      // debug layer: exact colour
   _nodesItem->setWireframe(true);  // outline over the fill
   _nodesItem->setWireframeColor(_nodeColor[0] * 0.35f, _nodeColor[1] * 0.35f,
                                 _nodeColor[2] * 0.35f);
