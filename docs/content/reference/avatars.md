@@ -94,6 +94,59 @@ area — the pan controller uses it.
 - **`OkSpectatorCamera`** — free-fly: ignores the target and flies from the
   input state; mouse rotates it. Use with no active avatar for a debug
   fly-through.
+- **`OkInspectionCamera`** — for looking *at* a scene rather than being inside
+  one: the wheel comes closer, a drag slides sideways, a drag swings the view
+  round a point, and every gesture is scaled by the camera's height above the
+  scene. See below.
+
+### OkInspectionCamera
+
+A tool that shows a large scene is used at two ranges — the whole thing on
+screen, and one detail of it — and a gesture worth a fixed number of units is
+unusable at both. The wheel crawls at the first and throws the camera through a
+wall at the second. Scaling every gesture by how high the camera sits above the
+scene makes one wheel notch mean "a bit closer" at every range, which is what a
+viewer for solid models does and what a person expects.
+
+| Method | Purpose |
+| --- | --- |
+| `void setGroundHeight(float y)` | The height the scene's ground sits at. Gestures are measured from it, and it is a fact about the scene, so the application sets it. |
+| `void setScaleRange(float min, float max)` | Clamps on that height. Without the lower one every gesture dies as the camera nears the ground; without the upper one a camera pulled far out crosses the scene in a notch. |
+| `void setZoomPerNotch(float)` / `void setPanPerPixel(float)` | Units per wheel notch and per dragged pixel, at a scale of 1. |
+| `float gestureScale() const` | What a gesture is worth right now. |
+| `void zoomAlongView(float notches)` | Move along the view direction. |
+| `void zoomToward(const OkPoint &target, float notches)` | Move towards a point, stopping short of it (`MIN_REACH`). |
+| `void panAcrossView(float dxPixels, float dyPixels)` | Slide across the view. |
+| `bool orbitAbout(const OkPoint &pivot, float yawDeg, float pitchDeg)` | Swing round a point; `false` when refused for coming too close or too near level. |
+| `float viewDistance() const` | Height above the scene's ground, so the rest of the engine scales with it. |
+
+It holds the arithmetic and none of the policy. Which button does what, whether
+the pointer is captured, and where a pivot comes from stay with the caller —
+and the two arguments it most wants are the two only the caller can work out:
+the point under the cursor, which needs to know what the scene contains, and
+the height of its ground.
+
+`zoomToward` and `orbitAbout` take that point rather than finding it, which is
+what makes them worth having: aiming the wheel at what the cursor is over keeps
+that thing under the pointer as the camera closes in, and orbiting about it
+keeps it in frame while the view swings. Orbiting about the camera's own
+position instead slides the subject out of view — right for a first-person
+game, wrong for a tool. Use [`OkCamera::rayThroughPixel`](/reference/core.html)
+and [`OkItem::intersectRay`](/reference/items.html) to find the point.
+
+```cpp
+OkInspectionCamera *camera = new OkInspectionCamera("tool", width, height);
+camera->setGroundHeight(sceneGroundY);
+camera->setScaleRange(5.0f, 900.0f);
+
+// ... per frame, from whatever the application decides a gesture is:
+OkPoint under;
+if (pointUnderCursor(&under)) {
+  camera->zoomToward(under, wheelNotches);
+} else {
+  camera->zoomAlongView(wheelNotches);
+}
+```
 
 ## Active avatar
 
