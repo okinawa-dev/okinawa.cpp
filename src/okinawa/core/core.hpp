@@ -52,6 +52,29 @@ public:
    * @param overlayCallback Called once per frame with the frame delta.
    */
   static void setOverlayCallback(const OkCoreCallback &overlayCallback);
+
+  /**
+   * @brief Run something once, when the loop is ending, before anything
+   *        is torn down.
+   *
+   *        An application usually has one thing to do on the way out --
+   *        write down where the user was, flush what they were editing --
+   *        and nowhere safe to do it. After `loop()` returns is too late:
+   *        it calls `exit()` before returning, which deletes the scene,
+   *        the input and every camera, so an application asking where its
+   *        camera was is asking a deleted object. Before `loop()` is too
+   *        early, because the answer is not known yet.
+   *
+   *        This runs in between, once, on the loop thread, whatever ended
+   *        the loop: the window's close button, `askForExit()`, or the
+   *        MCP `quit` tool. It does not run when the process is killed
+   *        from outside -- nothing can.
+   *
+   * @param exitCallback Called with the loop already stopped and the
+   *                     scene still intact. Set an empty function to
+   *                     remove it.
+   */
+  static void setExitCallback(const std::function<void()> &exitCallback);
   static void askForExit();
   static void exit();
 
@@ -146,6 +169,7 @@ private:
   static OkMcpServer            *_mcpServer;
   static OkAvatar               *_activeAvatar;
   static OkCoreCallback          _overlayCallback;
+  static std::function<void()>   _exitCallback;
 
   static void mouseCallback(GLFWwindow *window, double xpos, double ypos);
   // Mouse-wheel scroll -> zoom the current camera (yoffset = notches).

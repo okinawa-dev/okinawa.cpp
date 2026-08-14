@@ -40,7 +40,8 @@ OkSceneHandler         *OkCore::_sceneHandler  = nullptr;
 GLuint                  OkCore::_shaderProgram = 0;
 OkInput                *OkCore::_input         = nullptr;
 OkMcpServer            *OkCore::_mcpServer     = nullptr;
-OkAvatar               *OkCore::_activeAvatar  = nullptr;
+std::function<void()>   OkCore::_exitCallback;
+OkAvatar               *OkCore::_activeAvatar = nullptr;
 OkCore::OkCoreCallback  OkCore::_overlayCallback;
 
 /**
@@ -161,6 +162,13 @@ bool OkCore::initialize() {
  */
 void OkCore::setOverlayCallback(const OkCoreCallback &overlayCallback) {
   _overlayCallback = overlayCallback;
+}
+
+/**
+ * @brief Install the exit callback (see the header for what it is for).
+ */
+void OkCore::setExitCallback(const std::function<void()> &exitCallback) {
+  _exitCallback = exitCallback;
 }
 
 void OkCore::askForExit() {
@@ -624,6 +632,13 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       glfwSwapBuffers(_window);
       glfwPollEvents();
     }
+  }
+
+  // The application's last chance: the loop has stopped and nothing has
+  // been deleted yet. Whatever it wants to remember about this session,
+  // it has to read now -- exit() below takes the cameras with it.
+  if (_exitCallback) {
+    _exitCallback();
   }
 
   exit();

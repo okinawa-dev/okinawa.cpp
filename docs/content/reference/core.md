@@ -28,6 +28,7 @@ nav_order: 1
 | `static void enableMcpServer(int port = 8765)` | Start the in-engine MCP server (see [MCP server](/reference/mcp.html)). |
 | `static void setIgnoreUserInput(bool ignore)` | Ignore physical input (MCP-driven instances). |
 | `static void setOverlayCallback(cb)` | Draw over the finished frame, just before the swap. |
+| `static void setExitCallback(cb)` | Run something once when the loop ends, before anything is torn down. |
 
 The loop callbacks share the signature `void(float deltaTime)`.
 
@@ -55,6 +56,29 @@ OkCore::loop(stepCallback, drawCallback);
 Pass an empty function to remove it. The order within a frame is: scene,
 draw callback, post-process composite, cameras, interface pass, overlay
 callback, swap.
+
+### The last thing an application does
+
+Most applications have something to write down on the way out — where
+the user was, what they had open — and the obvious places to do it are
+both wrong. After `loop()` returns is too late: it calls `exit()` before
+returning, and that deletes the scene, the input and every camera, so an
+application asking where its camera was is asking a deleted object.
+Doing it every frame in case this one is the last is paying, sixty times
+a second, for something that happens once.
+
+`setExitCallback()` runs in between: once, on the loop thread, with the
+loop stopped and the scene still intact. It does not care what ended the
+loop — the window's close button, `askForExit()`, or the MCP
+[`quit` tool](/reference/mcp.html) all arrive here.
+
+```cpp
+OkCore::setExitCallback([]() {
+  saveWhereverTheUserWas();   // the camera is still alive here
+});
+```
+
+Nothing runs when the process is killed from outside. Nothing can.
 
 ## OkCamera methods
 
