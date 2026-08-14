@@ -652,16 +652,20 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
   static float lastY      = static_cast<float>(ypos);
   static bool  firstMouse = true;
 
-  // Ignore mouse-look unless the cursor is captured (pointer lock): physical
-  // input on, window focused, and the user has clicked into the view. So moving
-  // the mouse in another app, or before clicking in, never rotates the view.
-  // Re-baseline whenever not capturing so (re)capturing does not cause a jump.
-  if ((_input != nullptr &&
-       (!_input->isPhysicalInputEnabled() || !_input->isCursorCaptured())) ||
+  // Physical input off, or the window not focused: nothing here applies,
+  // and the baseline is dropped so that coming back does not arrive as
+  // one enormous delta.
+  if ((_input != nullptr && !_input->isPhysicalInputEnabled()) ||
       (window != nullptr && glfwGetWindowAttrib(window, GLFW_FOCUSED) == 0)) {
     firstMouse = true;
     return;
   }
+
+  // The pointer's motion is followed from here on whether or not the
+  // cursor is captured, so that capturing never arrives as a jump -- and
+  // so that an application which has refused capture altogether can
+  // still be told where the mouse went. What each half of that motion is
+  // allowed to do is decided below.
 
   if (firstMouse) {
     lastX      = static_cast<float>(xpos);
@@ -678,8 +682,24 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
 
   // Raw pixel delta for pan-style controllers (folded per frame into the
   // input state). Cameras that consume look ignore pan and vice versa.
-  if (_input != nullptr) {
+  //
+  // Fed while the cursor is captured, as mouse-look is -- or whenever
+  // the application has turned capture off entirely. A tool whose cursor
+  // is the instrument (`setPointerLockOnClick(false)`) never captures,
+  // so a delta that waited for capture would never arrive at all, and
+  // every pan-style controller would sit still in exactly the kind of
+  // application that most wants one. Applications that leave capture on
+  // are unaffected: for them the condition is still "captured", so a
+  // mouse crossing the window before any click moves nothing.
+  if (_input != nullptr &&
+      (_input->isCursorCaptured() || !_input->isPointerLockOnClick())) {
     _input->addPanDelta(xoffset, yoffset);
+  }
+
+  // Mouse-look, on the other hand, always needs the pointer captured: a
+  // free cursor aiming at a menu would be swinging the view behind it.
+  if (_input != nullptr && !_input->isCursorCaptured()) {
+    return;
   }
 
   const float sensitivity = 0.05f;

@@ -56,9 +56,21 @@ window that no longer shows where the pointer is.
 OkCore::getInput()->setPointerLockOnClick(false);
 ```
 
+The frame's mouse pan delta (`panX` / `panY`) follows the same rule from
+the other side. It is fed while the cursor is captured — or, in an
+application that has switched capture off altogether, always. Otherwise
+a delta that waited for a capture which never comes would never arrive,
+and every pan-style controller would sit still in exactly the kind of
+application that most wants one. Applications that leave capture on are
+unaffected: for them the condition is still "captured", so a mouse
+crossing the window before any click moves nothing.
+
+Mouse-**look** keeps needing the capture either way. A free cursor aimed
+at a menu would be swinging the view along behind it.
+
 ## OkInputState fields
 
-`getState()` returns a struct with ready-to-use flags. Movement: `forward`, `backward`, `strafeLeft`, `strafeRight`, plus the vertical nudge `moveUp` / `moveDown` (E / Q held). Rotation: `turnLeft`, `turnRight`, `turnUp`, `turnDown`. Mouse pan: `panX` / `panY`, the frame's raw mouse pixel delta (accumulated by the cursor callback while captured, consumed by pan-style controllers). Edge-triggered actions (true only on the frame first pressed): `action1`, `action2`, `action3`, `action4`. Camera selection: `changeCamera` (-1 if none). And `exit`, set when the user asks to quit (ESC while the cursor is already released; a captured cursor consumes ESC to release first).
+`getState()` returns a struct with ready-to-use flags. Movement: `forward`, `backward`, `strafeLeft`, `strafeRight`, plus the vertical nudge `moveUp` / `moveDown` (E / Q held). Rotation: `turnLeft`, `turnRight`, `turnUp`, `turnDown`. Mouse pan: `panX` / `panY`, the frame's raw mouse pixel delta (accumulated by the cursor callback while the cursor is captured, or always when the application has switched capture off; consumed by pan-style controllers). Edge-triggered actions (true only on the frame first pressed): `action1`, `action2`, `action3`, `action4`. Camera selection: `changeCamera` (-1 if none). And `exit`, set when the user asks to quit (ESC while the cursor is already released; a captured cursor consumes ESC to release first).
 
 ## Example
 
