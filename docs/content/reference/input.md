@@ -19,6 +19,7 @@ nav_order: 7
 | `void injectKey(OkKey key, double durationSeconds)` | Synthesize a key press (used to drive the app programmatically). |
 | `void setPhysicalInputEnabled(bool enabled)` | Enable/disable physical keyboard/mouse input. |
 | `void setCursorCaptured(bool captured)` | Capture (hide + lock for mouse-look) or release the OS cursor. |
+| `void setPointerLockOnClick(bool enabled)` | Whether a click may take the pointer at all (default on). |
 | `bool isCursorCaptured() const` | Whether the cursor is currently captured. |
 | `void setTextCapture(bool captured)` | Text capture (the console): the normal accessors and `getState()` report nothing while set, so typing cannot trigger gameplay keys. |
 | `bool isKeyJustPressedRaw/isKeyHeldRaw(OkKey)` | Variants that ignore the text-capture flag (console internals). |
@@ -34,6 +35,26 @@ Mouse-look uses a **pointer-lock** model rather than holding the cursor captured
 - **ESC releases** the cursor (browser style). When the cursor is already released, ESC sets `exit` instead (the app's quit request).
 - **Losing window focus** releases the cursor automatically (frees the OS pointer and, on macOS, restores system-wide mouse acceleration); the user clicks back into the view to resume mouse-look.
 - With physical input disabled (`setPhysicalInputEnabled(false)`, e.g. `--no-input`) the cursor is never captured; drive the view through the MCP `view` tool instead.
+
+### Applications that are pointed at rather than steered
+
+The model above is what a game wants. An application whose cursor is the
+instrument -- one where clicking is how things are chosen -- wants the
+opposite, and `setPointerLockOnClick(false)` gives it: no click ever
+takes the pointer, and the cursor stays on screen for good.
+
+It has to be a deliberate choice, because it is a trade. Mouse-look
+reads the locked pointer's motion, so switching pointer lock off
+switches mouse-look off with it; a tool that does this drives its camera
+from keys, or from a drag it interprets itself.
+
+Without it the first click is the last one the user can aim: the cursor
+disappears on the way in, and every click after that is made blind at a
+window that no longer shows where the pointer is.
+
+```cpp
+OkCore::getInput()->setPointerLockOnClick(false);
+```
 
 ## OkInputState fields
 

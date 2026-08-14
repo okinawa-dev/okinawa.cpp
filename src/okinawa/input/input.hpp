@@ -116,6 +116,31 @@ public:
   // the render area captures it (hidden + locked) for mouse-look; ESC or focus
   // loss release it. While released, the title bar / OS chrome work normally.
   void setCursorCaptured(bool captured);
+
+  /**
+   * @brief Whether a click inside the view takes the pointer.
+   *
+   *        On by default, which is what a game wants: click in, the
+   *        cursor disappears and the mouse steers the view.
+   *
+   *        An application that is *pointed at* rather than steered wants
+   *        it off. An editor is the case: its cursor has to stay on
+   *        screen because clicking is how things are chosen, and a
+   *        pointer that vanishes on the first click leaves the user
+   *        aiming at a window they can no longer see into. Turning this
+   *        off also turns mouse-look off, since that reads the locked
+   *        pointer's motion; drive the camera from keys instead.
+   */
+  void setPointerLockOnClick(bool enabled) {
+    _pointerLockOnClick = enabled;
+    if (!enabled) {
+      setCursorCaptured(false);
+    }
+  }
+
+  bool isPointerLockOnClick() const {
+    return _pointerLockOnClick;
+  }
   bool isCursorCaptured() const {
     return _cursorCaptured;
   }
@@ -148,6 +173,8 @@ private:
   bool _physicalEnabled;
   // Pointer lock state: true while the cursor is captured for mouse-look.
   bool _cursorCaptured;
+  // Whether a click may take the pointer at all (see the setter).
+  bool _pointerLockOnClick;
   // Mouse pan delta accumulated since the last process() (raw pixels).
   float _pendingPanX;
   float _pendingPanY;

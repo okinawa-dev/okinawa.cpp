@@ -37,12 +37,13 @@ OkInput::OkInput(GLFWwindow *window, MouseCallback callback) {
   _currentKeys.fill(false);
   _prevKeys.fill(false);
   _injectedUntil.fill(0.0);
-  _physicalEnabled = true;
-  _textCapture     = false;
-  _pendingChars    = "";
-  _cursorCaptured  = false;
-  _pendingPanX     = 0.0f;
-  _pendingPanY     = 0.0f;
+  _physicalEnabled    = true;
+  _textCapture        = false;
+  _pendingChars       = "";
+  _cursorCaptured     = false;
+  _pointerLockOnClick = true;
+  _pendingPanX        = 0.0f;
+  _pendingPanY        = 0.0f;
 
   OkLogger::info("Input", "Setting mouse callback...");
   glfwSetCursorPosCallback(window, _mouseCallback);
@@ -266,8 +267,8 @@ void OkInput::onMouseButton(int button, int action) {
   // GLFW only delivers button events for the content area, so clicks on the
   // title bar / OS chrome never reach here and keep working normally.
   if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS &&
-      _physicalEnabled && !_cursorCaptured && _window != nullptr &&
-      glfwGetWindowAttrib(_window, GLFW_FOCUSED) != 0) {
+      _pointerLockOnClick && _physicalEnabled && !_cursorCaptured &&
+      _window != nullptr && glfwGetWindowAttrib(_window, GLFW_FOCUSED) != 0) {
     setCursorCaptured(true);
   }
 }
