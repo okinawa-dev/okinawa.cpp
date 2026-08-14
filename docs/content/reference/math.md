@@ -46,6 +46,50 @@ Okinawa uses a right-handed coordinate system: X points right, Y points up, Z po
 | `static void directionVectorToAngles(const OkPoint &dir, float &outPitch, float &outYaw)` | Decompose a direction into pitch/yaw. |
 | `static OkRotation lookAt(const OkPoint &eye, const OkPoint &target, const OkPoint &up = OkPoint(0,1,0))` | Build a rotation that looks from eye to target. |
 
+## OkRay
+
+A half-line through the world — an origin and a direction — with the
+intersection tests worth having against it. It is what a cursor becomes
+once [`OkCamera::rayThroughPixel`](/reference/core.html) has turned a
+pixel into a direction, and what
+[`OkItem::intersectRay`](/reference/items.html) is asked with.
+
+| Method | Purpose |
+| --- | --- |
+| `OkRay(const OkPoint &origin, const OkPoint &direction)` | Construct. The direction need not be a unit vector; see below. |
+| `OkPoint pointAt(float distance) const` | The point that far along the ray. |
+| `bool intersectsBox(const OkPoint &low, const OkPoint &high, float *outDistance) const` | Axis-aligned box, by the slab method. `0` when the ray starts inside. |
+| `bool intersectsSphere(const OkPoint &centre, float radius, float *outDistance) const` | Sphere. `0` when the ray starts inside. |
+| `bool intersectsTriangle(const OkPoint &a, const OkPoint &b, const OkPoint &c, float *outDistance) const` | Triangle, by Möller–Trumbore, counting both faces. |
+| `OkRay transformed(const glm::mat4 &matrix) const` | The same ray seen from another space. |
+
+### Distances are measured in units of the direction
+
+Every distance a ray reports is in units of its own `direction`, not in
+world units. With a unit direction the two are the same and nobody has to
+think about it, which is the ordinary case — `rayThroughPixel` returns
+one.
+
+The distinction is there for `transformed`. Multiplying a ray by the
+inverse of an object's model matrix puts it in that object's local space,
+where the object's vertices already are, so a mesh test transforms **one
+ray** instead of every vertex. Under a scaling the transformed direction
+is no longer a unit vector, and that is deliberate: the scaling lives in
+the direction's length, which is what makes a hit found in local space
+come back with a distance measured in world units. Normalizing after the
+transform throws that conversion away and reports the wrong distance for
+any scaling but 1.
+
+### What it does not decide
+
+`OkRay` holds no policy about what may be hit. Which objects are worth
+testing, whether a hidden one counts, and which of several hits wins are
+questions for whoever is asking — and applications answer them
+differently: an editor's cursor wants the nearest selectable thing, a
+projectile wants the first solid one, a line-of-sight check only wants to
+know whether anything is in the way. An engine that answered any of them
+here would be answering it for all of them.
+
 ## OkFrustum
 
 The view frustum as six planes, extracted from a combined
