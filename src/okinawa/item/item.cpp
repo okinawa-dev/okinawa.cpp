@@ -732,6 +732,62 @@ void OkItem::drawSelf() {
   }
 }
 
+bool OkItem::intersectRay(const OkRay &ray, float *outDistance) const {
+  // Lines and points have no surface to cross, and a triangle test over
+  // an index list that is not triangles reads three unrelated vertices as
+  // a face and reports hits on shapes that were never drawn.
+  if (drawMode != GL_TRIANGLES) {
+    return false;
+  }
+  if (vertices == nullptr || indices == nullptr || numIndices < 3) {
+    return false;
+  }
+
+  // Into the item's own space, where its vertices already are. The
+  // direction is left unnormalized by the transform, which is what
+  // carries the local distances back to world ones under a scaling.
+  OkRay local = ray.transformed(glm::inverse(getTransformMatrix()));
+
+  // The same sphere the frustum culls with. Most items fail here for the
+  // cost of one quadratic, and never have a triangle read.
+  if (!local.intersectsSphere(
+          OkPoint(sphereCenter[0], sphereCenter[1], sphereCenter[2]), radius,
+          nullptr)) {
+    return false;
+  }
+
+  bool  found   = false;
+  float nearest = 0.0f;
+  for (long i = 0; i + 2 < numIndices; i += 3) {
+    long first  = static_cast<long>(indices[i]) * VERTEX_STRIDE;
+    long second = static_cast<long>(indices[i + 1]) * VERTEX_STRIDE;
+    long third  = static_cast<long>(indices[i + 2]) * VERTEX_STRIDE;
+    if (first + 2 >= numVertices || second + 2 >= numVertices ||
+        third + 2 >= numVertices) {
+      continue;  // an index past the end of the buffer: not a triangle
+    }
+
+    float distance = 0.0f;
+    if (!local.intersectsTriangle(
+            OkPoint(vertices[first], vertices[first + 1], vertices[first + 2]),
+            OkPoint(vertices[second], vertices[second + 1],
+                    vertices[second + 2]),
+            OkPoint(vertices[third], vertices[third + 1], vertices[third + 2]),
+            &distance)) {
+      continue;
+    }
+    if (!found || distance < nearest) {
+      found   = true;
+      nearest = distance;
+    }
+  }
+
+  if (found && outDistance != nullptr) {
+    *outDistance = nearest;
+  }
+  return found;
+}
+
 /**
  * @brief Update the vertex data of an existing item safely.
  * @param newVertexData The new vertex data.

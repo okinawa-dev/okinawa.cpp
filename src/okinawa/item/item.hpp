@@ -5,6 +5,7 @@
 #include "../core/object.hpp"
 #include "../handlers/textures.hpp"
 #include "../item/texture.hpp"
+#include "../math/ray.hpp"
 #include <algorithm>
 #include <array>
 #include <string>
@@ -141,6 +142,39 @@ public:
     return radius;
   }
   void updateVertexData(float *newVertexData, long newVertexCount);
+
+  /**
+   * @brief Where a ray crosses this item's own triangles, or false if it
+   *        misses.
+   *
+   *        The item is the only one that can answer this: it owns its
+   *        vertex and index buffers and its place in the world, and hands
+   *        neither back. Anything outside would have to keep a second
+   *        copy of the mesh to ask the question, which is tens of
+   *        megabytes for a city and a copy that can fall out of step with
+   *        what is drawn.
+   *
+   *        Two tests, in the order that makes the second one cheap: the
+   *        bounding sphere the frustum already culls with, and only then
+   *        the triangles. Both run in the item's local space, reached by
+   *        transforming the ray rather than the mesh -- one matrix
+   *        against one ray instead of one matrix against every vertex.
+   *
+   *        It answers about geometry and nothing else. Whether the item
+   *        is visible, whether it is the sort of thing this application
+   *        lets a user choose, and which of several hits wins are all
+   *        decisions for the caller; an engine that made them here would
+   *        be making them for every application at once.
+   *
+   *        Items drawn as lines or points are never hit: there is no
+   *        surface to cross. A subclass that draws its mesh more than
+   *        once (instanced items) is answered for the base copy only.
+   *
+   * @param ray         In world space. A unit direction makes the
+   *                    distance a world distance; see OkRay.
+   * @param outDistance If non-null, the distance to the nearest crossing.
+   */
+  bool intersectRay(const OkRay &ray, float *outDistance) const;
 
   // Texture methods
   void loadTextureFromFile(const std::string &texturePath);

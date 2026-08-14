@@ -45,6 +45,57 @@ Every drawable inherits these:
 | `void setTintColor(float r, float g, float b, float a)` | Multiplied over the texture in the fill pass (white = untouched); how GUI text is coloured. |
 | `void updateVertexData(float *data, long count)` | Replace the vertex data in place (stride-5 contract; normals recomputed against the item's indices). |
 | `float getRadius() const` | The mesh's maximum dimension. |
+| `bool intersectRay(const OkRay &ray, float *outDistance) const` | Whether a ray crosses this item's own triangles, and how far along (see below). |
+
+### Asking an item whether a ray hits it
+
+`intersectRay` takes a world-space ray — from
+[`OkCamera::rayThroughPixel`](/reference/core.html), or built by hand for
+a line-of-sight check — and answers against the item's **own triangles**,
+not against a box around it.
+
+The item is the only one that can answer it. It owns its vertex and index
+buffers and its place in the world and hands neither back, so anything
+outside would have to keep a second copy of the mesh to ask — which for a
+large scene is tens of megabytes, and a copy that can fall out of step
+with what is actually drawn.
+
+Two tests, in the order that makes the second cheap: the bounding sphere
+the frustum already culls with, and only then the triangles. Both run in
+the item's local space, reached by transforming the ray rather than the
+mesh; [OkRay](/reference/math.html#okray) explains why the distance still
+comes back in world units.
+
+It answers about geometry and nothing else. Whether the item is visible,
+whether it is the sort of thing this application lets a user choose, and
+which of several hits wins are the caller's decisions — an engine that
+made them here would be making them for every application at once. So a
+selection loop is the caller's, and it is short:
+
+```cpp
+OkRay  ray     = camera->rayThroughPixel(mouseX, mouseY, width, height);
+OkItem *chosen = nullptr;
+float  nearest = 0.0f;
+
+for (size_t i = 0; i < candidates.size(); i++) {
+  float distance = 0.0f;
+  if (!candidates[i]->getVisible()) {
+    continue;                       // this application's rule, not the engine's
+  }
+  if (!candidates[i]->intersectRay(ray, &distance)) {
+    continue;
+  }
+  if (chosen == nullptr || distance < nearest) {
+    chosen  = candidates[i];
+    nearest = distance;
+  }
+}
+```
+
+Items drawn as lines or points are never hit: there is no surface to
+cross, and reading such an index list in threes would invent triangles out
+of unrelated vertices. An `OkInstancedItem` is answered for its base copy
+only.
 
 ### Wireframe
 
