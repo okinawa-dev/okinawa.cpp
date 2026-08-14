@@ -66,8 +66,31 @@ callback, swap.
 | `const glm::mat4 &getProjection() const` | The projection matrix. |
 | `float viewDistance() const` | How far the camera sits from what it observes (orbit distance, overhead height); `0` when the notion does not apply. |
 | `void setViewDistance(float d)` | Write counterpart of `viewDistance()`: drive the distance/height directly. Base ignores it; subclasses apply and clamp. |
+| `OkRay rayThroughPixel(x, y, width, height) const` | The ray through a point on the surface being drawn to. |
+| `bool pixelOfPoint(const OkPoint &world, width, height, double *outX, double *outY) const` | Where a world point lands on it, or `false` when the point is behind the camera. |
 
 `OkCamera` also inherits `setPosition`, `setRotation` and the rest of the `OkObject` transform API.
+
+### Between the screen and the world
+
+`rayThroughPixel` and `pixelOfPoint` are inverses, and they are documented
+together because they only mean anything as a pair: a projection and an
+unprojection that disagree about which way y counts read as a picking bug
+for an afternoon. Both count y **downwards from the top**, the way a
+window system reports a cursor, and both take the size of the surface
+being drawn to rather than reading the camera's aspect ratio — so a camera
+rendering into an offscreen target answers about that target's pixels.
+
+The ray is built by unprojecting at the near plane and again at the far
+one and subtracting, rather than from the camera's own position. That is
+right for a perspective camera and for an orthographic one alike: an
+orthographic ray does not pass through the eye, and the overhead views
+that most want a cursor are exactly the ones that tend to be orthographic.
+
+Its direction is a unit vector, so a distance along it is a distance in
+world units. See [OkRay](/reference/math.html#okray) for what to do with
+it, and [`OkItem::intersectRay`](/reference/items.html) for asking an
+object whether the ray crosses it.
 
 Cameras are **identified by the name they are constructed with**: `findCamera` resolves names to indices, and the MCP [`view` tool](/reference/mcp.html) selects cameras by that same name. Indices (and the number-key switching in the stock input handler) are an internal/debug detail.
 

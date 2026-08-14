@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
@@ -82,6 +83,79 @@ void OkCamera::updateView() {
   glm::vec3  frontVec = forward.toVec3();
   glm::vec3  upVec    = up.toVec3();  // Use rotated up vector
   view                = glm::lookAt(pos, pos + frontVec, upVec);
+}
+
+namespace {
+
+  // Below this a length is nothing: a direction this short has no
+  // meaning, and a w this close to zero cannot be divided by.
+  const float CAMERA_NEARLY_ZERO = 1e-9f;
+
+  // Normalized device coordinates run -1..1 across the surface, and again
+  // from the near plane to the far one.
+  const float NDC_SPAN = 2.0f;
+  const float NDC_NEAR = -1.0f;
+  const float NDC_FAR  = 1.0f;
+
+  /** @brief Take a clip-space point back to world space, dividing by w. */
+  glm::vec4 unproject(const glm::mat4 &inverse, float ndcX, float ndcY,
+                      float ndcZ) {
+    glm::vec4 point = inverse * glm::vec4(ndcX, ndcY, ndcZ, 1.0f);
+    if (std::fabs(point.w) > CAMERA_NEARLY_ZERO) {
+      point /= point.w;
+    }
+    return point;
+  }
+
+}  // namespace
+
+OkRay OkCamera::rayThroughPixel(double x, double y, int width,
+                                int height) const {
+  OkRay ray(OkPoint(0.0f, 0.0f, 0.0f), OkPoint(0.0f, 0.0f, -1.0f));
+  if (width <= 0 || height <= 0) {
+    return ray;
+  }
+
+  // Pixels to normalized device coordinates. The window system counts y
+  // downwards from the top and OpenGL upwards from the bottom, which is
+  // the flip in the second line.
+  float ndcX =
+      static_cast<float>(x) / static_cast<float>(width) * NDC_SPAN - 1.0f;
+  float ndcY =
+      1.0f - static_cast<float>(y) / static_cast<float>(height) * NDC_SPAN;
+
+  glm::mat4 inverse = glm::inverse(projection * view);
+
+  glm::vec4 nearPoint = unproject(inverse, ndcX, ndcY, NDC_NEAR);
+  glm::vec4 farPoint  = unproject(inverse, ndcX, ndcY, NDC_FAR);
+
+  glm::vec3 along  = glm::vec3(farPoint - nearPoint);
+  float     length = glm::length(along);
+  if (length < CAMERA_NEARLY_ZERO) {
+    return ray;
+  }
+  along /= length;
+
+  ray.origin    = OkPoint(nearPoint.x, nearPoint.y, nearPoint.z);
+  ray.direction = OkPoint(along.x, along.y, along.z);
+  return ray;
+}
+
+bool OkCamera::pixelOfPoint(const OkPoint &world, int width, int height,
+                            double *outX, double *outY) const {
+  if (width <= 0 || height <= 0 || outX == nullptr || outY == nullptr) {
+    return false;
+  }
+  glm::vec4 clip =
+      projection * view * glm::vec4(world.x(), world.y(), world.z(), 1.0f);
+  if (clip.w <= CAMERA_NEARLY_ZERO) {
+    return false;  // behind the camera, or on its plane
+  }
+  float ndcX = clip.x / clip.w;
+  float ndcY = clip.y / clip.w;
+  *outX      = (ndcX + 1.0f) / NDC_SPAN * static_cast<double>(width);
+  *outY      = (1.0f - ndcY) / NDC_SPAN * static_cast<double>(height);
+  return true;
 }
 
 /**

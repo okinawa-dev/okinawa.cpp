@@ -2,6 +2,7 @@
 #define OK_CAMERA_HPP
 
 #include "../core/object.hpp"
+#include "../math/ray.hpp"
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -90,6 +91,51 @@ public:
   const float *getProjectionPtr() const {
     return glm::value_ptr(projection);
   }
+
+  // Screen and world, in both directions. The pair belongs together: a
+  // projection and an unprojection that disagree about which way y counts
+  // is the kind of mistake that looks like a picking bug for an
+  // afternoon, and keeping them side by side is what makes a round trip
+  // an obvious thing to test.
+  //
+  // Both take the size of the surface being drawn to rather than reading
+  // the camera's own aspect ratio, so a camera rendering into an
+  // offscreen target answers about that target's pixels.
+
+  /**
+   * @brief The ray through a point on the window.
+   *
+   *        Unprojects the point at the near plane and again at the far
+   *        one and subtracts, which is right for a perspective camera and
+   *        for an orthographic one alike -- an orthographic ray does not
+   *        pass through the eye, so a version built from the camera's
+   *        position would be wrong for exactly the overhead views that
+   *        tend to want picking.
+   *
+   * @param x      Cursor x in pixels, 0 at the left.
+   * @param y      Cursor y in pixels, 0 at the top, the way a window
+   *               system reports it. The flip to OpenGL's convention
+   *               happens here so no caller has to remember it.
+   * @param width  Surface width in pixels.
+   * @param height Surface height in pixels.
+   * @return A ray with a unit direction, so distances along it are world
+   *         units. Degenerate arguments give a ray pointing along -Z from
+   *         the origin, which hits nothing in particular.
+   */
+  OkRay rayThroughPixel(double x, double y, int width, int height) const;
+
+  /**
+   * @brief Where a world point lands on the window, in the same pixels
+   *        rayThroughPixel takes.
+   *
+   *        Wanted by anything that draws over a 3D object -- a label, a
+   *        marker, a leader line -- not only by picking.
+   *
+   * @return false when the point is behind the camera, where there is no
+   *         pixel to report. The outputs are untouched then.
+   */
+  bool pixelOfPoint(const OkPoint &world, int width, int height, double *outX,
+                    double *outY) const;
 
   // Update and render
   void stepSelf(float dt) override;
