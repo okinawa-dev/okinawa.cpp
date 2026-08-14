@@ -537,6 +537,19 @@ struct OkMcpServer::Impl {
         {"additionalProperties", false}};
     tools.push_back(console);
 
+    json quit;
+    quit["name"]        = "quit";
+    quit["description"] = "Close the application, the same way its window's "
+                          "close button does: the loop stops, the application "
+                          "gets its chance to save whatever it keeps between "
+                          "sessions, and the process ends. The reply is sent "
+                          "before the shutdown starts, and this connection is "
+                          "the last one this server will answer.";
+    quit["inputSchema"] = {{"type", "object"},
+                           {"properties", json::object()},
+                           {"additionalProperties", false}};
+    tools.push_back(quit);
+
     json getState;
     getState["name"] = "get_state";
     getState["description"] =
@@ -651,6 +664,23 @@ struct OkMcpServer::Impl {
       return textResult("held keys for " +
                         std::to_string(static_cast<long>(durationMs)) + "ms\n" +
                         pose.dump(2));
+    }
+
+    if (name == "quit") {
+      // Asked for on the loop thread like everything else, so the flag
+      // is set between frames rather than in the middle of one. The
+      // result is returned first and written by the HTTP thread while
+      // the loop is on its way out.
+      json asked = runOnLoop([]() {
+        OkCore::askForExit();
+        json ok;
+        ok["closing"] = true;
+        return ok;
+      });
+      if (asked.contains("error")) {
+        return errorResult("quit: " + asked["error"].get<std::string>());
+      }
+      return textResult("closing");
     }
 
     if (name == "view") {
