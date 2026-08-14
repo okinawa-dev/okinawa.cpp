@@ -41,6 +41,7 @@ GLuint                  OkCore::_shaderProgram = 0;
 OkInput                *OkCore::_input         = nullptr;
 OkMcpServer            *OkCore::_mcpServer     = nullptr;
 OkAvatar               *OkCore::_activeAvatar  = nullptr;
+OkCore::OkCoreCallback  OkCore::_overlayCallback;
 
 /**
  * @brief Enable the in-engine MCP server so an external agent can connect
@@ -155,6 +156,13 @@ bool OkCore::initialize() {
  * @brief Mark the window for closing. In the next main loop iteration,
  *        the window will be closed and the engine will exit.
  */
+/**
+ * @brief Install the overlay callback (see the header for what it is for).
+ */
+void OkCore::setOverlayCallback(const OkCoreCallback &overlayCallback) {
+  _overlayCallback = overlayCallback;
+}
+
 void OkCore::askForExit() {
   glfwSetWindowShouldClose(_window, true);
 }
@@ -596,6 +604,13 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       // GUI pass: grid-placed OkItems over the frame, painter's order,
       // rendered with the calibrated GUI camera (see OkGui).
       OkGui::draw();
+
+      // Anything the application paints over the finished frame. Last,
+      // so it sits on top of the world and of the interface pass, and
+      // before the MCP drain, so a capture sees it.
+      if (_overlayCallback) {
+        _overlayCallback(dt);
+      }
 
 #ifdef OKINAWA_WITH_MCP
       // Run any queued MCP tool commands on this (GL) thread, after the frame

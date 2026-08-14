@@ -34,6 +34,24 @@ public:
   static bool initialize();
   static void loop(const OkCoreCallback &stepCallback,
                    const OkCoreCallback &drawCallback);
+
+  /**
+   * @brief Draw over the finished frame, immediately before the swap.
+   *
+   *        The draw callback passed to loop() runs inside the frame:
+   *        before the post-process composite, so whatever it draws is
+   *        bloomed, fogged and depth-of-field blurred along with the
+   *        world. That is right for anything belonging to the scene and
+   *        wrong for anything belonging to the application on top of it,
+   *        which wants to be read rather than looked through.
+   *
+   *        This one runs after the composite and after the interface
+   *        pass, with the default framebuffer bound, so it paints on the
+   *        finished image. Set it to an empty function to remove it.
+   *
+   * @param overlayCallback Called once per frame with the frame delta.
+   */
+  static void setOverlayCallback(const OkCoreCallback &overlayCallback);
   static void askForExit();
   static void exit();
 
@@ -127,6 +145,7 @@ private:
   static OkInput                *_input;
   static OkMcpServer            *_mcpServer;
   static OkAvatar               *_activeAvatar;
+  static OkCoreCallback          _overlayCallback;
 
   static void mouseCallback(GLFWwindow *window, double xpos, double ypos);
   // Mouse-wheel scroll -> zoom the current camera (yoffset = notches).

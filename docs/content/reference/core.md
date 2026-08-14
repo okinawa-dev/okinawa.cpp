@@ -27,8 +27,34 @@ nav_order: 1
 | `static int findCamera(const std::string &name)` | Index of the camera registered with that name, `-1` when not found. |
 | `static void enableMcpServer(int port = 8765)` | Start the in-engine MCP server (see [MCP server](/reference/mcp.html)). |
 | `static void setIgnoreUserInput(bool ignore)` | Ignore physical input (MCP-driven instances). |
+| `static void setOverlayCallback(cb)` | Draw over the finished frame, just before the swap. |
 
 The loop callbacks share the signature `void(float deltaTime)`.
+
+### Drawing inside the frame or over it
+
+The draw callback given to `loop()` runs **inside** the frame, before the
+post-process composite. Anything it draws belongs to the world and is
+treated as such: bloomed, fogged, and blurred by depth of field along
+with everything else. That is what you want for a debug overlay meant to
+sit in the scene, and wrong for an interface meant to be read.
+
+`setOverlayCallback()` runs **after** the composite and after the
+interface pass, with the default framebuffer bound. Use it for anything
+painted on the finished image -- an immediate-mode interface library,
+for instance, which draws its own geometry and expects the final target.
+
+```cpp
+OkCore::setOverlayCallback([](float dt) {
+  (void)dt;
+  // draw over the finished frame
+});
+OkCore::loop(stepCallback, drawCallback);
+```
+
+Pass an empty function to remove it. The order within a frame is: scene,
+draw callback, post-process composite, cameras, interface pass, overlay
+callback, swap.
 
 ## OkCamera methods
 
