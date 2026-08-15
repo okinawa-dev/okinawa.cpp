@@ -34,7 +34,7 @@ bool okSetDockIcon(const unsigned char *rgba, int width, int height) {
                         hasAlpha:YES
                         isPlanar:NO
                   colorSpaceName:NSDeviceRGBColorSpace
-                     bytesPerRow:width * 4
+                     bytesPerRow:static_cast<NSInteger>(width) * 4
                     bitsPerPixel:32];
     if (rep == nil) {
       return false;
