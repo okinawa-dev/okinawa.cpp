@@ -14,6 +14,7 @@
 #include <chrono>
 #include <mutex>
 #include <set>
+#include <stdexcept>
 #include <thread>
 #include <vector>
 
@@ -332,6 +333,49 @@ TEST_CASE("OkAsyncLoader survives many small jobs", "[async]") {
   REQUIRE(drainUntilIdle(15000));
   REQUIRE(prepared.load() == COUNT);
   REQUIRE(finished.load() == COUNT);
+
+  OkAsyncLoader::shutdown();
+}
+
+// A job that throws while preparing must not take the process with it.
+// An exception leaving a thread function is std::terminate, which is an
+// abort: no message worth reading, and on a desktop a "quit
+// unexpectedly" dialog naming nothing. Reading files is where this
+// bites -- one rewritten while it is read, one that vanished between
+// the listing and the open -- and that is ordinary, not fatal.
+TEST_CASE("OkAsyncLoader survives a job that throws", "[async]") {
+  OkAsyncLoader::initialize(2);
+
+  std::atomic<int>  finished(0);
+  std::atomic<bool> reached(false);
+  // The flag is set BEFORE the throw, and waited for below, because a
+  // job still queued when the loader stops is simply dropped: without
+  // the wait this case passes without ever throwing anything, which is
+  // exactly how its first version fooled me.
+  OkAsyncLoader::submit(
+      [&] {
+        reached = true;
+        throw std::runtime_error("no such file");
+      },
+      [&] { finished++; });
+
+  for (int i = 0; i < 5000 && !reached.load(); i++) {
+    OkAsyncLoader::drain(1000.0f);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+  REQUIRE(reached.load());
+  REQUIRE(drainUntilIdle(5000));
+
+  // The failed job is dropped rather than half-finished: its finish
+  // half would be building out of whatever the failure left behind.
+  REQUIRE(finished.load() == 0);
+
+  // And the loader keeps working afterwards, which is the other half of
+  // "not fatal".
+  std::atomic<int> afterwards(0);
+  OkAsyncLoader::submit([] {}, [&] { afterwards++; });
+  REQUIRE(drainUntilIdle(5000));
+  REQUIRE(afterwards.load() == 1);
 
   OkAsyncLoader::shutdown();
 }

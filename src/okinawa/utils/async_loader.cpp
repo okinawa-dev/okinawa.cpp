@@ -24,6 +24,36 @@ namespace {
   bool                     g_running  = false;
   int                      g_inFlight = 0;  // taken by a worker, not yet ready
 
+  /**
+   * @brief Joins the workers on the way out, whatever the way out was.
+   *
+   *        `shutdown()` is called by OkCore::exit(), which an
+   *        application only reaches if it got as far as running its
+   *        loop. One that fails earlier -- no data to open, a file it
+   *        cannot read, anything that leaves main by the error door --
+   *        never calls it, and then these threads are destroyed while
+   *        still joinable. Destroying a joinable std::thread calls
+   *        std::terminate, so a clean "could not start, here is why"
+   *        turned into an abort: on a desktop, a crash dialog reporting
+   *        nothing, in place of the message that says what went wrong.
+   *
+   *        Declared after the workers on purpose. Statics are destroyed
+   *        in reverse order of construction, so this one goes first and
+   *        empties the vector the next one would have destroyed.
+   */
+  struct WorkerReaper {
+    ~WorkerReaper() {
+      // A destructor that throws during static teardown is the very
+      // abort this exists to prevent, so whatever shutdown() runs into
+      // stops here.
+      try {
+        OkAsyncLoader::shutdown();
+      } catch (...) {  // NOLINT(bugprone-empty-catch)
+      }
+    }
+  };
+  WorkerReaper g_reaper;
+
   void workerLoop() {
     for (;;) {
       Job job;
@@ -38,14 +68,38 @@ namespace {
         g_inFlight++;
       }
 
+      // Nothing may leave a worker by throwing. An exception that
+      // escapes a thread function is std::terminate, and terminate is
+      // an abort: the application dies with no message worth reading,
+      // and on a desktop with a "quit unexpectedly" dialog that names
+      // nothing. Files are exactly where this bites -- one being
+      // rewritten while it is read, one that vanished between the
+      // listing and the open -- which is ordinary and must not be
+      // fatal.
+      bool prepared = true;
       if (job.prepare) {
-        job.prepare();
+        try {
+          job.prepare();
+        } catch (const std::exception &err) {
+          prepared = false;
+          OkLogger::error("AsyncLoader",
+                          std::string("Job failed while preparing: ") +
+                              err.what());
+        } catch (...) {
+          prepared = false;
+          OkLogger::error("AsyncLoader", "Job failed while preparing");
+        }
       }
 
       {
         std::scoped_lock lock(g_mutex);
         g_inFlight--;
-        g_ready.push_back(job);
+        // A job whose preparation failed is dropped rather than passed
+        // on: its finish half would be building something out of
+        // whatever the failure left behind.
+        if (prepared) {
+          g_ready.push_back(job);
+        }
       }
     }
   }
