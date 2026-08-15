@@ -117,7 +117,7 @@ viewer for solid models does and what a person expects.
 | `void zoomAlongView(float notches)` | Move along the view direction. |
 | `void zoomToward(const OkPoint &target, float notches)` | Move towards a point, stopping short of it (`MIN_REACH`). |
 | `void panAcrossView(float dxPixels, float dyPixels)` | Slide across the view. |
-| `bool orbitAbout(const OkPoint &pivot, float yawDeg, float pitchDeg)` | Swing round a point; `false` when refused for coming too close or too near level. |
+| `bool orbitAbout(const OkPoint &pivot, float yawDeg, float pitchDeg)` | Swing round a point, rigidly (see below); `false` when refused for coming too close or too near level. |
 | `float viewDistance() const` | Height above the scene's ground, so the rest of the engine scales with it. |
 
 It holds the arithmetic and none of the policy. Which button does what, whether
@@ -125,6 +125,14 @@ the pointer is captured, and where a pivot comes from stay with the caller —
 and the two arguments it most wants are the two only the caller can work out:
 the point under the cursor, which needs to know what the scene contains, and
 the height of its ground.
+
+`orbitAbout` is a **rigid** turn about the pivot: the camera's position
+swings round it and its facing turns by the same angle, so nothing in the
+picture slides and the pivot keeps the pixel it had. That is the property
+worth testing — project the pivot, orbit, project again, same pixel — and
+the two ways to lose it are turning position and facing by opposite signs,
+and tilting about the right axis as it was before the yaw rather than
+after.
 
 `zoomToward` and `orbitAbout` take that point rather than finding it, which is
 what makes them worth having: aiming the wheel at what the cursor is over keeps
