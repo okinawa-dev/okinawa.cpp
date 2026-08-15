@@ -379,3 +379,23 @@ TEST_CASE("OkAsyncLoader survives a job that throws", "[async]") {
 
   OkAsyncLoader::shutdown();
 }
+
+// An application can also exit without ever calling shutdown(): one that
+// fails before its loop, or simply returns from main. The workers are
+// then destroyed as statics, and destroying a JOINABLE std::thread calls
+// std::terminate -- an abort during teardown, after the application has
+// already decided to stop. On a desktop that is a "quit unexpectedly"
+// dialog for a program that quit on purpose.
+//
+// The assertion here is the test binary's own exit status: this case
+// leaves the loader running deliberately, so if the reaper in
+// async_loader.cpp goes missing, every test above still passes and the
+// process still dies on the way out.
+TEST_CASE("OkAsyncLoader left running does not abort the exit", "[async]") {
+  OkAsyncLoader::initialize(2);
+  std::atomic<int> finished(0);
+  OkAsyncLoader::submit([] {}, [&] { finished++; });
+  REQUIRE(drainUntilIdle(5000));
+  REQUIRE(finished.load() == 1);
+  // No shutdown() on purpose.
+}
