@@ -29,6 +29,7 @@ nav_order: 1
 | `static void setIgnoreUserInput(bool ignore)` | Ignore physical input (MCP-driven instances). |
 | `static void setOverlayCallback(cb)` | Draw over the finished frame, just before the swap. |
 | `static void setExitCallback(cb)` | Run something once when the loop ends, before anything is torn down. |
+| `static bool setWindowIcon(const std::vector<std::string> &pngPaths)` | Give the window an icon, from square RGBA PNGs at several sizes. |
 
 The loop callbacks share the signature `void(float deltaTime)`.
 
@@ -56,6 +57,46 @@ OkCore::loop(stepCallback, drawCallback);
 Pass an empty function to remove it. The order within a frame is: scene,
 draw callback, post-process composite, cameras, interface pass, overlay
 callback, swap.
+
+### Icons, and where an application is run from
+
+`setWindowIcon` takes the same picture at several sizes and lets the
+window system choose; a 32 and a 64 covers a title bar and a task bar.
+Drawing each size separately beats handing over one large one, because
+an icon is mostly seen small and a downscaled large one goes soft.
+
+**On macOS it lands on the Dock tile.** Windows there carry no icon at
+all, so `glfwSetWindowIcon` has nothing to set — the application's icon
+on that platform *is* the tile, and AppKit is the only way to it. The
+engine does that for you from the same call, so an application asks once
+and needs no `#ifdef`.
+
+A macOS **bundle** says the same thing statically —
+`Contents/Resources/<name>.icns`, named by `CFBundleIconFile` in
+`Info.plist` — and that is what the Finder and the application switcher
+read, which the runtime call cannot reach. The two are complementary:
+the bundle for an application that is installed and double-clicked, the
+call for a binary run straight out of a build directory, which has no
+bundle to be read from.
+
+Elsewhere the packaging differs again: Windows wants the icon compiled
+into the executable as a resource for the Explorer to show, and Linux
+desktops read a `.desktop` entry and the hicolor theme. One picture,
+three packaging stories, one call at runtime.
+
+Packaging an application as a macOS bundle changes one more thing: a
+bundle opened from the desktop starts with a working directory of `/`,
+and GLFW moves it again on its own, into `Contents/Resources`. The
+engine turns that off (`GLFW_COCOA_CHDIR_RESOURCES`) — where an
+application works from is the application's decision — and instead the
+asset search settles it: it looks up from the working directory first,
+and then up from **the executable's own directory**, moving the working
+directory to what it finds. An application started from anywhere
+therefore resolves its own relative paths — its data, its assets, the
+files it writes — against its project, exactly as it does in
+development. `OkFiles::executableDirectory()` is the piece that answers
+where the binary itself is, asked of the operating system rather than of
+`argv[0]`, which a caller can set to anything.
 
 ### The last thing an application does
 

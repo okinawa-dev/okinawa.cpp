@@ -29,6 +29,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/trigonometric.hpp>
+#include <memory>
+#include <stb/stb_image.h>
 #include <string>
 #include <vector>
 
@@ -164,6 +166,73 @@ void OkCore::setOverlayCallback(const OkCoreCallback &overlayCallback) {
   _overlayCallback = overlayCallback;
 }
 
+#ifdef __APPLE__
+// Defined in core/mac_icon.mm. Declared here rather than in a header
+// because it has exactly one caller and saying so is the point.
+bool okSetDockIcon(const unsigned char *rgba, int width, int height);
+#endif
+
+bool OkCore::setWindowIcon(const std::vector<std::string> &pngPaths) {
+  if (_window == nullptr || pngPaths.empty()) {
+    return false;
+  }
+
+  // Read them all first: glfwSetWindowIcon takes the whole set in one
+  // call and copies what it needs, so the pixels only have to outlive
+  // that call.
+  std::vector<GLFWimage>                                        images;
+  std::vector<std::unique_ptr<unsigned char, void (*)(void *)>> pixels;
+  for (size_t i = 0; i < pngPaths.size(); i++) {
+    int width    = 0;
+    int height   = 0;
+    int channels = 0;
+    // Forced to four channels: the window system wants RGBA whatever
+    // the file happens to carry.
+    unsigned char *data =
+        stbi_load(pngPaths[i].c_str(), &width, &height, &channels, 4);
+    if (data == nullptr) {
+      OkLogger::warning("Core", "Window icon not read: " + pngPaths[i]);
+      continue;
+    }
+    GLFWimage image;
+    image.width  = width;
+    image.height = height;
+    image.pixels = data;
+    images.push_back(image);
+    pixels.emplace_back(data, stbi_image_free);
+  }
+  if (images.empty()) {
+    return false;
+  }
+
+  // Windows and Linux take the whole set and choose; macOS takes none
+  // of them, because its windows have no icon. There the picture goes
+  // on the Dock tile instead, which is what an application's icon means
+  // on that platform -- and the largest one is the one worth sending,
+  // since the tile is drawn large.
+  glfwSetWindowIcon(_window, static_cast<int>(images.size()), images.data());
+
+#ifdef __APPLE__
+  size_t largest = 0;
+  for (size_t i = 1; i < images.size(); i++) {
+    if (images[i].width > images[largest].width) {
+      largest = i;
+    }
+  }
+  bool dock = okSetDockIcon(images[largest].pixels, images[largest].width,
+                            images[largest].height);
+  OkLogger::info(
+      "Core", std::string("Window icon: ") +
+                  (dock ? "dock tile set from " : "dock tile refused, from ") +
+                  std::to_string(images[largest].width) + " px");
+#else
+  OkLogger::info("Core", "Window icon: " + std::to_string(images.size()) +
+                             " size(s) given to the window system");
+#endif
+
+  return true;
+}
+
 /**
  * @brief Install the exit callback (see the header for what it is for).
  */
@@ -234,6 +303,14 @@ void OkCore::exit() {
  * @return True if initialization was successful, false otherwise.
  */
 bool OkCore::initializeOpenGL(int width, int height) {
+  // Inside a macOS bundle GLFW moves the working directory to
+  // `Contents/Resources` on its own, and it does it by default. That
+  // undoes the one the asset search settled on, and every relative path
+  // an application uses afterwards -- its data, its own assets, the
+  // files it writes -- resolves inside the bundle instead of beside it.
+  // The application decides where it works from; the window library
+  // does not.
+  glfwInitHint(GLFW_COCOA_CHDIR_RESOURCES, GLFW_FALSE);
   glfwInit();
   glfwWindowHint(GLFW_SAMPLES, 4);
   glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);

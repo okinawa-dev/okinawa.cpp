@@ -6,6 +6,7 @@
 #include "./camera.hpp"
 #include "gl_config.hpp"
 #include <functional>
+#include <string>
 #include <vector>
 
 // Forward declaration: the MCP server type is only a pointer here, and its
@@ -75,6 +76,30 @@ public:
    *                     remove it.
    */
   static void setExitCallback(const std::function<void()> &exitCallback);
+
+  /**
+   * @brief Give the window an icon of the application's own.
+   *
+   *        Pass the same picture at several sizes and the window system
+   *        picks the one it wants; a 16 and a 32 is enough for a title
+   *        bar and a task bar, and drawing each size separately beats
+   *        handing over one large one for it to shrink.
+   *
+   *        **macOS puts it on the Dock tile instead.** Its windows carry
+   *        no icon at all, so there is nothing for the window system to
+   *        take; the application's icon on that platform is the tile,
+   *        and AppKit sets it (see `core/mac_icon.mm`). A bundle says
+   *        the same thing statically, through `Contents/Resources` and
+   *        `CFBundleIconFile`, and that is what the Finder and the
+   *        application switcher read -- this is what a binary run
+   *        straight out of a build directory needs, having no bundle to
+   *        be read from. Either way the caller asks once and needs no
+   *        #ifdef.
+   *
+   * @param pngPaths Square RGBA PNGs, any number, any sizes.
+   * @return false when none of them could be read.
+   */
+  static bool setWindowIcon(const std::vector<std::string> &pngPaths);
   static void askForExit();
   static void exit();
 

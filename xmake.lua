@@ -95,8 +95,12 @@ target("okinawa")
     add_options("mcp", "no-mcp")
     add_packages("cpp-httplib", "nlohmann_json")
 
-    -- macOS windowing/runtime frameworks required by GLFW.
+    -- macOS windowing/runtime frameworks required by GLFW, and the one
+    -- Objective-C++ file in the engine: a window here carries no icon,
+    -- so the application's icon is the Dock tile and only AppKit can
+    -- set it (see core/mac_icon.mm).
     if is_plat("macosx") then
+        add_files("src/**.mm")
         add_frameworks("Cocoa", "IOKit", "CoreVideo", "OpenGL")
     end
 
