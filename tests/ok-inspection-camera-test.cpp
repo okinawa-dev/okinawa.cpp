@@ -1,4 +1,5 @@
 #include "okinawa/cameras/inspection_camera.hpp"
+#include "okinawa/math/math.hpp"
 #include "okinawa/math/point.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>
@@ -186,6 +187,64 @@ TEST_CASE("OkInspectionCamera orbits about a point", "[inspection]") {
     OkPoint before = camera->getPosition();
     REQUIRE_FALSE(camera->orbitAbout(pivot, 20.0f, 0.0f));
     REQUIRE(camera->getPosition() == before);
+  }
+
+  delete camera;
+}
+
+// What "orbit about the point I clicked" means, stated as arithmetic:
+// the point stays where it is on screen. A turntable is a rigid
+// rotation of the camera about that point -- position AND facing turned
+// by the same angle -- so nothing in the picture slides. If the facing
+// is turned by a different amount from the position, the view drifts,
+// and the thing being examined creeps out from under the pointer.
+TEST_CASE("OkInspectionCamera orbits without moving the pivot on screen",
+          "[inspection]") {
+  auto *camera = new OkInspectionCamera("inspect", WIDTH, HEIGHT);
+  camera->setPerspective(60.0f, 0.5f, 5000.0f);
+  camera->setGroundHeight(0.0f);
+  camera->setPosition(0.0f, 60.0f, 60.0f);
+  camera->setRotation(
+      OkMath::lookAt(OkPoint(0.0f, 60.0f, 60.0f), OkPoint(0.0f, 0.0f, 0.0f)));
+  camera->updateTransform();
+
+  // Off the centre of the screen on purpose: a pivot at the centre
+  // hides a mismatch between the two rotations, because everything the
+  // centre does looks right.
+  const OkPoint pivot(14.0f, 0.0f, -6.0f);
+
+  double wasX = 0.0;
+  double wasY = 0.0;
+  REQUIRE(camera->pixelOfPoint(pivot, WIDTH, HEIGHT, &wasX, &wasY));
+
+  SECTION("Turning sideways") {
+    REQUIRE(camera->orbitAbout(pivot, 12.0f, 0.0f));
+    camera->updateTransform();
+    double nowX = 0.0;
+    double nowY = 0.0;
+    REQUIRE(camera->pixelOfPoint(pivot, WIDTH, HEIGHT, &nowX, &nowY));
+    REQUIRE_THAT(nowX, WithinAbs(wasX, 1.0));
+    REQUIRE_THAT(nowY, WithinAbs(wasY, 1.0));
+  }
+
+  SECTION("Turning up and over") {
+    REQUIRE(camera->orbitAbout(pivot, 0.0f, 8.0f));
+    camera->updateTransform();
+    double nowX = 0.0;
+    double nowY = 0.0;
+    REQUIRE(camera->pixelOfPoint(pivot, WIDTH, HEIGHT, &nowX, &nowY));
+    REQUIRE_THAT(nowX, WithinAbs(wasX, 1.0));
+    REQUIRE_THAT(nowY, WithinAbs(wasY, 1.0));
+  }
+
+  SECTION("A whole drag of both at once") {
+    REQUIRE(camera->orbitAbout(pivot, -20.0f, 6.0f));
+    camera->updateTransform();
+    double nowX = 0.0;
+    double nowY = 0.0;
+    REQUIRE(camera->pixelOfPoint(pivot, WIDTH, HEIGHT, &nowX, &nowY));
+    REQUIRE_THAT(nowX, WithinAbs(wasX, 1.0));
+    REQUIRE_THAT(nowY, WithinAbs(wasY, 1.0));
   }
 
   delete camera;

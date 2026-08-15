@@ -79,18 +79,34 @@ bool OkInspectionCamera::orbitAbout(const OkPoint &pivot, float yawDeg,
 
   // Around the world's vertical axis first, then around the camera's own
   // right axis: the two rotations every orbit is made of.
+  //
+  // The sign has to match what look() does with the same angle, because
+  // an orbit is a RIGID turn of the camera about the pivot: the position
+  // goes round it and the facing turns by the same amount, so nothing in
+  // the picture slides and the pivot keeps its pixel. Turned opposite
+  // ways -- which is how this arithmetic arrived from the application it
+  // was lifted from -- the two rotations partly cancel and the view
+  // drifts off whatever was being examined. look() reads +yaw as looking
+  // right, which is this direction.
   float ay = glm::radians(yawDeg);
   float cy = std::cos(ay);
   float sy = std::sin(ay);
-  float rx = ox * cy + oz * sy;
-  float rz = -ox * sy + oz * cy;
+  float rx = ox * cy - oz * sy;
+  float rz = ox * sy + oz * cy;
   ox       = rx;
   oz       = rz;
 
-  OkPoint right = getRotation().getRightVector();
-  float   ap    = glm::radians(pitchDeg);
-  float   cp    = std::cos(ap);
-  float   sp    = std::sin(ap);
+  // The axis the tilt turns about is the camera's right -- as it will be
+  // AFTER the yaw above, not as it was before. The facing is turned by
+  // both angles at once, so an axis taken before the yaw belongs to a
+  // camera that no longer exists, and a drag that mixes the two leaves
+  // the pivot a dozen pixels from where it was grabbed.
+  OkPoint aimed = getRotation().getRightVector();
+  OkPoint right(aimed.x() * cy - aimed.z() * sy, aimed.y(),
+                aimed.x() * sy + aimed.z() * cy);
+  float   ap = glm::radians(pitchDeg);
+  float   cp = std::cos(ap);
+  float   sp = std::sin(ap);
   // Rodrigues about the right axis, which is horizontal by construction,
   // so the roll stays at zero and the horizon stays level.
   float dot = ox * right.x() + oy * right.y() + oz * right.z();
