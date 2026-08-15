@@ -20,6 +20,12 @@ bool OkAssets::initialize() {
 
   OkLogger::info("Assets",
                  "Engine asset root: " + getMutableEngineRoot().string());
+  // Said out loud because every relative path an application uses is
+  // resolved against it, and when an application is started from
+  // somewhere else -- a bundle, a shortcut -- this is the line that
+  // says whether it landed where it thinks it did.
+  OkLogger::info("Assets", "Working directory: " +
+                               std::filesystem::current_path().string());
   return true;
 }
 
@@ -47,20 +53,33 @@ std::filesystem::path &OkAssets::getMutableProjectRoot() {
  *        the current working directory and moving up the directory tree.
  * @return True if the engine asset root was found, false otherwise.
  */// How many directories up the tree the engine assets are looked for.
-// Deep enough for a build directory inside a project, shallow enough
-// that a missing checkout fails instead of walking to the root.
-static const int kMaxSearchDepth = 5;
+// Deep enough for a build directory inside a project AND for an
+// executable buried in a macOS bundle inside that build directory
+// (`build/<plat>/<arch>/<mode>/Name.app/Contents/MacOS` is eight levels
+// down), shallow enough that a missing checkout fails instead of
+// walking to the filesystem root.
+static const int kMaxSearchDepth = 10;
 
-bool OkAssets::discoverEngineAssetRoot() {
-  std::filesystem::path currentPath = std::filesystem::current_path();
-
-  // Search up the directory tree for the engine structure
+/**
+ * @brief Walk up from `currentPath`, looking for the engine's assets.
+ *
+ * @param currentPath Where to start.
+ * @param found       Set to the engine root when the answer is yes.
+ * @param startedFrom Set to the directory that HOLDS the engine, which
+ *                    is the one an application's own relative paths are
+ *                    written against.
+ * @return Whether they were found.
+ */
+static bool searchUpwards(std::filesystem::path  currentPath,
+                          std::filesystem::path *found,
+                          std::filesystem::path *startedFrom) {
   for (int i = 0; i < kMaxSearchDepth; i++) {
     std::filesystem::path candidate = currentPath / "assets" / "shaders";
 
     if (std::filesystem::exists(candidate) &&
         std::filesystem::is_directory(candidate)) {
-      getMutableEngineRoot() = currentPath;
+      *found       = currentPath;
+      *startedFrom = currentPath;
       return true;
     }
 
@@ -68,7 +87,11 @@ bool OkAssets::discoverEngineAssetRoot() {
     candidate = currentPath / "okinawa" / "assets" / "shaders";
     if (std::filesystem::exists(candidate) &&
         std::filesystem::is_directory(candidate)) {
-      getMutableEngineRoot() = currentPath / "okinawa";
+      *found = currentPath / "okinawa";
+      // The directory to work from is the one holding the engine, not
+      // the engine's own: an application's assets, its data and the
+      // files it writes are all relative to the project.
+      *startedFrom = currentPath;
       return true;
     }
 
@@ -76,6 +99,41 @@ bool OkAssets::discoverEngineAssetRoot() {
     if (currentPath == currentPath.parent_path()) {
       break;  // Reached filesystem root
     }
+  }
+
+  return false;
+}
+
+bool OkAssets::discoverEngineAssetRoot() {
+  std::filesystem::path found;
+
+  // From the working directory first, which is where an application
+  // started from its own project finds everything, and which is the
+  // answer a developer expects.
+  std::filesystem::path project;
+  if (searchUpwards(std::filesystem::current_path(), &found, &project)) {
+    getMutableEngineRoot() = found;
+    return true;
+  }
+
+  // Then from the executable's own directory, for an application that
+  // was not started from its project: a bundle opened from the desktop
+  // (macOS hands one a working directory of `/`), a shortcut, a service.
+  // The working directory MOVES to what is found, because everything
+  // else an application asks for is a relative path -- its own assets,
+  // its data, the file it remembers its window layout in -- and they all
+  // have to resolve against the same place.
+  std::filesystem::path exeDir = OkFiles::executableDirectory();
+  if (!exeDir.empty() && searchUpwards(exeDir, &found, &project)) {
+    std::error_code err;
+    std::filesystem::current_path(project, err);
+    if (!err) {
+      OkLogger::info("Assets", "Working directory moved to " +
+                                   std::filesystem::current_path().string() +
+                                   " (started from elsewhere)");
+    }
+    getMutableEngineRoot() = found;
+    return true;
   }
 
   return false;
