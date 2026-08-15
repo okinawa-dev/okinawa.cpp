@@ -15,18 +15,23 @@
 
 #import <Cocoa/Cocoa.h>
 
+#include <cstring>
+
 bool okSetDockIcon(const unsigned char *rgba, int width, int height) {
   if (rgba == nullptr || width <= 0 || height <= 0) {
     return false;
   }
 
   @autoreleasepool {
-    // The representation borrows the caller's rows rather than copying,
-    // so the image has to be drawn from before this returns -- which is
-    // what setApplicationIconImage does.
-    auto *bytes = const_cast<unsigned char *>(rgba);
+    // The representation is given its OWN storage and the pixels are
+    // copied into it, rather than being pointed at the caller's buffer.
+    // AppKit keeps the icon image for as long as the application lives
+    // and reads it again whenever it redraws the tile -- including on
+    // the way out -- while the caller's pixels are freed as soon as it
+    // returns. Lending them out is a use-after-free that only shows
+    // itself later, somewhere else, as a crash while quitting.
     NSBitmapImageRep *rep = [[NSBitmapImageRep alloc]
-        initWithBitmapDataPlanes:&bytes
+        initWithBitmapDataPlanes:nullptr
                       pixelsWide:width
                       pixelsHigh:height
                    bitsPerSample:8
@@ -39,6 +44,8 @@ bool okSetDockIcon(const unsigned char *rgba, int width, int height) {
     if (rep == nil) {
       return false;
     }
+    std::memcpy([rep bitmapData], rgba,
+                static_cast<size_t>(width) * static_cast<size_t>(height) * 4);
 
     NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];
     [image addRepresentation:rep];
