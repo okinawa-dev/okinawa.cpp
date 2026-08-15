@@ -79,7 +79,10 @@ private:
   static int    _size;
   static int    _layers;  // layers the array was built with
   // State of the last draw, per cascade, so an identical one is skipped.
-  static bool                            _neverDrawn;
+  static bool _neverDrawn;
+  // Which cascade's turn it is, when a redraw was asked for by the
+  // scene rather than by the sun and they can be spread over frames.
+  static int                             _roundRobin;
   static std::array<float, 3>            _lastDir;
   static std::array<float, MAX_CASCADES> _lastCx;
   static std::array<float, MAX_CASCADES> _lastCz;

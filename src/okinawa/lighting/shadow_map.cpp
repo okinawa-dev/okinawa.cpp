@@ -61,6 +61,7 @@ GLuint OkShadowMap::_program        = 0;
 int    OkShadowMap::_size           = 0;
 // What the map was last drawn for, so an identical redraw is skipped.
 bool                 OkShadowMap::_neverDrawn = true;
+int                  OkShadowMap::_roundRobin = 0;
 std::array<float, 3> OkShadowMap::_lastDir    = {0.0f, 0.0f, 0.0f};
 std::array<float, OkShadowMap::MAX_CASCADES> OkShadowMap::_lastExtent  = {0.0f};
 std::array<float, OkShadowMap::MAX_CASCADES> OkShadowMap::_lastCx      = {0.0f};
@@ -292,7 +293,8 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
   // forth between them as the blend moves: not a shimmer of texels but
   // a shadow visibly rocking through a few degrees. Whatever the maps
   // hold, they must all hold the same sun.
-  bool redrawAll = _neverDrawn || turn > turnMax || objects != _lastObjects;
+  bool sunMoved  = _neverDrawn || turn > turnMax;
+  bool redrawAll = sunMoved || objects != _lastObjects;
 
   // Pass one: work out where every cascade's box would sit this frame.
   // Nothing is committed yet -- the decision to redraw is taken once,
@@ -391,8 +393,26 @@ void OkShadowMap::render(OkScene *scene, const float *viewProj, float centreX,
     return;
   }
 
-  // Pass two: commit and draw. All of them, from the same sun.
-  for (int c = 0; c < count; c++) {
+  // Which cascades are actually redrawn this time.
+  //
+  // All of them together when the SUN has moved: they must hold the same
+  // sun or a shadow rocks between two directions as the blend crosses
+  // over. But when the redraw was asked for because the SCENE changed --
+  // objects appeared, the viewer moved -- the sun is the same for all of
+  // them, and doing one per frame is free of that problem and spreads
+  // the cost. It matters because the first draw of new geometry is when
+  // the driver makes its buffers resident: three cascades of it in one
+  // frame is a stall, one cascade a frame is not.
+  int first = 0;
+  int last  = count - 1;
+  if (!sunMoved && !_neverDrawn) {
+    _roundRobin = (_roundRobin + 1) % count;
+    first       = _roundRobin;
+    last        = _roundRobin;
+  }
+
+  // Pass two: commit and draw, from the same sun.
+  for (int c = first; c <= last; c++) {
     _lightSpace[c] = candidate[c];
     _lastCx[c]     = candCx[c];
     _lastCz[c]     = candCz[c];
