@@ -72,6 +72,21 @@ allowed to reach the JSON library and abort the request, so a client
 that gets a field wrong is told which one instead of receiving an empty
 response.
 
+An argument the tool does not have is refused outright, naming it and
+listing the ones the tool does take:
+
+```
+console: no such argument: command. It takes: line
+```
+
+This matters more than it looks. Every schema says
+`additionalProperties: false`, and an unknown argument used to be
+dropped, leaving the tool to run on whatever was left — which for a tool
+whose arguments are all optional is a call with no arguments at all.
+That is a different call, it succeeds, and it answers tidily, so a
+caller with one field misspelled can drive an application for a long
+time believing it is being obeyed.
+
 ## Enabling it
 
 From application code, enable the server after `OkCore::initialize()`:

@@ -563,8 +563,70 @@ struct OkMcpServer::Impl {
     return tools;
   }
 
+  /**
+   * @brief Refuses a call carrying an argument the tool does not have.
+   *
+   * Every schema here says `additionalProperties: false`, and until this
+   * ran nothing enforced it: an unknown argument was dropped and the
+   * tool went ahead with what was left. That is the worst way to be
+   * wrong, because the answer looks like success. A `console` call whose
+   * argument is misspelled becomes a `console` call with no argument at
+   * all, which is a request for the list of command names -- so it
+   * returns a tidy list, the command never runs, and the caller has no
+   * way to tell. It cost a session before anyone noticed the app was not
+   * doing as it was told.
+   *
+   * @return an error result naming the argument and listing the ones the
+   *         tool does take, or a null json when the call is fine.
+   */
+  json rejectUnknownArgs(const std::string &name, const json &args) {
+    if (!args.is_object() || args.empty()) {
+      return json();
+    }
+    json list = toolList();
+    for (size_t i = 0; i < list.size(); i++) {
+      if (list[i].value("name", std::string()) != name) {
+        continue;
+      }
+      if (!list[i].contains("inputSchema") ||
+          !list[i]["inputSchema"].contains("properties")) {
+        return json();
+      }
+      const json &props = list[i]["inputSchema"]["properties"];
+      std::string unknown;
+      for (json::const_iterator it = args.begin(); it != args.end(); ++it) {
+        if (!props.contains(it.key())) {
+          if (!unknown.empty()) {
+            unknown += ", ";
+          }
+          unknown += it.key();
+        }
+      }
+      if (unknown.empty()) {
+        return json();
+      }
+      std::string taken;
+      for (json::const_iterator it = props.begin(); it != props.end(); ++it) {
+        if (!taken.empty()) {
+          taken += ", ";
+        }
+        taken += it.key();
+      }
+      if (taken.empty()) {
+        taken = "(none)";
+      }
+      return errorResult(name + ": no such argument: " + unknown +
+                         ". It takes: " + taken);
+    }
+    return json();
+  }
+
   // Dispatch a tools/call by name. Returns the MCP result object.
   json callTool(const std::string &name, const json &args) {
+    json bad = rejectUnknownArgs(name, args);
+    if (!bad.is_null()) {
+      return bad;
+    }
     if (name == "view_frame") {
       std::shared_ptr<std::vector<unsigned char>> png =
           std::make_shared<std::vector<unsigned char>>();
