@@ -32,6 +32,7 @@ public:
 
 private:
   void _initBuffers();
+  void _initDefaults();
 
 protected:
   // Mesh, material and GL state. Protected rather than private because
@@ -131,6 +132,44 @@ public:
   OkItem(const std::string &name, float *vertexData, long vertexCount,
          unsigned int *indexData, long indexCount,
          int vertexStride = VERTEX_STRIDE_IN);
+
+  /**
+   * @brief An item with no geometry yet, filled by addMesh().
+   *
+   * For a mesh made of pieces that wear different textures. Nothing is
+   * drawn until upload() has been called.
+   */
+  explicit OkItem(const std::string &name);
+
+  /**
+   * @brief Appends a piece of mesh wearing one texture.
+   *
+   * The piece keeps its own texture as a material range, so a single
+   * item can carry as many as it is given: one transform, one bounding
+   * sphere, one culling test, one draw per texture. Built as an item
+   * per texture instead, a mesh of eight materials is eight objects.
+   *
+   * The indices are the piece's own, counted from its first vertex; they
+   * are moved along by what is already in the item. That arithmetic is
+   * the reason this exists -- every caller that merged meshes by hand
+   * wrote it out again, and an index that is wrong but still in range
+   * draws the wrong geometry without failing.
+   *
+   * @param vertexData   The piece's vertices, `vertexStride` floats each.
+   * @param vertexCount  How many floats, not how many vertices.
+   * @param indexData    Its indices, from zero.
+   * @param indexCount   How many of them.
+   * @param texturePath  The texture this piece wears.
+   * @param vertexStride 5 for x,y,z,u,v (normals computed here), 8 for
+   *                     caller-provided normals.
+   */
+  void addMesh(const float *vertexData, long vertexCount,
+               const unsigned int *indexData, long indexCount,
+               const std::string &texturePath,
+               int                vertexStride = VERTEX_STRIDE_IN);
+
+  /** @brief Hands the assembled mesh to the GPU. Call once, at the end. */
+  void upload();
   ~OkItem() override;
 
   // Delete copy constructor and assignment

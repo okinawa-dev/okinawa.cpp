@@ -34,14 +34,7 @@ namespace {
  * @param indexData   The index data.
  * @param indexCount  The number of indices.
  */
-OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
-               unsigned int *indexData, long indexCount, int vertexStride)
-    : OkObject(name) {
-
-  OkLogger::info("Item", "Creating item " + name + " with " +
-                             std::to_string(vertexCount) + " vertices and " +
-                             std::to_string(indexCount) + " indices");
-
+void OkItem::_initDefaults() {
   visible           = true;
   drawWireframe     = false;
   wireframeGlobal   = true;
@@ -59,7 +52,6 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   wireframeColor[1] = 1.0f;
   wireframeColor[2] = 1.0f;
 
-  numIndices      = indexCount;
   texture         = nullptr;
   textureName     = "";
   sphereCenter[0] = 0.0f;
@@ -78,6 +70,28 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
   }
   nearLightCount = 0;
   nearLightGen   = -1;
+}
+
+OkItem::OkItem(const std::string &name) : OkObject(name) {
+  // An item with nothing in it yet: geometry arrives piece by piece
+  // through addMesh(), and upload() hands the finished mesh to the GPU.
+  _initDefaults();
+  vertices    = nullptr;
+  indices     = nullptr;
+  numVertices = 0;
+  numIndices  = 0;
+}
+
+OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
+               unsigned int *indexData, long indexCount, int vertexStride)
+    : OkObject(name) {
+
+  OkLogger::info("Item", "Creating item " + name + " with " +
+                             std::to_string(vertexCount) + " vertices and " +
+                             std::to_string(indexCount) + " indices");
+
+  _initDefaults();
+  numIndices = indexCount;
 
   _adoptVertexData(vertexData, vertexCount, indexData, indexCount,
                    vertexStride);
@@ -89,6 +103,62 @@ OkItem::OkItem(const std::string &name, float *vertexData, long vertexCount,
 
   _calculateRadius();
 
+  _initBuffers();
+}
+
+void OkItem::addMesh(const float *vertexData, long vertexCount,
+                     const unsigned int *indexData, long indexCount,
+                     const std::string &texturePath, int vertexStride) {
+  if (vertexData == nullptr || indexData == nullptr || vertexCount <= 0 ||
+      indexCount <= 0) {
+    return;
+  }
+  // The piece arrives in the caller's layout and is stored in the
+  // internal one, normals and all, exactly as a whole mesh would be.
+  OkItem piece("", const_cast<float *>(vertexData), vertexCount,
+               const_cast<unsigned int *>(indexData), indexCount, vertexStride);
+  if (piece.vertices == nullptr || piece.numVertices <= 0) {
+    return;
+  }
+
+  // Where the piece's vertices land, which is what its indices have to
+  // be moved along by. Get this wrong and the second piece draws with
+  // the first one's geometry -- silently, because the indices are still
+  // in range.
+  auto base = static_cast<unsigned int>(numVertices / VERTEX_STRIDE);
+
+  auto *grownV = new float[numVertices + piece.numVertices];
+  if (vertices != nullptr && numVertices > 0) {
+    std::memcpy(grownV, vertices,
+                static_cast<size_t>(numVertices) * sizeof(float));
+  }
+  std::memcpy(grownV + numVertices, piece.vertices,
+              static_cast<size_t>(piece.numVertices) * sizeof(float));
+  delete[] vertices;
+  vertices = grownV;
+  numVertices += piece.numVertices;
+
+  auto *grownI = new unsigned int[numIndices + indexCount];
+  if (indices != nullptr && numIndices > 0) {
+    std::memcpy(grownI, indices,
+                static_cast<size_t>(numIndices) * sizeof(unsigned int));
+  }
+  for (long i = 0; i < indexCount; i++) {
+    grownI[numIndices + i] = indexData[i] + base;
+  }
+  delete[] indices;
+  indices    = grownI;
+  long first = numIndices;
+  numIndices += indexCount;
+
+  addMaterialFromFile(first, indexCount, texturePath);
+}
+
+void OkItem::upload() {
+  if (vertices == nullptr || numVertices <= 0) {
+    return;
+  }
+  _calculateRadius();
   _initBuffers();
 }
 

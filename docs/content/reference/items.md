@@ -38,6 +38,9 @@ Every drawable inherits these:
 | `void setDrawMode(GLenum mode)` | Set the GL primitive (`GL_TRIANGLES`, `GL_LINES`, ...). |
 | `void loadTextureFromFile(const std::string &path)` | Load and apply a texture from disk. |
 | `void addMaterialFromFile(long firstIndex, long indexCount, const std::string &path)` | Give a range of the index buffer its own texture (see below). |
+| `OkItem(name)` | An item with no geometry yet, to be filled with `addMesh` (see below). |
+| `void addMesh(vertexData, vertexCount, indexData, indexCount, texturePath, stride = 5)` | Append a piece of mesh wearing one texture. The piece's indices count from its own first vertex and are moved along by what the item already holds. |
+| `void upload()` | Hand the assembled mesh to the GPU. Call once, when every piece has been added. |
 | `void clearMaterials()` | Drop every material slot and its texture reference. |
 | `size_t getMaterialCount() const` | How many material slots the item has (0 = single-material). |
 | `void setTexture(const std::string &name, OkTexture *tex)` | Apply an already-loaded texture. The item takes its own reference (see below). |
@@ -173,6 +176,31 @@ Rules:
   fade, the lighting uniforms — is done once for the whole mesh,
   whatever the slot count. Only the texture bind and the draw call
   repeat.
+
+### Assembling one from pieces
+
+The example above knows where each material's faces sit in the index
+buffer, because it built the buffer itself. When the pieces arrive
+separately -- a mesh per material, each indexed from its own first
+vertex -- use `addMesh`, which concatenates the geometry and moves each
+piece's indices along by what is already there:
+
+```cpp
+OkItem *crate = new OkItem("crate");          // empty, no geometry yet
+crate->addMesh(sidesV.data(), (long)sidesV.size(),
+               sidesI.data(), (long)sidesI.size(), "assets/wood.png");
+crate->addMesh(lidV.data(), (long)lidV.size(),
+               lidI.data(), (long)lidI.size(), "assets/metal.png");
+crate->upload();                              // hands it to the GPU, once
+```
+
+Each piece becomes one range, so this is the same item as before, built
+the other way round. Nothing is drawn until `upload()`.
+
+It exists because that index arithmetic is easy to get wrong and does
+not announce itself: an index that is off but still inside the buffer
+draws the wrong triangles rather than failing. Callers that merged
+meshes by hand each wrote it out again.
 
 Because a vertex carries one set of texture coordinates, vertices on the
 seam between two materials usually have to be **split**: same position,
