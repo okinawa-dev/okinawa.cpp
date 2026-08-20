@@ -31,8 +31,11 @@ public:
   static const int MAT_SLOTS = 3;
 
 private:
-  void _initBuffers();
-  void _initDefaults();
+  void        _initBuffers();
+  void        _initDefaults();
+  static void _expandVertices(const float *vertexData, long vertexCount,
+                              const unsigned int *indexData, long indexCount,
+                              int vertexStride, std::vector<float> *out);
 
 protected:
   // Mesh, material and GL state. Protected rather than private because

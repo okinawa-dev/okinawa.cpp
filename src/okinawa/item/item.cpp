@@ -113,11 +113,25 @@ void OkItem::addMesh(const float *vertexData, long vertexCount,
       indexCount <= 0) {
     return;
   }
-  // The piece arrives in the caller's layout and is stored in the
-  // internal one, normals and all, exactly as a whole mesh would be.
-  OkItem piece("", const_cast<float *>(vertexData), vertexCount,
-               const_cast<unsigned int *>(indexData), indexCount, vertexStride);
-  if (piece.vertices == nullptr || piece.numVertices <= 0) {
+  // The piece is expanded to the internal layout HERE, in memory, and
+  // never by building a throwaway OkItem to do it.
+  //
+  // That is what this used to do, and it looked harmless: an item knows
+  // how to adopt vertex data, so make one, take its buffers and let it
+  // go. But an item's constructor also UPLOADS -- it creates a vertex
+  // array and two buffers on the GPU -- and its destructor deletes them.
+  // A city cell is a few thousand pieces, so loading one created and
+  // freed a few thousand GPU objects, whose names OpenGL then recycles,
+  // while the streaming pass was creating buffers of its own on the same
+  // thread. The city came apart into shards a few cells later: geometry
+  // drawn from somebody else's buffer. It did not show on a fresh
+  // launch, only after enough had been loaded and unloaded to make the
+  // recycling collide, which is what makes this kind of fault expensive
+  // to find.
+  std::vector<float> expanded;
+  _expandVertices(vertexData, vertexCount, indexData, indexCount, vertexStride,
+                  &expanded);
+  if (expanded.empty()) {
     return;
   }
 
@@ -127,16 +141,17 @@ void OkItem::addMesh(const float *vertexData, long vertexCount,
   // in range.
   auto base = static_cast<unsigned int>(numVertices / VERTEX_STRIDE);
 
-  auto *grownV = new float[numVertices + piece.numVertices];
+  auto  grownCount = numVertices + static_cast<long>(expanded.size());
+  auto *grownV     = new float[grownCount];
   if (vertices != nullptr && numVertices > 0) {
     std::memcpy(grownV, vertices,
                 static_cast<size_t>(numVertices) * sizeof(float));
   }
-  std::memcpy(grownV + numVertices, piece.vertices,
-              static_cast<size_t>(piece.numVertices) * sizeof(float));
+  std::memcpy(grownV + numVertices, expanded.data(),
+              expanded.size() * sizeof(float));
   delete[] vertices;
-  vertices = grownV;
-  numVertices += piece.numVertices;
+  vertices    = grownV;
+  numVertices = grownCount;
 
   auto *grownI = new unsigned int[numIndices + indexCount];
   if (indices != nullptr && numIndices > 0) {
@@ -174,118 +189,108 @@ void OkItem::upload() {
  *        points) produce garbage normals, which is fine: the shader only
  *        lights the textured branch, and debug lines are never textured.
  */
-void OkItem::_adoptVertexData(float *vertexData, long vertexCount,
-                              const unsigned int *indexData, long indexCount,
-                              int vertexStride) {
-  // Nothing to adopt: say so plainly rather than allocating an empty
-  // buffer. An item with a zero-length array behind a non-null pointer
-  // looks like an item with vertices to everything downstream, and the
-  // first thing that reads one walks off the end.
+/**
+ * @brief Expand a piece of mesh into the internal stride-8 layout.
+ *
+ * Stride-5 input (x,y,z,u,v -- the layout every caller writes) gets its
+ * normals computed here by accumulating the face normal of every
+ * triangle onto its three vertices. De-indexed meshes, where each face
+ * owns its vertices, end up with exact flat face normals; indexed meshes
+ * with shared vertices (terrain grids) end up with area-weighted smooth
+ * ones. Non-triangle index lists (lines, points) produce garbage
+ * normals, which is fine: the shader only lights the textured branch,
+ * and debug lines are never textured.
+ *
+ * Pure arithmetic, and deliberately so: it touches no GPU state, which
+ * is what lets a mesh be assembled from pieces without creating and
+ * destroying buffers per piece.
+ */
+void OkItem::_expandVertices(const float *vertexData, long vertexCount,
+                             const unsigned int *indexData, long indexCount,
+                             int vertexStride, std::vector<float> *out) {
+  out->clear();
   if (vertexData == nullptr || vertexCount <= 0) {
-    vertices    = nullptr;
-    numVertices = 0;
     return;
   }
   if (vertexStride == VERTEX_STRIDE) {
-    vertices = new float[vertexCount];
-    std::memcpy(vertices, vertexData, vertexCount * sizeof(float));
-    numVertices = vertexCount;
-  } else {
-    long vcount = vertexCount / VERTEX_STRIDE_IN;
-    // Fewer floats than one whole vertex: same as having none. Said here
-    // rather than left to fall through, because an allocation of length
-    // zero behind a non-null pointer reads as a mesh to everything
-    // downstream and the buffer it points at can never be read.
-    if (vcount <= 0) {
-      vertices    = nullptr;
-      numVertices = 0;
-      return;
+    out->assign(vertexData, vertexData + vertexCount);
+    return;
+  }
+  long vcount = vertexCount / VERTEX_STRIDE_IN;
+  if (vcount <= 0) {
+    return;
+  }
+  out->assign(static_cast<size_t>(vcount * VERTEX_STRIDE), 0.0f);
+  std::vector<float> &v = *out;
+  for (long i = 0; i < vcount; i++) {
+    long src = i * VERTEX_STRIDE_IN;
+    long dst = i * VERTEX_STRIDE;
+    for (int k = 0; k < VERTEX_STRIDE_IN; k++) {
+      v[static_cast<size_t>(dst + k)] = vertexData[src + k];
     }
-    vertices = new float[vcount * VERTEX_STRIDE];
-    for (long i = 0; i < vcount; i++) {
-      long src                          = i * VERTEX_STRIDE_IN;
-      long dst                          = i * VERTEX_STRIDE;
-      vertices[dst]                     = vertexData[src];
-      vertices[dst + 1]                 = vertexData[src + 1];
-      vertices[dst + 2]                 = vertexData[src + 2];
-      vertices[dst + 3]                 = vertexData[src + 3];
-      vertices[dst + 4]                 = vertexData[src + 4];
-      vertices[dst + VERTEX_NORMAL + 0] = 0.0f;
-      vertices[dst + VERTEX_NORMAL + 1] = 0.0f;
-      vertices[dst + VERTEX_NORMAL + 2] = 0.0f;
+  }
+  for (long f = 0; f + 2 < indexCount; f += 3) {
+    long ia = static_cast<long>(indexData[f]);
+    long ib = static_cast<long>(indexData[f + 1]);
+    long ic = static_cast<long>(indexData[f + 2]);
+    if (ia >= vcount || ib >= vcount || ic >= vcount) {
+      continue;
     }
-    for (long f = 0; f + 2 < indexCount; f += 3) {
-      long ia = static_cast<long>(indexData[f]);
-      long ib = static_cast<long>(indexData[f + 1]);
-      long ic = static_cast<long>(indexData[f + 2]);
-      if (ia >= vcount || ib >= vcount || ic >= vcount) {
-        continue;
-      }
-      float ax = vertexData[ia * VERTEX_STRIDE_IN];
-      float ay = vertexData[ia * VERTEX_STRIDE_IN + 1];
-      float az = vertexData[ia * VERTEX_STRIDE_IN + 2];
-      float ux = vertexData[ib * VERTEX_STRIDE_IN] - ax;
-      float uy = vertexData[ib * VERTEX_STRIDE_IN + 1] - ay;
-      float uz = vertexData[ib * VERTEX_STRIDE_IN + 2] - az;
-      float wx = vertexData[ic * VERTEX_STRIDE_IN] - ax;
-      float wy = vertexData[ic * VERTEX_STRIDE_IN + 1] - ay;
-      float wz = vertexData[ic * VERTEX_STRIDE_IN + 2] - az;
-      // Area-weighted face normal (unnormalized cross product).
-      float               nx = uy * wz - uz * wy;
-      float               ny = uz * wx - ux * wz;
-      float               nz = ux * wy - uy * wx;
-      std::array<long, 3> tri;
-      tri[0] = ia;
-      tri[1] = ib;
-      tri[2] = ic;
-      for (int k = 0; k < 3; k++) {
-        vertices[tri[k] * VERTEX_STRIDE + VERTEX_NORMAL + 0] += nx;
-        vertices[tri[k] * VERTEX_STRIDE + VERTEX_NORMAL + 1] += ny;
-        vertices[tri[k] * VERTEX_STRIDE + VERTEX_NORMAL + 2] += nz;
-      }
+    float ax = vertexData[ia * VERTEX_STRIDE_IN];
+    float ay = vertexData[ia * VERTEX_STRIDE_IN + 1];
+    float az = vertexData[ia * VERTEX_STRIDE_IN + 2];
+    float ux = vertexData[ib * VERTEX_STRIDE_IN] - ax;
+    float uy = vertexData[ib * VERTEX_STRIDE_IN + 1] - ay;
+    float uz = vertexData[ib * VERTEX_STRIDE_IN + 2] - az;
+    float wx = vertexData[ic * VERTEX_STRIDE_IN] - ax;
+    float wy = vertexData[ic * VERTEX_STRIDE_IN + 1] - ay;
+    float wz = vertexData[ic * VERTEX_STRIDE_IN + 2] - az;
+    // Area-weighted face normal (unnormalized cross product).
+    float               nx  = uy * wz - uz * wy;
+    float               ny  = uz * wx - ux * wz;
+    float               nz  = ux * wy - uy * wx;
+    std::array<long, 3> tri = {ia, ib, ic};
+    for (int k = 0; k < 3; k++) {
+      v[static_cast<size_t>(tri[k] * VERTEX_STRIDE + VERTEX_NORMAL + 0)] += nx;
+      v[static_cast<size_t>(tri[k] * VERTEX_STRIDE + VERTEX_NORMAL + 1)] += ny;
+      v[static_cast<size_t>(tri[k] * VERTEX_STRIDE + VERTEX_NORMAL + 2)] += nz;
     }
-    for (long i = 0; i < vcount; i++) {
-      float *n  = &vertices[i * VERTEX_STRIDE + VERTEX_NORMAL];
-      float  nl = std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
-      if (nl > MIN_NORMAL_LEN_SQ) {
-        n[0] /= nl;
-        n[1] /= nl;
-        n[2] /= nl;
-      } else {
-        // Cancelled out (double-sided quads) or never touched: face up.
-        n[0] = 0.0f;
-        n[1] = 1.0f;
-        n[2] = 0.0f;
-      }
+  }
+  for (long i = 0; i < vcount; i++) {
+    long  n   = i * VERTEX_STRIDE + VERTEX_NORMAL;
+    float nx  = v[static_cast<size_t>(n)];
+    float ny  = v[static_cast<size_t>(n + 1)];
+    float nz  = v[static_cast<size_t>(n + 2)];
+    float len = std::sqrt(nx * nx + ny * ny + nz * nz);
+    if (len > 1e-8f) {
+      v[static_cast<size_t>(n)]     = nx / len;
+      v[static_cast<size_t>(n + 1)] = ny / len;
+      v[static_cast<size_t>(n + 2)] = nz / len;
+    } else {
+      v[static_cast<size_t>(n)]     = 0.0f;
+      v[static_cast<size_t>(n + 1)] = 1.0f;
+      v[static_cast<size_t>(n + 2)] = 0.0f;
     }
-    numVertices = vcount * VERTEX_STRIDE;
   }
 }
 
 /**
- * @brief Destructor for the OkItem class.
- *        Cleans up OpenGL objects and allocated memory.
+ * @brief Store vertex data in the internal layout, expanding it first.
  */
-OkItem::~OkItem() {
-  // Delete OpenGL objects
-  glDeleteVertexArrays(1, &VAO);
-  glDeleteBuffers(1, &VBO);
-  glDeleteBuffers(1, &EBO);
-
-  // Free allocated memory
-  delete[] vertices;
-  delete[] indices;
-
-  // Remove texture reference
-  if (texture && !textureName.empty()) {
-    OkTextureHandler::getInstance()->removeReference(textureName);
+void OkItem::_adoptVertexData(float *vertexData, long vertexCount,
+                              const unsigned int *indexData, long indexCount,
+                              int vertexStride) {
+  std::vector<float> expanded;
+  _expandVertices(vertexData, vertexCount, indexData, indexCount, vertexStride,
+                  &expanded);
+  if (expanded.empty()) {
+    vertices    = nullptr;
+    numVertices = 0;
+    return;
   }
-  for (size_t i = 0; i < materials.size(); i++) {
-    if (materials[i].texture && !materials[i].textureName.empty()) {
-      OkTextureHandler::getInstance()->removeReference(
-          materials[i].textureName);
-    }
-  }
+  vertices = new float[expanded.size()];
+  std::memcpy(vertices, expanded.data(), expanded.size() * sizeof(float));
+  numVertices = static_cast<long>(expanded.size());
 }
 
 /**
@@ -397,6 +402,28 @@ void OkItem::_initBuffers() {
  * @note  The radius is calculated as the maximum distance from the center of
  *        the item to any vertex.
  */
+OkItem::~OkItem() {
+  // Delete OpenGL objects
+  glDeleteVertexArrays(1, &VAO);
+  glDeleteBuffers(1, &VBO);
+  glDeleteBuffers(1, &EBO);
+
+  // Free allocated memory
+  delete[] vertices;
+  delete[] indices;
+
+  // Remove texture reference
+  if (texture && !textureName.empty()) {
+    OkTextureHandler::getInstance()->removeReference(textureName);
+  }
+  for (size_t i = 0; i < materials.size(); i++) {
+    if (materials[i].texture && !materials[i].textureName.empty()) {
+      OkTextureHandler::getInstance()->removeReference(
+          materials[i].textureName);
+    }
+  }
+}
+
 void OkItem::_calculateRadius() {
 
   // numVertices counts floats, not vertices: fewer than one whole
