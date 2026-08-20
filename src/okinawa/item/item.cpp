@@ -113,21 +113,14 @@ void OkItem::addMesh(const float *vertexData, long vertexCount,
       indexCount <= 0) {
     return;
   }
-  // The piece is expanded to the internal layout HERE, in memory, and
-  // never by building a throwaway OkItem to do it.
+  // The piece is expanded in memory, and nothing here touches the GPU.
   //
-  // That is what this used to do, and it looked harmless: an item knows
-  // how to adopt vertex data, so make one, take its buffers and let it
-  // go. But an item's constructor also UPLOADS -- it creates a vertex
-  // array and two buffers on the GPU -- and its destructor deletes them.
-  // A city cell is a few thousand pieces, so loading one created and
-  // freed a few thousand GPU objects, whose names OpenGL then recycles,
-  // while the streaming pass was creating buffers of its own on the same
-  // thread. The city came apart into shards a few cells later: geometry
-  // drawn from somebody else's buffer. It did not show on a fresh
-  // launch, only after enough had been loaded and unloaded to make the
-  // recycling collide, which is what makes this kind of fault expensive
-  // to find.
+  // That is the rule this method exists under: a mesh may be assembled
+  // from thousands of pieces, and creating a GPU object per piece would
+  // have OpenGL recycling buffer names underneath whatever else is
+  // uploading on the same thread. Geometry then draws from somebody
+  // else's buffer -- not at once, but once enough has been created and
+  // freed for the recycling to collide.
   std::vector<float> expanded;
   _expandVertices(vertexData, vertexCount, indexData, indexCount, vertexStride,
                   &expanded);
