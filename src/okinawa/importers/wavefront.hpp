@@ -32,6 +32,24 @@ public:
                             std::vector<float>        &vertices,
                             std::vector<unsigned int> &indices);
 
+  /**
+   * @brief Read a file's geometry WITH its texture coordinates.
+   *
+   * The same as `parseGeometry` and for the same reasons, but giving
+   * back what a textured mesh needs: five floats a vertex, position
+   * then texture coordinate, in the layout `OkItem` and
+   * `OkInstancedItem` take. Use this when the model is to be drawn
+   * rather than measured.
+   *
+   * @param filename the Wavefront file to read.
+   * @param vertices filled with x, y, z, u, v per vertex.
+   * @param indices  filled with one index per corner.
+   * @return false when the file cannot be read or holds no faces.
+   */
+  static bool parseMesh(const std::string &filename,
+                        std::vector<float> &vertices,
+                        std::vector<unsigned int> &indices);
+
 private:
   /**
    * @brief Temporary vertex structure to hold position and texture coordinates.

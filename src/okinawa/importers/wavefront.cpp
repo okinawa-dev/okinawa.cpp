@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
+
+// Position and texture coordinate: what a textured vertex carries.
+static const size_t kFloatsPerVertex = 5;
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -101,6 +104,25 @@ bool OkWavefrontImporter::parseGeometry(const std::string         &filename,
  * @param mesh     The TempMesh structure to store the parsed data.
  * @return True if parsing was successful, false otherwise.
  */
+bool OkWavefrontImporter::parseMesh(const std::string         &filename,
+                                    std::vector<float>        &vertices,
+                                    std::vector<unsigned int> &indices) {
+  TempMesh mesh;
+  if (!parseGeometryWithUV(filename, mesh) || mesh.indices.empty()) {
+    return false;
+  }
+  vertices.clear();
+  vertices.reserve(mesh.vertices.size() * kFloatsPerVertex);
+  for (const auto &vertex : mesh.vertices) {
+    vertices.insert(vertices.end(), std::begin(vertex.position),
+                    std::end(vertex.position));
+    vertices.insert(vertices.end(), std::begin(vertex.texcoord),
+                    std::end(vertex.texcoord));
+  }
+  indices = mesh.indices;
+  return true;
+}
+
 bool OkWavefrontImporter::parseGeometryWithUV(const std::string &filename,
                                               TempMesh          &mesh) {
   std::ifstream file(filename);
@@ -204,7 +226,6 @@ std::string OkWavefrontImporter::getItemName(const std::string &filename) {
  * @return A pointer to the created OkItem, or nullptr on failure.
  */// Interleaved vertex layout: three position floats then two texture
 // coordinates.
-static const size_t kFloatsPerVertex = 5;
 
 OkItem *OkWavefrontImporter::importFile(const std::string &filename) {
   bool hasUV = hasTextureCoordinates(filename);
