@@ -3,6 +3,7 @@
 #include "item/item.hpp"
 #include <algorithm>
 #include <cstddef>
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -63,9 +64,21 @@ bool OkWavefrontImporter::parseGeometry(const std::string         &filename,
       }
     } else if (type == "f") {
       std::vector<int> face;
-      int              idx;
-      while (iss >> idx) {
-        face.push_back(idx - 1);  // OBJ indices start at 1
+      std::string      corner;
+      while (iss >> corner) {
+        // A corner is `v`, `v/vt`, `v//vn` or `v/vt/vn`. Read as a bare
+        // integer -- which is what this did -- the first slash stops the
+        // stream and a triangle comes out with one corner, so a file
+        // written by anything that exports texture coordinates loaded as
+        // no geometry at all and said nothing about it.
+        size_t cut = corner.find('/');
+        if (cut != std::string::npos) {
+          corner = corner.substr(0, cut);
+        }
+        if (corner.empty()) {
+          continue;
+        }
+        face.push_back(std::atoi(corner.c_str()) - 1);  // OBJ counts from 1
       }
 
       // Triangulate face

@@ -54,3 +54,25 @@ if (model) {
 Position, scale and orient it like any other `OkItem` (`setPosition`,
 `setScaling`, `setRotation`); render it as a wireframe with
 `setWireframe(true)`. See [Items](/reference/items.html).
+
+## Reading a model without building one
+
+`importFile` hands back a finished `OkItem`, which is what an application
+usually wants -- and also a GPU object it may not have asked for. A tool that
+wants to measure a model, draw it in a panel it renders itself, or pass its
+triangles to something else can read the numbers alone:
+
+```cpp
+std::vector<float>        vertices;   // three floats per vertex: x, y, z
+std::vector<unsigned int> indices;    // one per corner, three to a face
+if (OkWavefrontImporter::parseGeometry("assets/table.obj", vertices, indices)) {
+  // ...
+}
+```
+
+Nothing is uploaded and nothing is allocated on the graphics card, so this is
+safe to call from a worker thread.
+
+A face corner may be written as `v`, `v/vt`, `v//vn` or `v/vt/vn`; all four are
+read, and a polygon of more than three corners is triangulated as a fan.
+
