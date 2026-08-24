@@ -29,16 +29,27 @@ is derived from the file name (without path or extension).
 
 - `v x y z` — vertex positions.
 - `vt u v` — texture coordinates.
-- `f ...` — faces. Each vertex reference may be `v`, `v/vt`, or `v/vt/vn`;
-  the parser uses the **position** and the **texture** index. Faces with more
-  than three vertices are triangulated (triangle fan).
-- If the file contains any `vt` lines, the model is built with texture
-  coordinates (5 floats per vertex: position + UV); otherwise it is built from
-  positions only.
+- `vn x y z` — vertex normals.
+- `f ...` — faces. Each corner may be written `v`, `v/vt`, `v//vn` or
+  `v/vt/vn`, and an index may be negative, counting backwards from the end of
+  what has been read so far. A corner naming something the file does not hold
+  is dropped rather than read past the end. Faces with more than three corners
+  are triangulated (triangle fan).
+- If the file contains `vn` lines, the model is built with the normals it
+  carries (8 floats per vertex: position, UV, normal). With `vt` but no `vn`
+  it is built with 5 floats per vertex and **the normals are computed from the
+  winding of the triangles**. With neither it is built from positions alone.
 
-Other directives (`vn` normals, `o`, `usemtl`, `mtllib`, comments) are ignored.
-In particular the importer does **not** read the companion `.mtl`, so it does
-not assign a texture: load and apply textures yourself (see
+That last point is worth pausing on. A mesh with no normals of its own is lit
+by the direction its triangles are wound in, which is a second thing an
+exporter has to get right and which nothing complains about when it is wrong:
+a model wound inward is not invisible, it is lit from the wrong side — the
+undersides bright and everything facing the sky dark. Authoring normals is how
+a model says what it means instead of implying it.
+
+Other directives (`o`, `usemtl`, `mtllib`, comments) are ignored. In
+particular the importer does **not** read the companion `.mtl`, so it does not
+assign a texture: load and apply textures yourself (see
 [Textures](/reference/textures.html)).
 
 ## Applying a texture to a loaded model
@@ -75,4 +86,17 @@ safe to call from a worker thread.
 
 A face corner may be written as `v`, `v/vt`, `v//vn` or `v/vt/vn`; all four are
 read, and a polygon of more than three corners is triangulated as a fan.
+
+Two more readers sit beside it, for callers that want the model drawn rather
+than measured:
+
+```cpp
+// x, y, z, u, v -- the layout OkItem and OkInstancedItem take.
+OkWavefrontImporter::parseMesh("assets/table.obj", vertices, indices);
+
+// x, y, z, u, v, nx, ny, nz -- with the normals the file carries. Returns
+// false when the file has none, since there is then nothing this adds.
+OkWavefrontImporter::parseMeshWithNormals("assets/table.obj", vertices,
+                                          indices);
+```
 
