@@ -183,6 +183,14 @@ public:
   float getRadius() const {
     return radius;
   }
+  // How many indices the mesh has, which is three per triangle. Reported
+  // rather than kept to itself because a count is not the geometry: it
+  // is what a caption, a budget or a test says about it, and working it
+  // out again from the file the mesh came from is a second answer to a
+  // question the item already knows.
+  long getIndexCount() const {
+    return numIndices;
+  }
   void updateVertexData(float *newVertexData, long newVertexCount);
 
   /**

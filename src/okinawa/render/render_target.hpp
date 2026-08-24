@@ -3,6 +3,8 @@
 
 #include "../core/gl_config.hpp"
 
+#include <array>
+
 /**
  * @file
  * @brief An offscreen surface to draw into: colour, depth, and a size.
@@ -83,8 +85,8 @@ private:
   // Read from the driver rather than assumed to be the window: a target
   // bound inside another pass would otherwise release to the wrong
   // surface and paint the rest of the frame somewhere invisible.
-  GLint previousFramebuffer;
-  GLint previousViewport[4];
+  GLint                previousFramebuffer;
+  std::array<GLint, 4> previousViewport;
 };
 
 #endif

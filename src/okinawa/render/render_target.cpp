@@ -12,9 +12,7 @@ OkRenderTarget::OkRenderTarget() {
   height              = 0;
   valid               = false;
   previousFramebuffer = 0;
-  for (int i = 0; i < 4; i++) {
-    previousViewport[i] = 0;
-  }
+  previousViewport    = {0, 0, 0, 0};
 }
 
 OkRenderTarget::~OkRenderTarget() {
@@ -98,7 +96,7 @@ void OkRenderTarget::bind() {
     return;
   }
   glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previousFramebuffer);
-  glGetIntegerv(GL_VIEWPORT, previousViewport);
+  glGetIntegerv(GL_VIEWPORT, previousViewport.data());
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
   glViewport(0, 0, width, height);
 }

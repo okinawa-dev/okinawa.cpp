@@ -26,7 +26,13 @@ namespace {
   // The default light: over the viewer's left shoulder and a little
   // above, which is where a light has to be for a flat face to read as
   // facing the viewer and a side face to read as turning away.
-  const std::array<float, 3> PREVIEW_SUN   = {0.40f, 0.82f, 0.41f};
+  //
+  // Written as the direction the light TRAVELS, which is the convention
+  // the shader reads it in -- so the vector points down and away from
+  // the eye, not up towards where the source is. The two are easy to
+  // confuse and the mistake is silent: an object lit from below still
+  // has light on it, so the picture looks dim rather than wrong.
+  const std::array<float, 3> PREVIEW_SUN   = {-0.40f, -0.82f, -0.41f};
   const std::array<float, 3> PREVIEW_COLOR = {1.0f, 0.98f, 0.94f};
 
   // How much light a face gets with its back to the source. Not zero: an
