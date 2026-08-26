@@ -22,9 +22,26 @@ Every drawable inherits these:
 | `void attachTo(OkObject *parent)` | Parent this object (transforms compose). |
 | `void attach(OkObject *child)` | Add a child to this object. |
 | `void detachFromParent()` | Detach from the parent. |
+| `bool shouldDraw() const` | Override to skip this object AND its children this frame. |
+| `bool shouldStep(float dt) const` | The same for the update. |
 | `void setDrawOriginAxis(bool)` | Toggle the debug origin axis gizmo. |
 
+Deleting an object takes it out of its parent and leaves its children
+**detached, not deleted** — whoever created them still owns them. A
+parent that is the owner of its children has to delete them before
+itself.
+
+The two questions are what makes a hierarchy worth having: see
+[Scene](/reference/scene.html#skipping-a-subtree).
+
 ## OkItem
+
+An item carries its own bounding sphere, computed from the mesh when it
+is handed over: `getRadius()` and `getSphereCenter()`. The centre is
+**not** the item's origin -- a mesh baked in the coordinates of the
+region it came from has its origin at that region's corner, so the two
+can be a long way apart. Anything measuring where an item really is (a
+parent working out how far its children reach) wants the centre.
 
 | Method | Purpose |
 | --- | --- |
