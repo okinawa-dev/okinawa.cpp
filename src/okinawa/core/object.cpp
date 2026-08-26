@@ -266,6 +266,10 @@ void OkObject::updateTransform() {
  * @param dt The time elapsed since the last frame.
  */
 void OkObject::step(float dt) {
+  if (!shouldStep(dt)) {
+    return;
+  }
+
   float frameTime = dt / OkConfig::getFloat("graphics.time-per-frame");
 
   // Process movement if there's any speed
@@ -301,20 +305,33 @@ void OkObject::step(float dt) {
  *        This method first calls the derived class's specific drawing logic.
  */
 void OkObject::draw() {
-  // OkLogger::info("Drawing object in hierarchy, name: " + name);
+  // Both passes in one go, in the right order, for a caller that draws a
+  // subtree on its own -- an inspection view, a thumbnail. A frame does
+  // not come through here: OkScene draws the world one pass at a time,
+  // so that ALL the opaque geometry is down before any of the blended.
+  drawPass(false);
+  drawPass(true);
+}
 
-  // Call the derived class's specific drawing logic
-  drawSelf();
-
-  // Only draw axes if enabled for this object
-  if (drawOriginAxis) {
-    drawAxis();
+void OkObject::drawPass(bool blendedPass) {
+  // The question comes first, and it covers the children too: a region
+  // of the world that is not drawn costs one test, not one per item.
+  if (!shouldDraw()) {
+    return;
   }
 
-  // Draw children recursively (this stays in OkObject)
+  // Each object draws itself in its own pass and stays out of the other.
+  if (isBlended() == blendedPass) {
+    drawSelf();
+    if (drawOriginAxis) {
+      drawAxis();
+    }
+  }
+
+  // Children recursively (this stays in OkObject)
   OkObject *current = _firstChild;
   while (current != nullptr) {
-    current->draw();
+    current->drawPass(blendedPass);
     current = current->getNextSibling();
   }
 }

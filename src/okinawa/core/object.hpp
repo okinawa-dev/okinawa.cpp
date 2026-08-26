@@ -122,6 +122,54 @@ public:
   // Final draw method that enforces the drawing sequence
   virtual void draw() final;
 
+  /**
+   * @brief Draw this subtree, but only what belongs to one pass.
+   *
+   * Opaque geometry is drawn nearest first, so the depth buffer can
+   * reject what is hidden; blended geometry -- halos, glows -- goes
+   * afterwards, because it deliberately does not write depth and any
+   * opaque surface drawn later would paint over it.
+   *
+   * Which pass an object belongs to is its own business (`isBlended`),
+   * and it is asked per OBJECT rather than per root. It used to be
+   * decided for a whole root: harmless while every object was a root,
+   * and wrong the moment one of them has children -- a single halo
+   * inside a group would carry all of that group's opaque geometry into
+   * the late pass.
+   *
+   * @param blendedPass true to draw the blended half, false the opaque
+   *        half. The traversal walks the whole subtree either way; each
+   *        object draws itself only in its own pass.
+   */
+  virtual void drawPass(bool blendedPass) final;
+
+  /**
+   * @brief Whether this object and its children are drawn at all.
+   *
+   * Asked before anything else, every frame. The default is yes; a node
+   * that stands for a region of the world answers no when that region
+   * is behind the viewer or beyond the distance it is drawn at, and its
+   * whole subtree costs one test instead of one per item.
+   *
+   * A question rather than a flag on purpose: a flag has to be put back,
+   * and a flag left false is a piece of the world that disappears with
+   * nothing to say why.
+   */
+  virtual bool shouldDraw() const {
+    return true;
+  }
+
+  /**
+   * @brief Whether this object and its children are stepped at all.
+   *
+   * The same question for the update: what is not near enough to be
+   * looked at is rarely near enough to need moving.
+   */
+  virtual bool shouldStep(float dt) const {
+    (void)dt;
+    return true;
+  }
+
   // Blended/additive objects (light halos, glows) must be drawn AFTER
   // all opaque geometry: they deliberately do not write depth, so any
   // opaque surface drawn later would pass the depth test and paint over

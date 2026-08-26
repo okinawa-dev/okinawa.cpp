@@ -150,14 +150,11 @@ void OkScene::draw() {
     _drawOrder.clear();
     _drawOrder.reserve(rootObjects.size());
     for (size_t i = 0; i < rootObjects.size(); ++i) {
-      OkObject *o = rootObjects[i];
-      if (o->isBlended()) {
-        continue;
-      }
-      OkPoint p  = o->getPosition();
-      float   dx = p.x() - OkFrustum::getViewerX();
-      float   dy = p.y() - OkFrustum::getViewerY();
-      float   dz = p.z() - OkFrustum::getViewerZ();
+      OkObject *o  = rootObjects[i];
+      OkPoint   p  = o->getPosition();
+      float     dx = p.x() - OkFrustum::getViewerX();
+      float     dy = p.y() - OkFrustum::getViewerY();
+      float     dz = p.z() - OkFrustum::getViewerZ();
       _drawOrder.emplace_back(dx * dx + dy * dy + dz * dz, o);
     }
     std::sort(_drawOrder.begin(), _drawOrder.end(),
@@ -166,13 +163,20 @@ void OkScene::draw() {
                 return a.first < b.first;
               });
   }
+  // Opaque first, nearest to furthest; then the blended, in whatever
+  // order they were added -- they do not write depth, so ordering them
+  // among themselves buys nothing.
+  //
+  // Both passes walk every root, and each object draws itself only in
+  // its own pass. The two used to be sorted apart HERE, by asking each
+  // root whether it was blended, which answered for its children too:
+  // one halo inside a group would have taken that group's walls and
+  // roofs into the late pass with it.
   for (size_t i = 0; i < _drawOrder.size(); ++i) {
-    _drawOrder[i].second->draw();
+    _drawOrder[i].second->drawPass(false);
   }
   for (size_t i = 0; i < rootObjects.size(); ++i) {
-    if (rootObjects[i]->isBlended()) {
-      rootObjects[i]->draw();
-    }
+    rootObjects[i]->drawPass(true);
   }
 }
 
