@@ -183,6 +183,19 @@ public:
   float getRadius() const {
     return radius;
   }
+  /**
+   * @brief The centre of that sphere, in the item's own coordinates.
+   *
+   * Not the item's origin: a baked mesh keeps its vertices in the
+   * coordinates of the region it came from, with the origin at that
+   * region's corner, so the sphere is centred on the geometry and can
+   * be a long way from (0, 0, 0). Anything measuring where an item
+   * really is -- a parent working out how far its children reach --
+   * needs the centre and not the origin.
+   */
+  const std::array<float, RGB> &getSphereCenter() const {
+    return sphereCenter;
+  }
   // How many indices the mesh has, which is three per triangle. Reported
   // rather than kept to itself because a count is not the geometry: it
   // is what a caption, a budget or a test says about it, and working it
