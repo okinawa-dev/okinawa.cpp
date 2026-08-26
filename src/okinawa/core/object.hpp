@@ -31,6 +31,12 @@ protected:
   OkObject *_firstChild;
   OkObject *_nextSibling;
 
+  // The pointer surgery of leaving a parent, without the transform
+  // update that follows it. The destructor needs exactly this: updating
+  // a transform is a virtual call, and by then there is no object left
+  // to answer it.
+  void unlinkFromParent();
+
   // Flags
   bool drawOriginAxis;  // Flag to draw origin axis
 

@@ -130,3 +130,40 @@ TEST_CASE("Drawing a subtree on its own does both passes, opaque first",
   REQUIRE(log[0] == "draw:wall");
   REQUIRE(log[1] == "draw:halo");
 }
+
+TEST_CASE("A child can be deleted, and its parent forgets it", "[object]") {
+  std::vector<std::string> log;
+  Spy                      parent("parent", &log);
+  auto                    *first  = new Spy("first", &log);
+  auto                    *second = new Spy("second", &log);
+  parent.attach(first);
+  parent.attach(second);
+
+  // Deleting a child used to end the program: the destructor detached
+  // it from its parent, and detaching recomputes the transform -- a
+  // virtual call, on an object that is halfway gone. "Pure virtual
+  // function called", and nothing to say which one.
+  delete first;
+
+  log.clear();
+  parent.draw();
+  REQUIRE(contains(log, "draw:parent"));
+  REQUIRE(contains(log, "draw:second"));
+  REQUIRE_FALSE(contains(log, "draw:first"));
+}
+
+TEST_CASE("Deleting a parent leaves its children alive and unparented",
+          "[object]") {
+  std::vector<std::string> log;
+  auto                    *parent = new Spy("parent", &log);
+  auto                    *child  = new Spy("child", &log);
+  parent->attach(child);
+  delete parent;
+
+  // The children are detached, not deleted: whoever made them still
+  // owns them. Drawing one has to work, and reach nobody else.
+  REQUIRE(child->getParent() == nullptr);
+  child->draw();
+  REQUIRE(contains(log, "draw:child"));
+  delete child;
+}

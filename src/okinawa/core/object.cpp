@@ -40,7 +40,16 @@ OkObject::OkObject(const std::string &name) {
  *        Cleans up the object and detaches from parent.
  */
 OkObject::~OkObject() {
-  detachFromParent();
+  // Unlinked, not detached: `detachFromParent` ends by recomputing this
+  // object's transform, which is a virtual call, and a virtual call from
+  // a destructor lands on a method whose object no longer exists. The
+  // program dies with "pure virtual function called" and no clue as to
+  // which one.
+  //
+  // It never happened while nothing in the world had a parent. The first
+  // thing to have one -- a cell holding what stands in it -- brought the
+  // whole city down the moment a cell was unloaded.
+  unlinkFromParent();
   detachAllChildren();
 }
 
@@ -187,7 +196,7 @@ void OkObject::attachTo(OkObject *parent) {
  *        This method updates the parent-child relationship and recalculates
  *        the transform matrix.
  */
-void OkObject::detachFromParent() {
+void OkObject::unlinkFromParent() {
   if (!_parent)
     return;
 
@@ -203,6 +212,13 @@ void OkObject::detachFromParent() {
 
   _parent      = nullptr;
   _nextSibling = nullptr;
+}
+
+void OkObject::detachFromParent() {
+  if (!_parent)
+    return;
+  unlinkFromParent();
+  // Its transform was measured from a parent it no longer has.
   updateTransform();
 }
 
