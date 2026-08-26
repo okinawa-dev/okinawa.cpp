@@ -57,23 +57,22 @@ frame costs more than it saves.
 
 ### Skipping a subtree
 
-`draw()` and `step()` ask two questions before doing anything:
+`draw()` and `step()` ask two questions before doing anything, and any
+object may answer them -- they are `OkObject`'s, so every item, camera,
+avatar or group of your own already has them and answers yes by default:
 
 ```cpp
-class Region : public OkItem {
-public:
-  bool shouldDraw() const override {
-    return withinView(centre, radius);   // your test
-  }
-  bool shouldStep(float dt) const override {
-    return withinView(centre, radius);
-  }
-};
+bool shouldDraw() const override;      // me and everything under me
+bool shouldStep(float dt) const override;
 ```
 
-Answer no and **neither the object nor its children** are visited. A node
-standing for a region of the world therefore costs one test instead of
-one per item inside it.
+Answer no and **neither the object nor its children** are visited. That
+is the whole of it: an object that owns a part of the world -- a district,
+a room, a level -- answers once for everything inside it, instead of each
+of those things answering for itself.
+
+There is no class in the engine for that owner, and none is needed:
+whatever you already use for it overrides the two methods.
 
 They are questions and not flags on purpose. A flag has to be put back,
 and a flag left false is a piece of the world that has disappeared with
