@@ -255,6 +255,12 @@ apply. Every instance wears the same ones -- an instance carries a
 position, a rotation about Y and a scale, and nothing else -- so a
 variation that has to differ between instances is a group of its own.
 
+**An instance is placed within its item**, not in the world: the item's
+own transform applies on top, so an instanced item can hang off a parent
+and move with it, and the instance positions can be written relative to
+whatever owns them. Each instance is frustum-tested where it actually
+stands, through that transform.
+
 One mesh drawn many times in a **single** draw call: the base `OkItem` holds
 the shared mesh (uploaded once), and this subclass adds a per-instance
 buffer of world transforms (position, uniform scale, Y rotation) wired
