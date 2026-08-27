@@ -249,6 +249,12 @@ atlas) simply keeps its reference and does nothing extra.
 
 ## OkInstancedItem
 
+An instanced item is an `OkItem`, and it draws with the same material
+state: the texture, the mask flag and the three material tints all
+apply. Every instance wears the same ones -- an instance carries a
+position, a rotation about Y and a scale, and nothing else -- so a
+variation that has to differ between instances is a group of its own.
+
 One mesh drawn many times in a **single** draw call: the base `OkItem` holds
 the shared mesh (uploaded once), and this subclass adds a per-instance
 buffer of world transforms (position, uniform scale, Y rotation) wired

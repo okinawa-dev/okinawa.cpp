@@ -531,6 +531,28 @@ void OkItem::updateTransformSelf() {
  * @brief Draw the item and its children.
  * @note  This method handles the rendering of the item and its children.
  */
+void OkItem::applyMaterialUniforms(unsigned int program) const {
+  GLint maskLoc = glGetUniformLocation(program, "maskedMaterials");
+  if (maskLoc != -1) {
+    glUniform1f(maskLoc, maskedMaterials ? 1.0f : 0.0f);
+  }
+  if (!maskedMaterials) {
+    return;
+  }
+  const std::array<const char *, MAT_SLOTS> names = {"matTintA", "matTintB",
+                                                     "matTintC"};
+  for (int i = 0; i < MAT_SLOTS; i++) {
+    GLint loc = glGetUniformLocation(program, names[static_cast<size_t>(i)]);
+    if (loc != -1) {
+      glUniform4f(loc, matTint[i][0], matTint[i][1], matTint[i][2], 1.0f);
+    }
+  }
+  GLint lumaLoc = glGetUniformLocation(program, "matLuminance");
+  if (lumaLoc != -1) {
+    glUniform3f(lumaLoc, matLuma[0], matLuma[1], matLuma[2]);
+  }
+}
+
 void OkItem::drawSelf() {
   if (!this->visible) {
     // If the item is not visible, skip rendering
@@ -684,10 +706,6 @@ void OkItem::drawSelf() {
       glUniform4f(tintLoc, tintColor[0], tintColor[1], tintColor[2],
                   tintColor[3]);
     }
-    GLint maskLoc = glGetUniformLocation(current_program, "maskedMaterials");
-    if (maskLoc != -1) {
-      glUniform1f(maskLoc, maskedMaterials ? 1.0f : 0.0f);
-    }
     // Uniform locations are fixed for the life of a program, so they are
     // looked up once per program rather than once per draw: with a few
     // thousand objects on screen, a name lookup per object per frame is
@@ -708,20 +726,7 @@ void OkItem::drawSelf() {
         glUniform1f(cachedInvert, fadeInverted ? 1.0f : 0.0f);
       }
     }
-    if (maskedMaterials) {
-      const std::array<const char *, MAT_SLOTS> names = {"matTintA", "matTintB",
-                                                         "matTintC"};
-      for (int i = 0; i < 3; i++) {
-        GLint loc = glGetUniformLocation(current_program, names[i]);
-        if (loc != -1) {
-          glUniform4f(loc, matTint[i][0], matTint[i][1], matTint[i][2], 1.0f);
-        }
-      }
-      GLint lumaLoc = glGetUniformLocation(current_program, "matLuminance");
-      if (lumaLoc != -1) {
-        glUniform3f(lumaLoc, matLuma[0], matLuma[1], matLuma[2]);
-      }
-    }
+    applyMaterialUniforms(static_cast<unsigned int>(current_program));
     GLint texLoc     = glGetUniformLocation(current_program, "texture0");
     GLint colorLoc   = glGetUniformLocation(current_program, "wireframeColor");
     bool  texturesOn = OkConfig::getBool("graphics.textures");

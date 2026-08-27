@@ -387,6 +387,19 @@ public:
 
   // Update and render
   void stepSelf(float dt) override;
+  /**
+   * @brief Send this item's material state to the program in use.
+   *
+   * The mask flag and the three material tints. Shared because an
+   * instanced draw needs exactly the same thing an ordinary one does,
+   * and for a while it did not send them at all: whatever the last
+   * item drawn had left in those uniforms is what the instances came
+   * out wearing. It looked almost right, which is the worst way for it
+   * to be wrong -- the glass of a hundred thousand windows took its
+   * colour from whichever building happened to be drawn before them.
+   */
+  void applyMaterialUniforms(unsigned int program) const;
+
   void drawSelf() override;
 };
 

@@ -179,6 +179,12 @@ void OkInstancedItem::drawSelf() {
       OkConfig::getBool("graphics.textures") && texture && texture->isLoaded();
   GLint hasTexLoc = glGetUniformLocation(currentProgram, "hasTexture");
   GLint tintLoc   = glGetUniformLocation(currentProgram, "tintColor");
+  // The mask and the material tints, the same ones an ordinary draw
+  // sends. Without them the instances came out wearing whatever the
+  // last item drawn had left in those uniforms -- which looked almost
+  // right, and made a hundred thousand windows take their glass colour
+  // from whichever building happened to be drawn before them.
+  applyMaterialUniforms(static_cast<unsigned int>(currentProgram));
   if (tintLoc != -1) {
     glUniform4f(tintLoc, tintColor[0], tintColor[1], tintColor[2],
                 tintColor[3]);
