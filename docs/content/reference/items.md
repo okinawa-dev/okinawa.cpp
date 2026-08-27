@@ -272,8 +272,9 @@ Instances are addressable, not anonymous triangles — each one can be
 moved, hidden or removed at runtime, and the buffer is recomposed
 cheaply. The mesh is authored around its own origin
 and each instance places a copy of it. Instances are frustum-culled
-individually (the mesh bounding sphere at each instance position), so
-only what is on screen is uploaded and drawn.
+individually -- the mesh bounding sphere at each instance position, taken
+through the item's transform, so an instance is tested where it actually
+stands -- and only what is on screen is uploaded and drawn.
 
 The logical side of an object — state, collision, its light — belongs to
 the game, never to this class: collision never comes from render

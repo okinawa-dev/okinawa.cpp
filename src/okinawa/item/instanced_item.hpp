@@ -8,10 +8,18 @@
  * @brief One mesh drawn many times in a single draw call.
  *
  *        The base OkItem holds the shared mesh (uploaded once); this
- *        class adds a per-instance buffer of world transforms, so a
- *        thousand copies cost one draw call instead of a thousand
- *        items, which is what makes large numbers of repeated objects
- *        affordable.
+ *        class adds a per-instance buffer of transforms, so a thousand
+ *        copies cost one draw call instead of a thousand items, which
+ *        is what makes large numbers of repeated objects affordable.
+ *
+ *        An instance is placed WITHIN the item, and the item's own
+ *        transform applies on top -- so an instanced item hangs off a
+ *        parent and moves with it like anything else, and its instances
+ *        can be written in whatever frame owns them. It used to pass
+ *        the identity as its model matrix, which pinned every instance
+ *        to the origin of the world: correct while the only caller
+ *        passed world positions, and the one thing in the engine that
+ *        could not be given a parent.
  *
  *        Instances are ADDRESSABLE, not anonymous triangles: each one
  *        can be moved, hidden or removed at runtime, and the buffer is
@@ -37,8 +45,9 @@ public:
                   int vertexStride = DEFAULT_VERTEX_STRIDE);
   ~OkInstancedItem() override;
 
-  // Add an instance at a world position with a Y rotation (radians) and
-  // a uniform scale; returns its index.
+  // Add an instance at a position WITHIN this item, with a Y rotation
+  // (radians) and a uniform scale; returns its index. With the item at
+  // the origin and no parent, that position is a world one.
   int addInstance(float x, float y, float z, float yaw = 0.0f,
                   float scale = 1.0f);
   // Move an existing instance.
