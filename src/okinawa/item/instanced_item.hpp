@@ -45,6 +45,19 @@ public:
                   int vertexStride = DEFAULT_VERTEX_STRIDE);
   ~OkInstancedItem() override;
 
+  /**
+   * @brief The sphere covering every instance, not just the mesh.
+   *
+   * What a parent has to be told: an instanced item stands wherever its
+   * instances stand, which can be a whole district.
+   */
+  float getRadius() const override {
+    return _instanceRadius > 0.0f ? _instanceRadius : radius;
+  }
+  const std::array<float, RGB> &getSphereCenter() const override {
+    return _instanceCentre;
+  }
+
   // Add an instance at a position WITHIN this item, with a Y rotation
   // (radians) and a uniform scale; returns its index. With the item at
   // the origin and no parent, that position is a world one.
@@ -80,9 +93,16 @@ private:
   void ensureInstanceBuffer();
 
   std::vector<Instance> _instances;
-  std::vector<float>    _uploadScratch;  // visible instances, 8 floats each
-  GLuint                _instanceVbo;
-  int                   _drawnCount;
+  // The sphere the instances cover, grown as they arrive: a parent asks
+  // how far this item reaches and the mesh alone cannot answer.
+  std::array<float, RGB> _instanceCentre;
+  float                  _instanceRadius;
+
+  /** @brief Widen the instance sphere to take one more instance in. */
+  void               growInstanceBounds(const Instance &inst);
+  std::vector<float> _uploadScratch;  // visible instances, 8 floats each
+  GLuint             _instanceVbo;
+  int                _drawnCount;
 };
 
 #endif

@@ -180,7 +180,17 @@ public:
   OkItem &operator=(const OkItem &) = delete;
 
   // Geometry
-  float getRadius() const {
+  /**
+   * @brief The bounding sphere of what this item actually draws.
+   *
+   * Virtual because an item that draws its mesh MANY times covers far
+   * more ground than the mesh does, and anything measuring how far an
+   * item reaches -- a parent working out whether its subtree is worth
+   * drawing -- has to be told the truth. Asked of the mesh alone, a
+   * district holding thousands of windows reported the size of one
+   * window and was skipped whenever that one window fell out of view.
+   */
+  virtual float getRadius() const {
     return radius;
   }
   /**
@@ -193,7 +203,7 @@ public:
    * really is -- a parent working out how far its children reach --
    * needs the centre and not the origin.
    */
-  const std::array<float, RGB> &getSphereCenter() const {
+  virtual const std::array<float, RGB> &getSphereCenter() const {
     return sphereCenter;
   }
   // How many indices the mesh has, which is three per triangle. Reported

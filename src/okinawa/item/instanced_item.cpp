@@ -20,8 +20,10 @@ OkInstancedItem::OkInstancedItem(const std::string &name, float *vertexData,
                                  long indexCount, int vertexStride)
     : OkItem(name, vertexData, vertexCount, indexData, indexCount,
              vertexStride) {
-  _instanceVbo = 0;
-  _drawnCount  = 0;
+  _instanceVbo    = 0;
+  _drawnCount     = 0;
+  _instanceCentre = {0.0f, 0.0f, 0.0f};
+  _instanceRadius = 0.0f;
 }
 
 OkInstancedItem::~OkInstancedItem() {
@@ -29,6 +31,37 @@ OkInstancedItem::~OkInstancedItem() {
     glDeleteBuffers(1, &_instanceVbo);
     _instanceVbo = 0;
   }
+}
+
+void OkInstancedItem::growInstanceBounds(const Instance &inst) {
+  // The mesh's own sphere, standing where this instance stands.
+  float cx  = inst.x + sphereCenter[0] * inst.scale;
+  float cy  = inst.y + sphereCenter[1] * inst.scale;
+  float cz  = inst.z + sphereCenter[2] * inst.scale;
+  float rad = radius * inst.scale;
+  if (_instanceRadius <= 0.0f) {
+    _instanceCentre = {cx, cy, cz};
+    _instanceRadius = rad;
+    return;
+  }
+  float dx   = cx - _instanceCentre[0];
+  float dy   = cy - _instanceCentre[1];
+  float dz   = cz - _instanceCentre[2];
+  float away = std::sqrt(dx * dx + dy * dy + dz * dz);
+  if (away + rad <= _instanceRadius) {
+    return;
+  }
+  if (away + _instanceRadius <= rad) {
+    _instanceCentre = {cx, cy, cz};
+    _instanceRadius = rad;
+    return;
+  }
+  float grown = (away + _instanceRadius + rad) * 0.5f;
+  float shift = (grown - _instanceRadius) / (away > 1e-6f ? away : 1.0f);
+  _instanceCentre[0] += dx * shift;
+  _instanceCentre[1] += dy * shift;
+  _instanceCentre[2] += dz * shift;
+  _instanceRadius = grown;
 }
 
 int OkInstancedItem::addInstance(float x, float y, float z, float yaw,
@@ -41,6 +74,7 @@ int OkInstancedItem::addInstance(float x, float y, float z, float yaw,
   inst.scale   = scale;
   inst.visible = true;
   _instances.push_back(inst);
+  growInstanceBounds(inst);
   return static_cast<int>(_instances.size()) - 1;
 }
 
