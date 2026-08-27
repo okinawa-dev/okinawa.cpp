@@ -1,4 +1,5 @@
 #include "instanced_item.hpp"
+
 #include "../config/config.hpp"
 #include "../lighting/lighting.hpp"
 #include "../math/frustum.hpp"
@@ -6,6 +7,7 @@
 #include "texture.hpp"
 #include <cmath>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/vec4.hpp>
 
 // Per-instance attribute layout, starting after the mesh attributes
 // (0 position, 1 uv, 2 normal): 3 = position+scale, 4 = orientation.
@@ -114,6 +116,14 @@ void OkInstancedItem::drawSelf() {
   }
 
   // Collect the visible, on-screen instances.
+  //
+  // An instance's position is measured INSIDE this item, so the test
+  // has to be made where the instance actually stands: through the
+  // item's own transform. Testing the raw numbers means testing a point
+  // near the origin of the world, and every instance of a set that hangs
+  // off something -- a district, a room -- is culled at once. The city
+  // lost every one of its windows to exactly that.
+  glm::mat4        model   = getTransformMatrix();
   const OkFrustum *frustum = OkFrustum::getActive();
   _uploadScratch.clear();
   _uploadScratch.reserve(_instances.size() * OK_INST_FLOATS);
@@ -123,9 +133,13 @@ void OkInstancedItem::drawSelf() {
       continue;
     }
     if (frustum != nullptr) {
-      float cx = inst.x + sphereCenter[0] * inst.scale;
-      float cy = inst.y + sphereCenter[1] * inst.scale;
-      float cz = inst.z + sphereCenter[2] * inst.scale;
+      glm::vec4 centre =
+          model * glm::vec4(inst.x + sphereCenter[0] * inst.scale,
+                            inst.y + sphereCenter[1] * inst.scale,
+                            inst.z + sphereCenter[2] * inst.scale, 1.0f);
+      float cx = centre.x;
+      float cy = centre.y;
+      float cz = centre.z;
       if (OkFrustum::isBeyondDrawDistance(cx, cy, cz, radius * inst.scale) ||
           !frustum->containsSphere(cx, cy, cz, radius * inst.scale)) {
         OkFrustum::addCulled();
@@ -153,12 +167,13 @@ void OkInstancedItem::drawSelf() {
                _uploadScratch.data(), GL_DYNAMIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  // The instance transform replaces the model matrix: pass identity and
-  // turn the shader's instancing path on.
-  glm::mat4 identity = glm::mat4(1.0f);
-  GLint     modelLoc = glGetUniformLocation(currentProgram, "model");
+  // Where this ITEM stands: the instances are placed within it, so an
+  // instanced item hangs off a parent and moves with it like anything
+  // else. It used to pass the identity, which pinned every instance to
+  // the origin of the world and made a parent above it mean nothing.
+  GLint modelLoc = glGetUniformLocation(currentProgram, "model");
   if (modelLoc != -1) {
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(identity));
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
   }
   GLint instLoc = glGetUniformLocation(currentProgram, "instanced");
   if (instLoc != -1) {

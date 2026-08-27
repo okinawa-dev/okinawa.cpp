@@ -56,14 +56,20 @@ void main() {
                     -aNormal.x * s + aNormal.z * c);
   }
 
-  vec4 worldPos4 = instanced ? vec4(localPos, 1.0) : model * vec4(aPos, 1.0);
+  // The model matrix applies either way. An instance carries where it
+  // stands WITHIN its item, and the item carries where it stands in the
+  // world -- which is what lets a set of instances hang off something
+  // that moves, and what lets their positions be written relative to it
+  // rather than in world coordinates. Skipping it for instanced draws
+  // pinned every instance to the origin of the world and made a parent
+  // above them mean nothing.
+  vec4 worldPos4 = model * vec4(localPos, 1.0);
   vec4 viewPos   = view * worldPos4;
   gl_Position    = projection * viewPos;
   TexCoord       = aTexCoord;
   FogDist        = length(viewPos.xyz);
 
-  vec3  worldN  = instanced ? normalize(localN)
-                            : normalize(mat3(model) * aNormal);
+  vec3  worldN  = normalize(mat3(model) * localN);
   float diffuse = max(dot(worldN, -sunDirection), 0.0);
   // 0.6 keeps full sun-facing surfaces just over 1.0 (slight burnout,
   // the deliberately-poor-materials look) instead of washing them out.
