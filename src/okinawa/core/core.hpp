@@ -193,10 +193,6 @@ public:
   // a negative number for a block with no deadline.
   static double userInputBlockedFor();
 
-  // How long escape has been held, for the notice that says holding it
-  // is what gives the keyboard back. 0 while it is up.
-  static double userInputReleaseHeldFor();
-
 private:
   static bool initializeOpenGL(int width, int height);
   static bool initializeShaders();

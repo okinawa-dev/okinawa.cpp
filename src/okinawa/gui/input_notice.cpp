@@ -63,21 +63,11 @@ void OkInputNotice::update() {
   // the point of showing it: the person can SEE the engine reading the
   // key, so a release that does not happen is told apart from a key
   // that never arrived.
-  double      held = OkCore::userInputReleaseHeldFor();
-  std::string say;
-  if (held > 0.0) {
-    double togo = OkInput::RELEASE_HOLD_SECONDS - held;
-    say = togo > 0.0 ? "releasing in " +
-                           std::to_string(static_cast<int>(std::ceil(togo))) +
-                           "s -- keep escape down"
-                     : "releasing";
-  } else {
-    say = "input held by an agent";
-    if (left > 0.0) {
-      say += ", " + std::to_string(static_cast<int>(std::ceil(left))) + "s";
-    }
-    say += " -- hold escape to take it back";
+  std::string say = "input held by an agent";
+  if (left > 0.0) {
+    say += ", " + std::to_string(static_cast<int>(std::ceil(left))) + "s";
   }
+  say += " -- ctrl+shift+esc frees it";
   line->setText(say);
   line->setGridPosition(NOTICE_MARGIN + line->getGridWidth() * 0.5f,
                         NOTICE_MARGIN + NOTICE_TEXT_CELLS * 0.5f);

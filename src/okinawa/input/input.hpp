@@ -100,8 +100,8 @@ public:
   // view under a measurement -- and the thing that goes wrong is the
   // agent forgetting to give it back, leaving a person with a window
   // that ignores them. So the block expires by itself, and the chord in
-  // holding escape lifts it whatever the agent asked for: nothing running
-  // in the background may lock somebody out of their own window.
+  // ctrl+shift+escape lifts it whatever the agent asked for: nothing
+  // running in the background may lock somebody out of their own window.
   //
   // @param seconds how long to hold it, clamped to
   //        [BLOCK_MIN_SECONDS, BLOCK_MAX_SECONDS]. Zero or less blocks
@@ -127,10 +127,43 @@ public:
   // out so it can be tested without a window.
   static double clampBlockSeconds(double seconds);
 
-  // How long escape has been held down (0 when it is up). Holding it for
-  // RELEASE_HOLD_SECONDS lifts any input block: see releaseHeldFor.
-  double              releaseHeldFor() const;
-  static const double RELEASE_HOLD_SECONDS;
+  // CHORDS: several keys held at once, as one gesture.
+  //
+  // The modifiers, as bits, and what is held right now. Read from the
+  // PHYSICAL state, so a chord can be recognised even while the game is
+  // being kept from seeing input at all -- which is the case the engine
+  // itself needs, to give the keyboard back.
+  static const int OK_MOD_SHIFT = 1;
+  static const int OK_MOD_CTRL  = 2;
+  static const int OK_MOD_ALT   = 4;
+  static const int OK_MOD_SUPER = 8;
+
+  int heldModifiers() const;
+
+  // Did `key` go down THIS frame with exactly `mods` held?
+  //
+  // Exactly, not at least: ctrl+shift+escape must not fire on
+  // ctrl+alt+shift+escape, or a chord would swallow every gesture that
+  // contains it.
+  bool isChordJustPressed(int mods, OkKey key) const;
+
+  // Hide a key from the game until it is physically let go.
+  //
+  // This is what makes a chord usable rather than merely detectable. A
+  // chord's keys mean something on their own -- escape quits most
+  // applications -- so whoever acts on the chord has to take those keys
+  // out of the frame, and keep them out until the gesture is over.
+  // Without it, ctrl+shift+escape lifts an input block and the escape
+  // still down closes the app a frame later, which is exactly what it
+  // did.
+  void consumeKeyUntilReleased(OkKey key);
+
+  // The two above, as pure functions over a key state, so the matching
+  // can be tested without a window.
+  static int  modifiersOf(const std::array<bool, OK_KEY_COUNT> &keys);
+  static bool chordJustPressed(const std::array<bool, OK_KEY_COUNT> &keys,
+                               const std::array<bool, OK_KEY_COUNT> &prev,
+                               int mods, OkKey key);
 
   // Text capture (the console). While captured, isKeyJustPressed/Held/
   // JustReleased and getState() report NOTHING to the game -- typing in
@@ -203,8 +236,17 @@ private:
   MouseCallback                  _mouseCallback;
   OkInputState                   _currentState;  // Current frame's input state
   OkInputState                   _prevState;     // Previous frame's input state
-  std::array<bool, OK_KEY_COUNT> _currentKeys;   // Current key states
-  std::array<bool, OK_KEY_COUNT> _prevKeys;      // Previous key states
+  std::array<bool, OK_KEY_COUNT> _currentKeys;   // What the game sees
+  std::array<bool, OK_KEY_COUNT> _prevKeys;      // ...and saw last frame
+  // The keyboard as the DEVICE reports it, whether or not the game is
+  // allowed to see it. Chords are matched on this: the engine has to be
+  // able to recognise the gesture that gives the keyboard back at the
+  // very moment the keyboard is being ignored.
+  std::array<bool, OK_KEY_COUNT> _physKeys;
+  std::array<bool, OK_KEY_COUNT> _prevPhysKeys;
+  // Keys taken out of the game's frame until they are let go: see
+  // consumeKeyUntilReleased.
+  std::array<bool, OK_KEY_COUNT> _consumed;
   // Per-key "injected until" timestamps (glfwGetTime seconds). A key counts as
   // pressed while glfwGetTime() < _injectedUntil[key].
   std::array<double, OK_KEY_COUNT> _injectedUntil;
@@ -213,8 +255,7 @@ private:
   // When a timed block ends, on the same clock as glfwGetTime(). Zero
   // means the block (if any) has no deadline.
   double _blockUntil = 0.0;
-  // When escape went down, on the same clock. Zero while it is up.
-  double _escDownSince = 0.0;
+
   // Pointer lock state: true while the cursor is captured for mouse-look.
   bool _cursorCaptured;
   // Whether a click may take the pointer at all (see the setter).

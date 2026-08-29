@@ -756,13 +756,6 @@ double OkCore::userInputBlockedFor() {
 }
 
 /**
- * @brief How long escape has been held down, in seconds; 0 while it is up.
- */
-double OkCore::userInputReleaseHeldFor() {
-  return _input != nullptr ? _input->releaseHeldFor() : 0.0;
-}
-
-/**
  * @brief Mouse callback function for handling mouse movement.
  *        This function updates the camera direction based on mouse movement.
  * @param window The GLFW window that received the event.

@@ -225,7 +225,7 @@ namespace {
       // No deadline: the launch flag, or a deliberate zero.
       r["blocked_for_seconds"] = nullptr;
     }
-    r["release"] = "hold escape";
+    r["release"] = "ctrl+shift+escape";
     return r;
   }
 
@@ -575,7 +575,7 @@ struct OkMcpServer::Impl {
         "cannot move the view under a measurement; `enabled: true` gives it "
         "straight back. A block EXPIRES on its own after `seconds` (default "
         "300, clamped to 1..3600), and the person can always lift it at the "
-        "window by holding escape -- an agent must never leave somebody "
+        "window with ctrl+shift+escape -- an agent must never leave somebody "
         "locked out of their own window. While blocked, the app says so on "
         "screen. Injected input (press_key, view) is unaffected either way.";
     input["inputSchema"] = {

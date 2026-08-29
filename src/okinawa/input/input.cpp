@@ -36,6 +36,9 @@ OkInput::OkInput(GLFWwindow *window, MouseCallback callback) {
   // Initialize key arrays
   _currentKeys.fill(false);
   _prevKeys.fill(false);
+  _physKeys.fill(false);
+  _prevPhysKeys.fill(false);
+  _consumed.fill(false);
   _injectedUntil.fill(0.0);
   _physicalEnabled    = true;
   _textCapture        = false;
@@ -55,41 +58,68 @@ OkInput::OkInput(GLFWwindow *window, MouseCallback callback) {
 /**
  * @brief Method to process current input events.
  */
-namespace {
-  // The chord that gives the keyboard back, whatever an agent asked for.
-  //
-  // Escape with both modifiers rather than Escape alone: plain Escape is
-  // what most applications quit on, and while input is blocked the
-  // application never sees it -- so a person pressing it to be let out
-  // would appear to be ignored twice over.
-  bool escapeHeld(GLFWwindow *window) {
-    return window != nullptr &&
-           glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
-  }
-}  // namespace
-
-const double OkInput::RELEASE_HOLD_SECONDS = 1.0;
 
 /**
- * @brief How long escape has been held down, in seconds.
- *
- * Read from GLFW and not through the gate: the gate is what it lifts.
- *
- * Holding one key rather than a chord of three. A chord has to be
- * described to be usable, and a person whose keyboard has just gone
- * dead is the last person able to look one up; holding the key every
- * application uses to get out of things is the thing they will try
- * anyway. A HOLD and not a tap, so it cannot be the same gesture as
- * the application's own quit.
- *
- * @return 0.0 when escape is up, otherwise how long it has been down.
+ * @brief Which modifiers a key state has held down.
+ * @return the OK_MOD_* bits, so a chord can ask for exactly a set.
  */
-double OkInput::releaseHeldFor() const {
-  if (_escDownSince <= 0.0) {
-    return 0.0;
+int OkInput::modifiersOf(const std::array<bool, OK_KEY_COUNT> &keys) {
+  int mods = 0;
+  if (keys[OK_KEY_LEFT_SHIFT] || keys[OK_KEY_RIGHT_SHIFT]) {
+    mods |= OK_MOD_SHIFT;
   }
-  double held = glfwGetTime() - _escDownSince;
-  return held > 0.0 ? held : 0.0;
+  if (keys[OK_KEY_LEFT_CONTROL] || keys[OK_KEY_RIGHT_CONTROL]) {
+    mods |= OK_MOD_CTRL;
+  }
+  if (keys[OK_KEY_LEFT_ALT] || keys[OK_KEY_RIGHT_ALT]) {
+    mods |= OK_MOD_ALT;
+  }
+  if (keys[OK_KEY_LEFT_SUPER] || keys[OK_KEY_RIGHT_SUPER]) {
+    mods |= OK_MOD_SUPER;
+  }
+  return mods;
+}
+
+/**
+ * @brief Did `key` go down this frame with exactly `mods` held?
+ *
+ * The EDGE is on the key and not on the modifiers, which is how a
+ * person performs a chord: the modifiers go down first and are already
+ * held when the key arrives.
+ */
+bool OkInput::chordJustPressed(const std::array<bool, OK_KEY_COUNT> &keys,
+                               const std::array<bool, OK_KEY_COUNT> &prev,
+                               int mods, OkKey key) {
+  if (key == OK_KEY_UNKNOWN || key < 0 || key >= OK_KEY_COUNT) {
+    return false;
+  }
+  if (!keys[key] || prev[key]) {
+    return false;
+  }
+  return modifiersOf(keys) == mods;
+}
+
+/**
+ * @brief The modifiers held on the physical keyboard right now.
+ */
+int OkInput::heldModifiers() const {
+  return modifiersOf(_physKeys);
+}
+
+/**
+ * @brief Did this chord just happen on the physical keyboard?
+ */
+bool OkInput::isChordJustPressed(int mods, OkKey key) const {
+  return chordJustPressed(_physKeys, _prevPhysKeys, mods, key);
+}
+
+/**
+ * @brief Hide a key from the game until it is physically released.
+ */
+void OkInput::consumeKeyUntilReleased(OkKey key) {
+  if (key != OK_KEY_UNKNOWN && key >= 0 && key < OK_KEY_COUNT) {
+    _consumed[key] = true;
+  }
 }
 
 void OkInput::process() {
@@ -107,32 +137,46 @@ void OkInput::process() {
   // block ends on its own, and the release chord ends any block at all --
   // an agent that blocks input and then dies must not leave a window
   // that ignores its owner.
-  if (escapeHeld(_window)) {
-    if (_escDownSince <= 0.0) {
-      _escDownSince = glfwGetTime();
-    }
-  } else {
-    _escDownSince = 0.0;
+  // The DEVICE first, whether or not the game may see it.
+  //
+  // Reading it always is what lets the engine recognise a chord while
+  // input is blocked -- and the gesture that gives the keyboard back is
+  // needed exactly then. The gate below decides who sees what; it is no
+  // longer the thing that decides what is read.
+  double now    = glfwGetTime();
+  _prevPhysKeys = _physKeys;
+  for (int i = 0; i < OK_KEY_COUNT; i++) {
+    int glfwKey  = OkKeys::okKeyToGLFW(static_cast<OkKey>(i));
+    _physKeys[i] = glfwKey != GLFW_KEY_UNKNOWN &&
+                   glfwGetKey(_window, glfwKey) == GLFW_PRESS;
   }
+
   if (!_physicalEnabled) {
-    if (_blockUntil > 0.0 && glfwGetTime() >= _blockUntil) {
+    if (_blockUntil > 0.0 && now >= _blockUntil) {
       setPhysicalInputEnabled(true);
-    } else if (releaseHeldFor() >= RELEASE_HOLD_SECONDS) {
+    } else if (isChordJustPressed(OK_MOD_CTRL | OK_MOD_SHIFT, OK_KEY_ESCAPE)) {
       setPhysicalInputEnabled(true);
+      // ...and the escape of the chord belongs to the chord. Left in
+      // the frame, the application reads it a moment later and quits,
+      // which is what happened the first time this gesture worked.
+      consumeKeyUntilReleased(OK_KEY_ESCAPE);
     }
   }
 
-  // Update current key states - convert from GLFW to OkKeys, OR-ing in any
-  // synthetic (injected) key that is still within its hold window so it
-  // behaves exactly like a physically held key.
-  double now = glfwGetTime();
+  // A consumed key is let go of only when the DEVICE lets go of it.
   for (int i = 0; i < OK_KEY_COUNT; i++) {
-    OkKey okKey     = static_cast<OkKey>(i);
-    int   glfwKey   = OkKeys::okKeyToGLFW(okKey);
-    bool  physical  = _physicalEnabled && glfwKey != GLFW_KEY_UNKNOWN &&
-                      glfwGetKey(_window, glfwKey) == GLFW_PRESS;
-    bool  injected  = now < _injectedUntil[i];
-    _currentKeys[i] = physical || injected;
+    if (_consumed[i] && !_physKeys[i]) {
+      _consumed[i] = false;
+    }
+  }
+
+  // What the game sees: the device when it is allowed to, plus any
+  // synthetic (injected) key still within its hold window, minus
+  // whatever a chord has taken for itself.
+  for (int i = 0; i < OK_KEY_COUNT; i++) {
+    bool physical   = _physicalEnabled && _physKeys[i];
+    bool injected   = now < _injectedUntil[i];
+    _currentKeys[i] = (physical || injected) && !_consumed[i];
   }
 
   // Update movement state (continuous press) - using OkKeys directly
