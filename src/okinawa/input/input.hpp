@@ -93,6 +93,43 @@ public:
     return _physicalEnabled;
   }
 
+  // Block physical input for a while, and give it back on its own.
+  //
+  // Same gate as setPhysicalInputEnabled, with a deadline on it. An agent
+  // driving the app blocks the keyboard so a stray key cannot move the
+  // view under a measurement -- and the thing that goes wrong is the
+  // agent forgetting to give it back, leaving a person with a window
+  // that ignores them. So the block expires by itself, and the chord in
+  // RELEASE_CHORD lifts it whatever the agent asked for: nothing running
+  // in the background may lock somebody out of their own window.
+  //
+  // @param seconds how long to hold it, clamped to
+  //        [BLOCK_MIN_SECONDS, BLOCK_MAX_SECONDS]. Zero or less blocks
+  //        with no deadline, which is what the launch flag does.
+  void blockPhysicalInput(double seconds);
+
+  // Seconds until physical input comes back: 0 when it is not blocked,
+  // and BLOCK_FOREVER when the block has no deadline.
+  double physicalInputBlockedFor() const;
+
+  // The shortest and longest a timed block may last, and the value
+  // physicalInputBlockedFor() reports for one that never expires.
+  static const double BLOCK_MIN_SECONDS;
+  static const double BLOCK_MAX_SECONDS;
+  static const double BLOCK_FOREVER;
+
+  // How long a block lasts when the caller does not say. Long enough to
+  // walk a viewpoint and capture it, short enough that a forgotten block
+  // is an annoyance and not a lockout.
+  static const double BLOCK_DEFAULT_SECONDS;
+
+  // What a block would last for, given what was asked: the clamp, split
+  // out so it can be tested without a window.
+  static double clampBlockSeconds(double seconds);
+
+  // Is the release chord (ctrl + shift + escape) held right now?
+  bool releaseChordHeld() const;
+
   // Text capture (the console). While captured, isKeyJustPressed/Held/
   // JustReleased and getState() report NOTHING to the game -- typing in
   // the console cannot trigger gameplay keys. The console itself reads
@@ -171,6 +208,9 @@ private:
   std::array<double, OK_KEY_COUNT> _injectedUntil;
   // When false, physical keyboard/mouse input is ignored (MCP-only control).
   bool _physicalEnabled;
+  // When a timed block ends, on the same clock as glfwGetTime(). Zero
+  // means the block (if any) has no deadline.
+  double _blockUntil = 0.0;
   // Pointer lock state: true while the cursor is captured for mouse-look.
   bool _cursorCaptured;
   // Whether a click may take the pointer at all (see the setter).

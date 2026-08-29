@@ -181,6 +181,18 @@ public:
   // works. Call after initialize().
   static void setIgnoreUserInput(bool ignore);
 
+  // Ignore physical input for a while and then give it back on its own,
+  // so an agent can take the keyboard for a measurement without a
+  // relaunch -- and without being able to leave its owner locked out.
+  // The block also lifts on ctrl + shift + escape. See OkInput.
+  // @param seconds how long, clamped; zero or less blocks with no
+  //        deadline, which is what the launch flag does.
+  static void blockUserInput(double seconds);
+
+  // Seconds until physical input returns: 0 when it is not blocked, and
+  // a negative number for a block with no deadline.
+  static double userInputBlockedFor();
+
 private:
   static bool initializeOpenGL(int width, int height);
   static bool initializeShaders();

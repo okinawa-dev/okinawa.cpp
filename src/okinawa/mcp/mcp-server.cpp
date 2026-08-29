@@ -213,6 +213,22 @@ namespace {
     return p;
   }
 
+  // Whether the person at the window can drive the app, and for how much
+  // longer it is being ignored. Loop thread.
+  json inputStateJson() {
+    double left = OkCore::userInputBlockedFor();
+    json   r;
+    r["user_input_enabled"] = left == 0.0;
+    if (left > 0.0) {
+      r["blocked_for_seconds"] = left;
+    } else if (left < 0.0) {
+      // No deadline: the launch flag, or a deliberate zero.
+      r["blocked_for_seconds"] = nullptr;
+    }
+    r["release_chord"] = "ctrl+shift+escape";
+    return r;
+  }
+
   // The six numbers the `view` tool takes and reproduces: the avatar position
   // (x,y,z) and the orbit camera angle (yaw_deg, pitch_deg, distance). Pass
   // this object straight back to `view` to restore the exact viewpoint. Loop
@@ -549,6 +565,33 @@ struct OkMcpServer::Impl {
                            {"properties", json::object()},
                            {"additionalProperties", false}};
     tools.push_back(quit);
+
+    json input;
+    input["name"] = "input";
+    input["description"] =
+        "Read or set whether the PERSON at the window can drive the app with "
+        "their own keyboard and mouse. With no arguments it reports. "
+        "`enabled: false` hands control to this agent alone, so a stray key "
+        "cannot move the view under a measurement; `enabled: true` gives it "
+        "straight back. A block EXPIRES on its own after `seconds` (default "
+        "300, clamped to 1..3600), and the person can always lift it at the "
+        "window with ctrl+shift+escape -- an agent must never leave somebody "
+        "locked out of their own window. While blocked, the app says so on "
+        "screen. Injected input (press_key, view) is unaffected either way.";
+    input["inputSchema"] = {
+        {"type", "object"},
+        {"properties",
+         {{"enabled",
+           {{"type", "boolean"},
+            {"description",
+             "false to take the keyboard, true to give it back"}}},
+          {"seconds",
+           {{"type", "number"},
+            {"description",
+             "how long a block lasts before it lifts itself; 0 means no "
+             "deadline, which only the launch flag should want"}}}}},
+        {"additionalProperties", false}};
+    tools.push_back(input);
 
     json getState;
     getState["name"] = "get_state";
@@ -953,6 +996,26 @@ struct OkMcpServer::Impl {
       return textResult(out.dump(2));
     }
 
+    if (name == "input") {
+      bool hasEnabled =
+          args.contains("enabled") && args["enabled"].is_boolean();
+      bool enabled    = hasEnabled && args["enabled"].get<bool>();
+      bool hasSeconds = args.contains("seconds") && args["seconds"].is_number();
+      double seconds  = hasSeconds ? args["seconds"].get<double>()
+                                   : OkInput::BLOCK_DEFAULT_SECONDS;
+      json   out      = runOnLoop([hasEnabled, enabled, seconds]() -> json {
+        if (hasEnabled) {
+          if (enabled) {
+            OkCore::setIgnoreUserInput(false);
+          } else {
+            OkCore::blockUserInput(seconds);
+          }
+        }
+        return inputStateJson();
+      });
+      return textResult(out.dump(2));
+    }
+
     if (name == "get_state") {
       double measuredFps = fps;
       json   state       = runOnLoop([measuredFps]() -> json {
@@ -979,6 +1042,9 @@ struct OkMcpServer::Impl {
         OkScene        *scene = handler ? handler->getCurrentScene() : nullptr;
         s["scene"] = {{"object_count", scene ? scene->getObjectCount() : 0},
                       {"frustum_culled", OkFrustum::getCulledCount()}};
+        // Whether the person at the window can drive: an agent about to
+        // say it has handed the app back can read it here first.
+        s["input"] = inputStateJson();
         return s;
       });
       state["memory"]    = {{"resident_mb", residentMb()}};

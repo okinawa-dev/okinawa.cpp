@@ -55,6 +55,34 @@ OkInput::OkInput(GLFWwindow *window, MouseCallback callback) {
 /**
  * @brief Method to process current input events.
  */
+namespace {
+  // The chord that gives the keyboard back, whatever an agent asked for.
+  //
+  // Escape with both modifiers rather than Escape alone: plain Escape is
+  // what most applications quit on, and while input is blocked the
+  // application never sees it -- so a person pressing it to be let out
+  // would appear to be ignored twice over.
+  bool chordHeld(GLFWwindow *window) {
+    if (window == nullptr) {
+      return false;
+    }
+    bool ctrl  = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
+                 glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS;
+    bool shift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+                 glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+    return ctrl && shift && glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
+  }
+}  // namespace
+
+/**
+ * @brief Is the chord that lifts an input block being held right now?
+ *
+ * Read from GLFW and not through the gate: the gate is what it lifts.
+ */
+bool OkInput::releaseChordHeld() const {
+  return chordHeld(_window);
+}
+
 void OkInput::process() {
   if (!_window)
     return;
@@ -62,6 +90,21 @@ void OkInput::process() {
   // Store previous key states
   _prevKeys  = _currentKeys;
   _prevState = _currentState;
+
+  // Before anything is polled: does the person get their keyboard back?
+  //
+  // Two ways, and both are read straight from GLFW rather than through
+  // the gate, because the gate is exactly what they are lifting. A timed
+  // block ends on its own, and the release chord ends any block at all --
+  // an agent that blocks input and then dies must not leave a window
+  // that ignores its owner.
+  if (!_physicalEnabled) {
+    if (_blockUntil > 0.0 && glfwGetTime() >= _blockUntil) {
+      setPhysicalInputEnabled(true);
+    } else if (releaseChordHeld()) {
+      setPhysicalInputEnabled(true);
+    }
+  }
 
   // Update current key states - convert from GLFW to OkKeys, OR-ing in any
   // synthetic (injected) key that is still within its hold window so it
@@ -245,11 +288,63 @@ void OkInput::injectKey(OkKey key, double durationSeconds) {
  */
 void OkInput::setPhysicalInputEnabled(bool enabled) {
   _physicalEnabled = enabled;
+  if (enabled) {
+    _blockUntil = 0.0;
+  }
   // Pointer lock is opt-in via a click; disabling physical input just makes
   // sure the cursor is released. It is never auto-captured here.
   if (!enabled) {
     setCursorCaptured(false);
   }
+}
+
+const double OkInput::BLOCK_MIN_SECONDS     = 1.0;
+const double OkInput::BLOCK_MAX_SECONDS     = 3600.0;
+const double OkInput::BLOCK_DEFAULT_SECONDS = 300.0;
+const double OkInput::BLOCK_FOREVER         = -1.0;
+
+/**
+ * @brief How long a block lasts, given what was asked for.
+ * @param seconds the request; zero or less means no deadline.
+ * @return the clamped duration, or 0.0 for a block that never expires.
+ */
+double OkInput::clampBlockSeconds(double seconds) {
+  if (seconds <= 0.0) {
+    return 0.0;
+  }
+  if (seconds < BLOCK_MIN_SECONDS) {
+    return BLOCK_MIN_SECONDS;
+  }
+  if (seconds > BLOCK_MAX_SECONDS) {
+    return BLOCK_MAX_SECONDS;
+  }
+  return seconds;
+}
+
+/**
+ * @brief Ignore physical input for a while, then give it back by itself.
+ * @param seconds how long, clamped; zero or less blocks with no deadline.
+ */
+void OkInput::blockPhysicalInput(double seconds) {
+  double hold = clampBlockSeconds(seconds);
+  setPhysicalInputEnabled(false);
+  _blockUntil = hold > 0.0 ? glfwGetTime() + hold : 0.0;
+}
+
+/**
+ * @brief Seconds until physical input returns.
+ * @return 0 when input is not blocked, BLOCK_FOREVER for a block with no
+ *         deadline, otherwise what is left of it.
+ */
+double OkInput::physicalInputBlockedFor() const {
+  if (_physicalEnabled) {
+    return 0.0;
+  }
+  if (_blockUntil <= 0.0) {
+    return BLOCK_FOREVER;
+  }
+  double left = _blockUntil - glfwGetTime();
+  return left > 0.0 ? left : 0.0;
 }
 
 void OkInput::setCursorCaptured(bool captured) {

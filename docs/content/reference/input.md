@@ -36,6 +36,22 @@ Mouse-look uses a **pointer-lock** model rather than holding the cursor captured
 - **Losing window focus** releases the cursor automatically (frees the OS pointer and, on macOS, restores system-wide mouse acceleration); the user clicks back into the view to resume mouse-look.
 - With physical input disabled (`setPhysicalInputEnabled(false)`, e.g. `--no-input`) the cursor is never captured; drive the view through the MCP `view` tool instead.
 
+### Blocking input for a while
+
+`blockPhysicalInput(seconds)` is the same gate with a deadline on it, for
+an agent that needs the view to hold still while it measures something.
+It exists in that shape because of what goes wrong: a block is invisible
+-- the keyboard just stops answering -- so one that is never lifted looks
+from a chair exactly like a hang.
+
+So a block **expires by itself**, `releaseChordHeld()` reads
+**ctrl + shift + escape** straight from the device before the gate that
+would have swallowed it, and the engine draws a line saying input is held
+and how to take it back. Nothing running in the background can talk its
+way past those. `physicalInputBlockedFor()` reports what is left: `0`
+when input is free, and a negative number for a block with no deadline
+(what the launch flag asks for).
+
 ### Applications that are pointed at rather than steered
 
 The model above is what a game wants. An application whose cursor is the

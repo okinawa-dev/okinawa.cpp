@@ -24,11 +24,42 @@ The server exposes these tools to a connected agent:
 | `config` | Reads or writes an engine config key at runtime — the same keys the console's `set`/`get` reach (`shadows.*`, `render.*`, `graphics.*`, plus any the application registers). With no `value` it reads; with one it writes, converting to the key's existing type. Pass `prefix` and no `key` to list every matching key with its current value. |
 | `get_performance` | Returns the frame-time **series**, not a single reading: `count`, `frame_ms` and `fps` each with min/max/mean/median, and a `hitching` flag (true when the mean sits well above the median, which is what occasional long frames look like in a summary). Also returns `draw_ms` (min/max/mean/median), the CPU time spent issuing the frame's draws, measured before the swap: where vsync is enforced by the platform, `frame_ms` is pinned to the refresh interval and cannot tell whether a change cost anything, and `draw_ms` is the number to compare. Pass `samples: true` for the raw per-frame milliseconds, oldest first. Samples are recorded whether or not the stats panel is visible. |
 | `quit` | Closes the application, the same way its window's close button does: the loop stops, the application's exit callback runs (see [`OkCore::setExitCallback`](/reference/core.html)) so it can save whatever it keeps between sessions, and the process ends. The reply is sent before the shutdown starts, and it is the last thing this server answers — a client that keeps the connection will see it drop. Reaches the same `askForExit()` as the console's own `quit` command, and is declared as a tool for the same reason `config` is: a tool appears in `tools/list`, so an agent finds it without having to know there is a console behind it. |
-| `get_state` | Returns numeric runtime state, including `view` (the active camera's name and values, ready to pass back to `view`), `cameras` (the registered camera names), the raw camera pose, fps, scene object count, window size and resident memory. |
+| `input` | Reads or sets whether the **person at the window** can drive with their own keyboard and mouse. With no arguments it reports. `enabled: false` takes the keyboard, so a stray key cannot move the view under a measurement; `enabled: true` gives it straight back. A block **expires on its own** after `seconds` (default 300, clamped to 1..3600) and can always be lifted at the window with **ctrl+shift+escape**; while it holds, the app says so on screen. Injected input (`press_key`, `view`) is unaffected either way. See below. |
+| `get_state` | Returns numeric runtime state, including `view` (the active camera's name and values, ready to pass back to `view`), `cameras` (the registered camera names), the raw camera pose, fps, scene object count, window size, resident memory, and `input` (whether the person at the window can drive, and for how much longer they cannot). |
 
 Key names accepted by `press_key`/`press_keys`: single letters and digits, `space`, `up`/`down`/`left`/`right`, `escape`, `enter`, `tab`, `backspace`, `grave` (or `backtick`), `period`, `minus`. `grave` toggles the engine console; while the console is open, injected printable keys feed its input line, so a command *can* be typed a key at a time (`grave`, then the letters with `space`/`period`, then `enter`).
 
 Do not drive the console that way. Each key is one MCP call with its own round trip, so a fifteen-character line costs sixteen of them and takes about as many seconds — long enough that an agent stops reaching for the commands it most needs while debugging. Use `console` instead: one call, one line, and the command's own output comes back as the result.
+
+## Taking the keyboard, and giving it back
+
+An agent measuring something needs the view to hold still, and a person
+at the same window will move it without meaning to. The launch flag
+`--no-input`-style gate (`OkCore::setIgnoreUserInput`) has always been
+able to stop that, but only at start-up: changing your mind meant
+relaunching, which throws away the viewpoint that was being measured.
+
+`input` is the same gate at runtime. `{"enabled": false}` takes the
+keyboard for the agent, `{"enabled": true}` hands it back, and both
+report the resulting state.
+
+The part worth understanding is what happens when the agent does *not*
+hand it back — because that is the failure this is built around, not an
+edge case. A block is invisible by nature: the keyboard simply stops
+answering, which from a chair looks exactly like a hang. So:
+
+- **it expires.** `seconds` (default 300) is a deadline, not a hint. An
+  agent that crashes, loses its connection or simply forgets costs the
+  person a wait, never a lockout;
+- **the window always wins.** `ctrl` + `shift` + `escape` lifts any
+  block, read straight from the device before the gate that would have
+  swallowed it. Nothing running in the background can override that;
+- **it is on screen.** A line in the corner says the input is held, how
+  many seconds are left and which keys end it.
+
+`{"seconds": 0}` blocks with no deadline. It exists because the launch
+flag needs it; an agent asking for it is asking to be the thing the
+three rules above were written about.
 
 ## Measuring performance
 

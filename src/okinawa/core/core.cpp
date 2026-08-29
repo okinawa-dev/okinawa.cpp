@@ -3,6 +3,7 @@
 #include "../config/config.hpp"
 #include "../gui/console.hpp"
 #include "../gui/gui.hpp"
+#include "../gui/input_notice.hpp"
 #include "../gui/stats.hpp"
 #include "../input/input.hpp"
 #include "../lighting/light_clusters.hpp"
@@ -254,6 +255,7 @@ void OkCore::exit() {
 
   // Destroy the GUI internal items while the GL context is still alive
   OkConsole::shutdown();
+  OkInputNotice::shutdown();
   OkGui::shutdown();
   OkSkybox::shutdown();
   OkPostProcess::shutdown();
@@ -440,6 +442,8 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       // Console first: while open it captures the keyboard, so nothing
       // below (avatar, cameras, game callbacks) sees any key.
       OkConsole::update(dt);
+      // Whether the keyboard is being ignored, and how to take it back.
+      OkInputNotice::update();
 
       // Advance the day cycle and refresh the atmosphere values.
       OkLighting::update(dt);
@@ -730,6 +734,25 @@ void OkCore::setIgnoreUserInput(bool ignore) {
   if (_input != nullptr) {
     _input->setPhysicalInputEnabled(!ignore);
   }
+}
+
+/**
+ * @brief Ignore physical input for a while, then give it back by itself.
+ * @param seconds how long, clamped by OkInput; zero or less has no deadline.
+ */
+void OkCore::blockUserInput(double seconds) {
+  if (_input != nullptr) {
+    _input->blockPhysicalInput(seconds);
+  }
+}
+
+/**
+ * @brief Seconds until physical input returns.
+ * @return 0 when input is not blocked, negative when the block never
+ *         expires on its own, otherwise what is left of it.
+ */
+double OkCore::userInputBlockedFor() {
+  return _input != nullptr ? _input->physicalInputBlockedFor() : 0.0;
 }
 
 /**
