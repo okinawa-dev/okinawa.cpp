@@ -24,7 +24,7 @@ The server exposes these tools to a connected agent:
 | `config` | Reads or writes an engine config key at runtime — the same keys the console's `set`/`get` reach (`shadows.*`, `render.*`, `graphics.*`, plus any the application registers). With no `value` it reads; with one it writes, converting to the key's existing type. Pass `prefix` and no `key` to list every matching key with its current value. |
 | `get_performance` | Returns the frame-time **series**, not a single reading: `count`, `frame_ms` and `fps` each with min/max/mean/median, and a `hitching` flag (true when the mean sits well above the median, which is what occasional long frames look like in a summary). Also returns `draw_ms` (min/max/mean/median), the CPU time spent issuing the frame's draws, measured before the swap: where vsync is enforced by the platform, `frame_ms` is pinned to the refresh interval and cannot tell whether a change cost anything, and `draw_ms` is the number to compare. Pass `samples: true` for the raw per-frame milliseconds, oldest first. Samples are recorded whether or not the stats panel is visible. |
 | `quit` | Closes the application, the same way its window's close button does: the loop stops, the application's exit callback runs (see [`OkCore::setExitCallback`](/reference/core.html)) so it can save whatever it keeps between sessions, and the process ends. The reply is sent before the shutdown starts, and it is the last thing this server answers — a client that keeps the connection will see it drop. Reaches the same `askForExit()` as the console's own `quit` command, and is declared as a tool for the same reason `config` is: a tool appears in `tools/list`, so an agent finds it without having to know there is a console behind it. |
-| `input` | Reads or sets whether the **person at the window** can drive with their own keyboard and mouse. With no arguments it reports. `enabled: false` takes the keyboard, so a stray key cannot move the view under a measurement; `enabled: true` gives it straight back. A block **expires on its own** after `seconds` (default 300, clamped to 1..3600) and can always be lifted at the window with **ctrl+shift+escape**; while it holds, the app says so on screen. Injected input (`press_key`, `view`) is unaffected either way. See below. |
+| `input` | Reads or sets whether the **person at the window** can drive with their own keyboard and mouse. With no arguments it reports. `enabled: false` takes the keyboard, so a stray key cannot move the view under a measurement; `enabled: true` gives it straight back. A block **expires on its own** after `seconds` (default 300, clamped to 1..3600) and can always be lifted at the window with **ctrl+shift+k**; while it holds, the app says so on screen. Injected input (`press_key`, `view`) is unaffected either way. See below. |
 | `get_state` | Returns numeric runtime state, including `view` (the active camera's name and values, ready to pass back to `view`), `cameras` (the registered camera names), the raw camera pose, fps, scene object count, window size, resident memory, and `input` (whether the person at the window can drive, and for how much longer they cannot). |
 
 Key names accepted by `press_key`/`press_keys`: single letters and digits, `space`, `up`/`down`/`left`/`right`, `escape`, `enter`, `tab`, `backspace`, `grave` (or `backtick`), `period`, `minus`. `grave` toggles the engine console; while the console is open, injected printable keys feed its input line, so a command *can* be typed a key at a time (`grave`, then the letters with `space`/`period`, then `enter`).
@@ -51,12 +51,15 @@ answering, which from a chair looks exactly like a hang. So:
 - **it expires.** `seconds` (default 300) is a deadline, not a hint. An
   agent that crashes, loses its connection or simply forgets costs the
   person a wait, never a lockout;
-- **the window always wins.** `ctrl` + `shift` + `escape` lifts any
-  block, matched on the device itself rather than on what the
-  application is allowed to see. Nothing running in the background can
-  override that. The escape of that chord is then taken out of the frame
-  until it is let go, so the application never sees it -- a release that
-  hands control back by quitting the app is not a release;
+- **the window always wins.** `ctrl` + `shift` + `k` lifts any block,
+  matched on the device itself rather than on what the application is
+  allowed to see. Nothing running in the background can override that,
+  and the key of the chord is then taken out of the frame until it is
+  let go, so the application never sees it -- a release that hands
+  control back by quitting the app, or by walking the avatar off, is
+  not a release. (Not escape: **macOS does not deliver Escape to an
+  application while Control is held**, measured on the device with the
+  modifiers arriving and the Escape never doing so.);
 - **it is on screen.** A line in the corner says the input is held, how
   many seconds are left, and which keys end it.
 

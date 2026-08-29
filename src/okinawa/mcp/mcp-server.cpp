@@ -225,7 +225,43 @@ namespace {
       // No deadline: the launch flag, or a deliberate zero.
       r["blocked_for_seconds"] = nullptr;
     }
-    r["release"] = "ctrl+shift+escape";
+    r["release"] = OkInput::releaseChordName();
+    // What the DEVICE is saying right now, whether or not the
+    // application may see it. Here so that a chord that does not fire
+    // can be told apart from keys that never arrive: an agent cannot
+    // press them, so the only way to know is to ask.
+    OkInput *in = OkCore::getInput();
+    if (in != nullptr) {
+      int mods         = in->heldModifiers();
+      r["modifiers"]   = {{"shift", (mods & OkInput::OK_MOD_SHIFT) != 0},
+                          {"ctrl", (mods & OkInput::OK_MOD_CTRL) != 0},
+                          {"alt", (mods & OkInput::OK_MOD_ALT) != 0},
+                          {"super", (mods & OkInput::OK_MOD_SUPER) != 0}};
+      r["escape_down"] = in->isPhysicalKeyDown(OK_KEY_ESCAPE);
+      // Everything the device says is down, by name. A chord that does
+      // not fire is either a key the engine never sees or a match that
+      // is wrong, and this is what tells the two apart without anybody
+      // having to guess which key to ask about.
+      json down = json::array();
+      for (int k = 0; k < OK_KEY_COUNT; k++) {
+        if (in->isPhysicalKeyDown(static_cast<OkKey>(k))) {
+          down.push_back(OkKeys::getKeyName(static_cast<OkKey>(k)));
+        }
+      }
+      r["keys_down"] = down;
+      // ...and what has been pressed lately, so a chord can be checked
+      // after the fact instead of caught in the act.
+      json                                    recent = json::array();
+      const std::vector<OkInput::OkKeyPress> &hist   = in->recentPresses();
+      for (size_t i = 0; i < hist.size(); i++) {
+        json one;
+        one["key"]     = OkKeys::getKeyName(hist[i].key);
+        one["mods"]    = hist[i].mods;
+        one["ago_sec"] = glfwGetTime() - hist[i].when;
+        recent.push_back(one);
+      }
+      r["recent_presses"] = recent;
+    }
     return r;
   }
 
@@ -575,7 +611,8 @@ struct OkMcpServer::Impl {
         "cannot move the view under a measurement; `enabled: true` gives it "
         "straight back. A block EXPIRES on its own after `seconds` (default "
         "300, clamped to 1..3600), and the person can always lift it at the "
-        "window with ctrl+shift+escape -- an agent must never leave somebody "
+        "window with the chord the app shows on screen -- an agent must never "
+        "leave somebody "
         "locked out of their own window. While blocked, the app says so on "
         "screen. Injected input (press_key, view) is unaffected either way.";
     input["inputSchema"] = {

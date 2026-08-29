@@ -44,13 +44,54 @@ It exists in that shape because of what goes wrong: a block is invisible
 -- the keyboard just stops answering -- so one that is never lifted looks
 from a chair exactly like a hang.
 
-So a block **expires by itself**, `releaseHeldFor()` reads
-**escape** straight from the device before the gate that would have
-swallowed it, and a hold of `RELEASE_HOLD_SECONDS` lifts the block, and the engine draws a line saying input is held
+So a block **expires by itself**, the chord in `RELEASE_MODS` +
+`RELEASE_KEY` lifts it, and the engine draws a line saying input is held
 and how to take it back. Nothing running in the background can talk its
 way past those. `physicalInputBlockedFor()` reports what is left: `0`
 when input is free, and a negative number for a block with no deadline
 (what the launch flag asks for).
+
+### Chords, and why a chord has to take its keys
+
+`isChordJustPressed(mods, key)` is several keys as one gesture: the
+modifiers already held, the key going down this frame, and **exactly**
+those modifiers -- a chord that fired on "at least" would swallow every
+gesture that contains it.
+
+It reads the DEVICE and not what the application is allowed to see, so a
+chord still works while input is blocked. That is the case the engine
+itself needs: the gesture that gives the keyboard back is wanted
+precisely when the keyboard is being ignored.
+
+`RELEASE_MODS`, `RELEASE_KEY` and `releaseChordName()` hold that gesture
+in one place, so the line the engine draws and the chord that actually
+works cannot drift apart. It is **not** escape, which is what it used
+first: **macOS does not deliver Escape to an application while Control
+is held** -- measured on the device, with the modifiers arriving, the
+Escape never arriving, and `ctrl+shift+E` arriving in the same breath.
+
+**`consumeKeyUntilReleased(key)` is what makes a chord usable rather
+than merely detectable.** The keys of a chord mean something on their
+own, so whoever acts on one has to take them out of the frame and keep
+them out until the gesture is over. Without it the release worked
+exactly once: it lifted the block, and the escape still held closed the
+application a frame later. A letter is no safer by itself --
+`ctrl+shift+E` walks the avatar upwards, because `E` is a movement key
+and the modifiers mean nothing to it.
+
+### The press history
+
+`recentPresses()` keeps the last `PRESS_HISTORY` keys the DEVICE
+reported going down, each with the modifiers held at the time and when
+it happened. It answers the question that is normally asked afterwards
+-- did that key ever arrive? was the chord performed the way it was
+described? -- instead of needing somebody to catch the moment. The macOS
+fault above was found with it in one reading, after three rounds of
+guessing at it.
+
+It is also what a CONSECUTIVE combo would be matched on: one key after
+another inside a time window. That matcher does not exist yet; the
+record it needs does.
 
 ### Applications that are pointed at rather than steered
 

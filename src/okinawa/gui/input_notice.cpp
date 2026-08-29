@@ -67,7 +67,7 @@ void OkInputNotice::update() {
   if (left > 0.0) {
     say += ", " + std::to_string(static_cast<int>(std::ceil(left))) + "s";
   }
-  say += " -- ctrl+shift+esc frees it";
+  say += std::string(" -- ") + OkInput::releaseChordName() + " frees it";
   line->setText(say);
   line->setGridPosition(NOTICE_MARGIN + line->getGridWidth() * 0.5f,
                         NOTICE_MARGIN + NOTICE_TEXT_CELLS * 0.5f);

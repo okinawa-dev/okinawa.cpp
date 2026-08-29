@@ -5,6 +5,7 @@
 #include "keys.hpp"
 #include <array>
 #include <string>
+#include <vector>
 
 /**
  * @brief Input state structure to hold the current state of input.
@@ -100,7 +101,7 @@ public:
   // view under a measurement -- and the thing that goes wrong is the
   // agent forgetting to give it back, leaving a person with a window
   // that ignores them. So the block expires by itself, and the chord in
-  // ctrl+shift+escape lifts it whatever the agent asked for: nothing
+  // the release chord lifts it whatever the agent asked for: nothing
   // running in the background may lock somebody out of their own window.
   //
   // @param seconds how long to hold it, clamped to
@@ -139,6 +140,47 @@ public:
   static const int OK_MOD_SUPER = 8;
 
   int heldModifiers() const;
+
+  // THE CHORD THAT GIVES THE KEYBOARD BACK, and its name for whoever
+  // has to tell somebody about it. One place, so the notice on screen
+  // and the gesture that works cannot drift apart.
+  //
+  // Not escape: macOS does not deliver Escape to an application while
+  // Control is held -- measured, with the modifiers arriving and the
+  // Escape never doing so, while ctrl+shift+E arrived in the same
+  // breath. A letter with no meaning of its own is the safe choice, and
+  // the notice on screen is what makes it findable.
+  static const int   RELEASE_MODS;
+  static const OkKey RELEASE_KEY;
+  static const char *releaseChordName();
+
+  // Is this key down on the DEVICE, whatever the game is allowed to
+  // see? For chords, and for saying so when one does not fire.
+  bool isPhysicalKeyDown(OkKey key) const;
+
+  // THE PRESS HISTORY: the last keys that went down on the device, in
+  // order, with the modifiers that were held and when.
+  //
+  // A record and not a question, because the interesting question is
+  // usually asked afterwards: whether a key ever arrived, whether a
+  // chord was performed the way it was described, what somebody
+  // actually pressed. Asked live, the answer depends on catching the
+  // moment.
+  //
+  // It is also what a CONSECUTIVE combo is matched on -- one key after
+  // another inside a time window, the way `okinawa.js` did it -- which
+  // this engine does not have yet and which this makes possible.
+  struct OkKeyPress {
+    OkKey  key;
+    int    mods;  // OK_MOD_* held when it went down
+    double when;  // glfwGetTime seconds
+  };
+  static const int PRESS_HISTORY = 16;
+
+  // The presses, oldest first, at most PRESS_HISTORY of them.
+  const std::vector<OkKeyPress> &recentPresses() const {
+    return _presses;
+  }
 
   // Did `key` go down THIS frame with exactly `mods` held?
   //
@@ -247,6 +289,8 @@ private:
   // Keys taken out of the game's frame until they are let go: see
   // consumeKeyUntilReleased.
   std::array<bool, OK_KEY_COUNT> _consumed;
+  // The last keys the device reported going down: see recentPresses.
+  std::vector<OkKeyPress> _presses;
   // Per-key "injected until" timestamps (glfwGetTime seconds). A key counts as
   // pressed while glfwGetTime() < _injectedUntil[key].
   std::array<double, OK_KEY_COUNT> _injectedUntil;

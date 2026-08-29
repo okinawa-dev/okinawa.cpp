@@ -107,6 +107,16 @@ int OkInput::heldModifiers() const {
 }
 
 /**
+ * @brief Is this key down on the device, gate or no gate?
+ */
+bool OkInput::isPhysicalKeyDown(OkKey key) const {
+  if (key == OK_KEY_UNKNOWN || key < 0 || key >= OK_KEY_COUNT) {
+    return false;
+  }
+  return _physKeys[key];
+}
+
+/**
  * @brief Did this chord just happen on the physical keyboard?
  */
 bool OkInput::isChordJustPressed(int mods, OkKey key) const {
@@ -151,15 +161,32 @@ void OkInput::process() {
                    glfwGetKey(_window, glfwKey) == GLFW_PRESS;
   }
 
+  // The press history, from the device and nothing else: what went
+  // down this frame, with the modifiers that were already held.
+  for (int i = 0; i < OK_KEY_COUNT; i++) {
+    if (_physKeys[i] && !_prevPhysKeys[i]) {
+      OkKeyPress press;
+      press.key  = static_cast<OkKey>(i);
+      press.mods = modifiersOf(_physKeys);
+      press.when = now;
+      _presses.push_back(press);
+      if (static_cast<int>(_presses.size()) > PRESS_HISTORY) {
+        _presses.erase(_presses.begin());
+      }
+    }
+  }
+
   if (!_physicalEnabled) {
     if (_blockUntil > 0.0 && now >= _blockUntil) {
       setPhysicalInputEnabled(true);
-    } else if (isChordJustPressed(OK_MOD_CTRL | OK_MOD_SHIFT, OK_KEY_ESCAPE)) {
+    } else if (isChordJustPressed(RELEASE_MODS, RELEASE_KEY)) {
       setPhysicalInputEnabled(true);
-      // ...and the escape of the chord belongs to the chord. Left in
-      // the frame, the application reads it a moment later and quits,
-      // which is what happened the first time this gesture worked.
-      consumeKeyUntilReleased(OK_KEY_ESCAPE);
+      // ...and the key of the chord belongs to the chord. Left in the
+      // frame, the application reads it a moment later and acts on it:
+      // with escape, which this chord used first, that meant handing
+      // the keyboard back by quitting the application -- and with a
+      // letter it would mean the avatar wandering off on its own.
+      consumeKeyUntilReleased(RELEASE_KEY);
     }
   }
 
@@ -356,6 +383,22 @@ void OkInput::setPhysicalInputEnabled(bool enabled) {
   if (!enabled) {
     setCursorCaptured(false);
   }
+}
+
+// The chord that gives the keyboard back, and its name for whoever has
+// to tell somebody about it -- one place, so the notice on screen and
+// the gesture that works cannot drift apart.
+//
+// Not escape, which is what it used first: macOS does not deliver
+// Escape to an application while Control is held. Measured on the
+// device, with the modifiers arriving, the Escape never arriving, and
+// ctrl+shift+E arriving in the same breath. A letter with no meaning of
+// its own is the safe choice, and the notice is what makes it findable.
+const int OkInput::RELEASE_MODS  = OkInput::OK_MOD_CTRL | OkInput::OK_MOD_SHIFT;
+const OkKey OkInput::RELEASE_KEY = OK_KEY_K;
+
+const char *OkInput::releaseChordName() {
+  return "ctrl+shift+k";
 }
 
 const double OkInput::BLOCK_MIN_SECONDS     = 1.0;
