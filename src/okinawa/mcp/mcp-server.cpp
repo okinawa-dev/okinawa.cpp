@@ -215,6 +215,26 @@ namespace {
 
   // Whether the person at the window can drive the app, and for how much
   // longer it is being ignored. Loop thread.
+  // The modifier bits, written out: "ctrl+shift", or "" for none. A
+  // report is read by a person or by an agent, and neither of them
+  // should have to decode a bitmask.
+  std::string modifierNames(int mods) {
+    std::string out;
+    if (mods & OkInput::OK_MOD_CTRL) {
+      out += out.empty() ? "ctrl" : "+ctrl";
+    }
+    if (mods & OkInput::OK_MOD_SHIFT) {
+      out += out.empty() ? "shift" : "+shift";
+    }
+    if (mods & OkInput::OK_MOD_ALT) {
+      out += out.empty() ? "alt" : "+alt";
+    }
+    if (mods & OkInput::OK_MOD_SUPER) {
+      out += out.empty() ? "super" : "+super";
+    }
+    return out;
+  }
+
   json inputStateJson() {
     double left = OkCore::userInputBlockedFor();
     json   r;
@@ -226,41 +246,32 @@ namespace {
       r["blocked_for_seconds"] = nullptr;
     }
     r["release"] = OkInput::releaseChordName();
-    // What the DEVICE is saying right now, whether or not the
-    // application may see it. Here so that a chord that does not fire
-    // can be told apart from keys that never arrive: an agent cannot
-    // press them, so the only way to know is to ask.
+    // WHAT THE DEVICE IS SAYING, whether or not the application may see
+    // it: what is down now, and what has been pressed lately.
+    //
+    // Here because an agent cannot press a key, so when a chord does
+    // not fire the only way to tell a key that never arrived from a
+    // match that is wrong is to ask the engine. It found one in a
+    // single reading -- macOS never delivers Escape while Control is
+    // held -- after three rounds of guessing at it.
     OkInput *in = OkCore::getInput();
     if (in != nullptr) {
-      int mods         = in->heldModifiers();
-      r["modifiers"]   = {{"shift", (mods & OkInput::OK_MOD_SHIFT) != 0},
-                          {"ctrl", (mods & OkInput::OK_MOD_CTRL) != 0},
-                          {"alt", (mods & OkInput::OK_MOD_ALT) != 0},
-                          {"super", (mods & OkInput::OK_MOD_SUPER) != 0}};
-      r["escape_down"] = in->isPhysicalKeyDown(OK_KEY_ESCAPE);
-      // Everything the device says is down, by name. A chord that does
-      // not fire is either a key the engine never sees or a match that
-      // is wrong, and this is what tells the two apart without anybody
-      // having to guess which key to ask about.
       json down = json::array();
       for (int k = 0; k < OK_KEY_COUNT; k++) {
         if (in->isPhysicalKeyDown(static_cast<OkKey>(k))) {
           down.push_back(OkKeys::getKeyName(static_cast<OkKey>(k)));
         }
       }
-      r["keys_down"] = down;
-      // ...and what has been pressed lately, so a chord can be checked
-      // after the fact instead of caught in the act.
       json                                    recent = json::array();
       const std::vector<OkInput::OkKeyPress> &hist   = in->recentPresses();
       for (size_t i = 0; i < hist.size(); i++) {
         json one;
         one["key"]     = OkKeys::getKeyName(hist[i].key);
-        one["mods"]    = hist[i].mods;
+        one["with"]    = modifierNames(hist[i].mods);
         one["ago_sec"] = glfwGetTime() - hist[i].when;
         recent.push_back(one);
       }
-      r["recent_presses"] = recent;
+      r["device"] = {{"keys_down", down}, {"recent_presses", recent}};
     }
     return r;
   }

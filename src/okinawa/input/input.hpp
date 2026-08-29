@@ -134,12 +134,13 @@ public:
   // PHYSICAL state, so a chord can be recognised even while the game is
   // being kept from seeing input at all -- which is the case the engine
   // itself needs, to give the keyboard back.
-  static const int OK_MOD_SHIFT = 1;
-  static const int OK_MOD_CTRL  = 2;
-  static const int OK_MOD_ALT   = 4;
-  static const int OK_MOD_SUPER = 8;
-
-  int heldModifiers() const;
+  // constexpr and not const: a static const int with its value here has
+  // no definition anywhere, so anything that takes it BY REFERENCE --
+  // a test assertion, for one -- has nothing to link against.
+  static constexpr int OK_MOD_SHIFT = 1;
+  static constexpr int OK_MOD_CTRL  = 2;
+  static constexpr int OK_MOD_ALT   = 4;
+  static constexpr int OK_MOD_SUPER = 8;
 
   // THE CHORD THAT GIVES THE KEYBOARD BACK, and its name for whoever
   // has to tell somebody about it. One place, so the notice on screen

@@ -25,7 +25,7 @@ The server exposes these tools to a connected agent:
 | `get_performance` | Returns the frame-time **series**, not a single reading: `count`, `frame_ms` and `fps` each with min/max/mean/median, and a `hitching` flag (true when the mean sits well above the median, which is what occasional long frames look like in a summary). Also returns `draw_ms` (min/max/mean/median), the CPU time spent issuing the frame's draws, measured before the swap: where vsync is enforced by the platform, `frame_ms` is pinned to the refresh interval and cannot tell whether a change cost anything, and `draw_ms` is the number to compare. Pass `samples: true` for the raw per-frame milliseconds, oldest first. Samples are recorded whether or not the stats panel is visible. |
 | `quit` | Closes the application, the same way its window's close button does: the loop stops, the application's exit callback runs (see [`OkCore::setExitCallback`](/reference/core.html)) so it can save whatever it keeps between sessions, and the process ends. The reply is sent before the shutdown starts, and it is the last thing this server answers — a client that keeps the connection will see it drop. Reaches the same `askForExit()` as the console's own `quit` command, and is declared as a tool for the same reason `config` is: a tool appears in `tools/list`, so an agent finds it without having to know there is a console behind it. |
 | `input` | Reads or sets whether the **person at the window** can drive with their own keyboard and mouse. With no arguments it reports. `enabled: false` takes the keyboard, so a stray key cannot move the view under a measurement; `enabled: true` gives it straight back. A block **expires on its own** after `seconds` (default 300, clamped to 1..3600) and can always be lifted at the window with **ctrl+shift+k**; while it holds, the app says so on screen. Injected input (`press_key`, `view`) is unaffected either way. See below. |
-| `get_state` | Returns numeric runtime state, including `view` (the active camera's name and values, ready to pass back to `view`), `cameras` (the registered camera names), the raw camera pose, fps, scene object count, window size, resident memory, and `input` (whether the person at the window can drive, and for how much longer they cannot). |
+| `get_state` | Returns numeric runtime state, including `view` (the active camera's name and values, ready to pass back to `view`), `cameras` (the registered camera names), the raw camera pose, fps, scene object count, window size, resident memory, and `input` (whether the person at the window can drive, for how much longer they cannot, and what the keyboard has been doing). |
 
 Key names accepted by `press_key`/`press_keys`: single letters and digits, `space`, `up`/`down`/`left`/`right`, `escape`, `enter`, `tab`, `backspace`, `grave` (or `backtick`), `period`, `minus`. `grave` toggles the engine console; while the console is open, injected printable keys feed its input line, so a command *can* be typed a key at a time (`grave`, then the letters with `space`/`period`, then `enter`).
 
@@ -62,6 +62,15 @@ answering, which from a chair looks exactly like a hang. So:
   modifiers arriving and the Escape never doing so.);
 - **it is on screen.** A line in the corner says the input is held, how
   many seconds are left, and which keys end it.
+
+Both also report `device`: `keys_down`, what the keyboard is holding
+right now, and `recent_presses`, the last few keys it reported going
+down with the modifiers held at the time and how long ago. An agent
+cannot press a key, so when a gesture does not work this is the only
+way to tell a key that never arrived from a match that is wrong. It
+earned its place: three rounds of guessing at a chord that would not
+fire, then one reading -- **macOS does not deliver Escape while Control
+is held**.
 
 `{"seconds": 0}` blocks with no deadline. It exists because the launch
 flag needs it; an agent asking for it is asking to be the thing the

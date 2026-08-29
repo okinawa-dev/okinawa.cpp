@@ -100,13 +100,6 @@ bool OkInput::chordJustPressed(const std::array<bool, OK_KEY_COUNT> &keys,
 }
 
 /**
- * @brief The modifiers held on the physical keyboard right now.
- */
-int OkInput::heldModifiers() const {
-  return modifiersOf(_physKeys);
-}
-
-/**
  * @brief Is this key down on the device, gate or no gate?
  */
 bool OkInput::isPhysicalKeyDown(OkKey key) const {
