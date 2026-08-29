@@ -1,5 +1,6 @@
 #include "input_notice.hpp"
 #include "../core/core.hpp"
+#include "../input/input.hpp"
 #include "gui.hpp"
 #include "gui_layer.hpp"
 #include "gui_text.hpp"
@@ -58,11 +59,25 @@ void OkInputNotice::update() {
   }
   // The seconds are what makes the notice worth reading: it tells the
   // person the keyboard is coming back on its own, and roughly when.
-  std::string say = "input held by an agent";
-  if (left > 0.0) {
-    say += ", " + std::to_string(static_cast<int>(std::ceil(left))) + "s";
+  // While escape is down the notice counts the hold out loud. That is
+  // the point of showing it: the person can SEE the engine reading the
+  // key, so a release that does not happen is told apart from a key
+  // that never arrived.
+  double      held = OkCore::userInputReleaseHeldFor();
+  std::string say;
+  if (held > 0.0) {
+    double togo = OkInput::RELEASE_HOLD_SECONDS - held;
+    say = togo > 0.0 ? "releasing in " +
+                           std::to_string(static_cast<int>(std::ceil(togo))) +
+                           "s -- keep escape down"
+                     : "releasing";
+  } else {
+    say = "input held by an agent";
+    if (left > 0.0) {
+      say += ", " + std::to_string(static_cast<int>(std::ceil(left))) + "s";
+    }
+    say += " -- hold escape to take it back";
   }
-  say += " -- ctrl+shift+esc frees it";
   line->setText(say);
   line->setGridPosition(NOTICE_MARGIN + line->getGridWidth() * 0.5f,
                         NOTICE_MARGIN + NOTICE_TEXT_CELLS * 0.5f);

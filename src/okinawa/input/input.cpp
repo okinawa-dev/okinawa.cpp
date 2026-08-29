@@ -62,25 +62,34 @@ namespace {
   // what most applications quit on, and while input is blocked the
   // application never sees it -- so a person pressing it to be let out
   // would appear to be ignored twice over.
-  bool chordHeld(GLFWwindow *window) {
-    if (window == nullptr) {
-      return false;
-    }
-    bool ctrl  = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS ||
-                 glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS;
-    bool shift = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-                 glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
-    return ctrl && shift && glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
+  bool escapeHeld(GLFWwindow *window) {
+    return window != nullptr &&
+           glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
   }
 }  // namespace
 
+const double OkInput::RELEASE_HOLD_SECONDS = 1.0;
+
 /**
- * @brief Is the chord that lifts an input block being held right now?
+ * @brief How long escape has been held down, in seconds.
  *
  * Read from GLFW and not through the gate: the gate is what it lifts.
+ *
+ * Holding one key rather than a chord of three. A chord has to be
+ * described to be usable, and a person whose keyboard has just gone
+ * dead is the last person able to look one up; holding the key every
+ * application uses to get out of things is the thing they will try
+ * anyway. A HOLD and not a tap, so it cannot be the same gesture as
+ * the application's own quit.
+ *
+ * @return 0.0 when escape is up, otherwise how long it has been down.
  */
-bool OkInput::releaseChordHeld() const {
-  return chordHeld(_window);
+double OkInput::releaseHeldFor() const {
+  if (_escDownSince <= 0.0) {
+    return 0.0;
+  }
+  double held = glfwGetTime() - _escDownSince;
+  return held > 0.0 ? held : 0.0;
 }
 
 void OkInput::process() {
@@ -98,10 +107,17 @@ void OkInput::process() {
   // block ends on its own, and the release chord ends any block at all --
   // an agent that blocks input and then dies must not leave a window
   // that ignores its owner.
+  if (escapeHeld(_window)) {
+    if (_escDownSince <= 0.0) {
+      _escDownSince = glfwGetTime();
+    }
+  } else {
+    _escDownSince = 0.0;
+  }
   if (!_physicalEnabled) {
     if (_blockUntil > 0.0 && glfwGetTime() >= _blockUntil) {
       setPhysicalInputEnabled(true);
-    } else if (releaseChordHeld()) {
+    } else if (releaseHeldFor() >= RELEASE_HOLD_SECONDS) {
       setPhysicalInputEnabled(true);
     }
   }

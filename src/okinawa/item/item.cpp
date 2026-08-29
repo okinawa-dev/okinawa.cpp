@@ -20,10 +20,6 @@ namespace {
 
   // Half, for midpoints and radii.
   const float HALF = 0.5f;
-  // Below this a summed normal is noise rather than a direction, and
-  // normalising it would amplify the noise instead.
-  const float MIN_NORMAL_LEN_SQ = 1e-12f;
-
 }  // namespace
 
 /**

@@ -44,9 +44,9 @@ It exists in that shape because of what goes wrong: a block is invisible
 -- the keyboard just stops answering -- so one that is never lifted looks
 from a chair exactly like a hang.
 
-So a block **expires by itself**, `releaseChordHeld()` reads
-**ctrl + shift + escape** straight from the device before the gate that
-would have swallowed it, and the engine draws a line saying input is held
+So a block **expires by itself**, `releaseHeldFor()` reads
+**escape** straight from the device before the gate that would have
+swallowed it, and a hold of `RELEASE_HOLD_SECONDS` lifts the block, and the engine draws a line saying input is held
 and how to take it back. Nothing running in the background can talk its
 way past those. `physicalInputBlockedFor()` reports what is left: `0`
 when input is free, and a negative number for a block with no deadline

@@ -100,7 +100,7 @@ public:
   // view under a measurement -- and the thing that goes wrong is the
   // agent forgetting to give it back, leaving a person with a window
   // that ignores them. So the block expires by itself, and the chord in
-  // RELEASE_CHORD lifts it whatever the agent asked for: nothing running
+  // holding escape lifts it whatever the agent asked for: nothing running
   // in the background may lock somebody out of their own window.
   //
   // @param seconds how long to hold it, clamped to
@@ -127,8 +127,10 @@ public:
   // out so it can be tested without a window.
   static double clampBlockSeconds(double seconds);
 
-  // Is the release chord (ctrl + shift + escape) held right now?
-  bool releaseChordHeld() const;
+  // How long escape has been held down (0 when it is up). Holding it for
+  // RELEASE_HOLD_SECONDS lifts any input block: see releaseHeldFor.
+  double              releaseHeldFor() const;
+  static const double RELEASE_HOLD_SECONDS;
 
   // Text capture (the console). While captured, isKeyJustPressed/Held/
   // JustReleased and getState() report NOTHING to the game -- typing in
@@ -211,6 +213,8 @@ private:
   // When a timed block ends, on the same clock as glfwGetTime(). Zero
   // means the block (if any) has no deadline.
   double _blockUntil = 0.0;
+  // When escape went down, on the same clock. Zero while it is up.
+  double _escDownSince = 0.0;
   // Pointer lock state: true while the cursor is captured for mouse-look.
   bool _cursorCaptured;
   // Whether a click may take the pointer at all (see the setter).

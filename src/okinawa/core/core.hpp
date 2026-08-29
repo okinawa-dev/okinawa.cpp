@@ -184,7 +184,7 @@ public:
   // Ignore physical input for a while and then give it back on its own,
   // so an agent can take the keyboard for a measurement without a
   // relaunch -- and without being able to leave its owner locked out.
-  // The block also lifts on ctrl + shift + escape. See OkInput.
+  // The block also lifts when escape is held. See OkInput.
   // @param seconds how long, clamped; zero or less blocks with no
   //        deadline, which is what the launch flag does.
   static void blockUserInput(double seconds);
@@ -192,6 +192,10 @@ public:
   // Seconds until physical input returns: 0 when it is not blocked, and
   // a negative number for a block with no deadline.
   static double userInputBlockedFor();
+
+  // How long escape has been held, for the notice that says holding it
+  // is what gives the keyboard back. 0 while it is up.
+  static double userInputReleaseHeldFor();
 
 private:
   static bool initializeOpenGL(int width, int height);
