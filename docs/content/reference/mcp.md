@@ -54,7 +54,7 @@ answering, which from a chair looks exactly like a hang. So:
 - **the window always wins.** `ctrl` + `shift` + `k` lifts any block,
   matched on the device itself rather than on what the application is
   allowed to see. Nothing running in the background can override that,
-  and the key of the chord is then taken out of the frame until it is
+  and the key of the combo is then taken out of the frame until it is
   let go, so the application never sees it -- a release that hands
   control back by quitting the app, or by walking the avatar off, is
   not a release. (Not escape: **macOS does not deliver Escape to an
@@ -68,7 +68,7 @@ right now, and `recent_presses`, the last few keys it reported going
 down with the modifiers held at the time and how long ago. An agent
 cannot press a key, so when a gesture does not work this is the only
 way to tell a key that never arrived from a match that is wrong. It
-earned its place: three rounds of guessing at a chord that would not
+earned its place: three rounds of guessing at a combo that would not
 fire, then one reading -- **macOS does not deliver Escape while Control
 is held**.
 

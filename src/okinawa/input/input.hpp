@@ -100,8 +100,8 @@ public:
   // driving the app blocks the keyboard so a stray key cannot move the
   // view under a measurement -- and the thing that goes wrong is the
   // agent forgetting to give it back, leaving a person with a window
-  // that ignores them. So the block expires by itself, and the chord in
-  // the release chord lifts it whatever the agent asked for: nothing
+  // that ignores them. So the block expires by itself, and the combo in
+  // the release combo lifts it whatever the agent asked for: nothing
   // running in the background may lock somebody out of their own window.
   //
   // @param seconds how long to hold it, clamped to
@@ -131,7 +131,7 @@ public:
   // CHORDS: several keys held at once, as one gesture.
   //
   // The modifiers, as bits, and what is held right now. Read from the
-  // PHYSICAL state, so a chord can be recognised even while the game is
+  // PHYSICAL state, so a combo can be recognised even while the game is
   // being kept from seeing input at all -- which is the case the engine
   // itself needs, to give the keyboard back.
   // constexpr and not const: a static const int with its value here has
@@ -153,10 +153,10 @@ public:
   // the notice on screen is what makes it findable.
   static const int   RELEASE_MODS;
   static const OkKey RELEASE_KEY;
-  static const char *releaseChordName();
+  static const char *releaseComboName();
 
   // Is this key down on the DEVICE, whatever the game is allowed to
-  // see? For chords, and for saying so when one does not fire.
+  // see? For combos, and for saying so when one does not fire.
   bool isPhysicalKeyDown(OkKey key) const;
 
   // THE PRESS HISTORY: the last keys that went down on the device, in
@@ -164,7 +164,7 @@ public:
   //
   // A record and not a question, because the interesting question is
   // usually asked afterwards: whether a key ever arrived, whether a
-  // chord was performed the way it was described, what somebody
+  // combo was performed the way it was described, what somebody
   // actually pressed. Asked live, the answer depends on catching the
   // moment.
   //
@@ -183,18 +183,19 @@ public:
     return _presses;
   }
 
-  // Did `key` go down THIS frame with exactly `mods` held?
+  // A SIMULTANEOUS combo: did `key` go down THIS frame with exactly
+  // `mods` already held?
   //
   // Exactly, not at least: ctrl+shift+escape must not fire on
-  // ctrl+alt+shift+escape, or a chord would swallow every gesture that
+  // ctrl+alt+shift+escape, or a combo would swallow every gesture that
   // contains it.
-  bool isChordJustPressed(int mods, OkKey key) const;
+  bool isComboJustPressed(int mods, OkKey key) const;
 
   // Hide a key from the game until it is physically let go.
   //
-  // This is what makes a chord usable rather than merely detectable. A
-  // chord's keys mean something on their own -- escape quits most
-  // applications -- so whoever acts on the chord has to take those keys
+  // This is what makes a combo usable rather than merely detectable. A
+  // combo's keys mean something on their own -- escape quits most
+  // applications -- so whoever acts on the combo has to take those keys
   // out of the frame, and keep them out until the gesture is over.
   // Without it, ctrl+shift+escape lifts an input block and the escape
   // still down closes the app a frame later, which is exactly what it
@@ -202,9 +203,10 @@ public:
   void consumeKeyUntilReleased(OkKey key);
 
   // The two above, as pure functions over a key state, so the matching
-  // can be tested without a window.
+  // can be tested without a window. A CONSECUTIVE matcher would go
+  // beside them, over `recentPresses` instead of over one frame.
   static int  modifiersOf(const std::array<bool, OK_KEY_COUNT> &keys);
-  static bool chordJustPressed(const std::array<bool, OK_KEY_COUNT> &keys,
+  static bool comboJustPressed(const std::array<bool, OK_KEY_COUNT> &keys,
                                const std::array<bool, OK_KEY_COUNT> &prev,
                                int mods, OkKey key);
 
@@ -282,7 +284,7 @@ private:
   std::array<bool, OK_KEY_COUNT> _currentKeys;   // What the game sees
   std::array<bool, OK_KEY_COUNT> _prevKeys;      // ...and saw last frame
   // The keyboard as the DEVICE reports it, whether or not the game is
-  // allowed to see it. Chords are matched on this: the engine has to be
+  // allowed to see it. Combos are matched on this: the engine has to be
   // able to recognise the gesture that gives the keyboard back at the
   // very moment the keyboard is being ignored.
   std::array<bool, OK_KEY_COUNT> _physKeys;

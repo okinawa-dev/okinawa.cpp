@@ -245,11 +245,11 @@ namespace {
       // No deadline: the launch flag, or a deliberate zero.
       r["blocked_for_seconds"] = nullptr;
     }
-    r["release"] = OkInput::releaseChordName();
+    r["release"] = OkInput::releaseComboName();
     // WHAT THE DEVICE IS SAYING, whether or not the application may see
     // it: what is down now, and what has been pressed lately.
     //
-    // Here because an agent cannot press a key, so when a chord does
+    // Here because an agent cannot press a key, so when a combo does
     // not fire the only way to tell a key that never arrived from a
     // match that is wrong is to ask the engine. It found one in a
     // single reading -- macOS never delivers Escape while Control is
@@ -622,7 +622,7 @@ struct OkMcpServer::Impl {
         "cannot move the view under a measurement; `enabled: true` gives it "
         "straight back. A block EXPIRES on its own after `seconds` (default "
         "300, clamped to 1..3600), and the person can always lift it at the "
-        "window with the chord the app shows on screen -- an agent must never "
+        "window with the combo the app shows on screen -- an agent must never "
         "leave somebody "
         "locked out of their own window. While blocked, the app says so on "
         "screen. Injected input (press_key, view) is unaffected either way.";

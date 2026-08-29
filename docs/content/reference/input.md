@@ -44,34 +44,39 @@ It exists in that shape because of what goes wrong: a block is invisible
 -- the keyboard just stops answering -- so one that is never lifted looks
 from a chair exactly like a hang.
 
-So a block **expires by itself**, the chord in `RELEASE_MODS` +
+So a block **expires by itself**, the combo in `RELEASE_MODS` +
 `RELEASE_KEY` lifts it, and the engine draws a line saying input is held
 and how to take it back. Nothing running in the background can talk its
 way past those. `physicalInputBlockedFor()` reports what is left: `0`
 when input is free, and a negative number for a block with no deadline
 (what the launch flag asks for).
 
-### Chords, and why a chord has to take its keys
+### Combos: at once, and one after another
 
-`isChordJustPressed(mods, key)` is several keys as one gesture: the
+A combo comes in the two kinds `okinawa.js` named: **simultaneous**,
+several keys held together, and **consecutive**, one key after another
+inside a time window. Only the simultaneous one is implemented; the
+press history below is what the other would be matched on.
+
+`isComboJustPressed(mods, key)` is the simultaneous one: the
 modifiers already held, the key going down this frame, and **exactly**
-those modifiers -- a chord that fired on "at least" would swallow every
+those modifiers -- a combo that fired on "at least" would swallow every
 gesture that contains it.
 
 It reads the DEVICE and not what the application is allowed to see, so a
-chord still works while input is blocked. That is the case the engine
+combo still works while input is blocked. That is the case the engine
 itself needs: the gesture that gives the keyboard back is wanted
 precisely when the keyboard is being ignored.
 
-`RELEASE_MODS`, `RELEASE_KEY` and `releaseChordName()` hold that gesture
-in one place, so the line the engine draws and the chord that actually
+`RELEASE_MODS`, `RELEASE_KEY` and `releaseComboName()` hold that gesture
+in one place, so the line the engine draws and the combo that actually
 works cannot drift apart. It is **not** escape, which is what it used
 first: **macOS does not deliver Escape to an application while Control
 is held** -- measured on the device, with the modifiers arriving, the
 Escape never arriving, and `ctrl+shift+E` arriving in the same breath.
 
-**`consumeKeyUntilReleased(key)` is what makes a chord usable rather
-than merely detectable.** The keys of a chord mean something on their
+**`consumeKeyUntilReleased(key)` is what makes a combo usable rather
+than merely detectable.** The keys of a combo mean something on their
 own, so whoever acts on one has to take them out of the frame and keep
 them out until the gesture is over. Without it the release worked
 exactly once: it lifted the block, and the escape still held closed the
@@ -84,7 +89,7 @@ and the modifiers mean nothing to it.
 `recentPresses()` keeps the last `PRESS_HISTORY` keys the DEVICE
 reported going down, each with the modifiers held at the time and when
 it happened. It answers the question that is normally asked afterwards
--- did that key ever arrive? was the chord performed the way it was
+-- did that key ever arrive? was the combo performed the way it was
 described? -- instead of needing somebody to catch the moment. The macOS
 fault above was found with it in one reading, after three rounds of
 guessing at it.

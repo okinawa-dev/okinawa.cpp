@@ -61,7 +61,7 @@ OkInput::OkInput(GLFWwindow *window, MouseCallback callback) {
 
 /**
  * @brief Which modifiers a key state has held down.
- * @return the OK_MOD_* bits, so a chord can ask for exactly a set.
+ * @return the OK_MOD_* bits, so a combo can ask for exactly a set.
  */
 int OkInput::modifiersOf(const std::array<bool, OK_KEY_COUNT> &keys) {
   int mods = 0;
@@ -84,10 +84,10 @@ int OkInput::modifiersOf(const std::array<bool, OK_KEY_COUNT> &keys) {
  * @brief Did `key` go down this frame with exactly `mods` held?
  *
  * The EDGE is on the key and not on the modifiers, which is how a
- * person performs a chord: the modifiers go down first and are already
+ * person performs a combo: the modifiers go down first and are already
  * held when the key arrives.
  */
-bool OkInput::chordJustPressed(const std::array<bool, OK_KEY_COUNT> &keys,
+bool OkInput::comboJustPressed(const std::array<bool, OK_KEY_COUNT> &keys,
                                const std::array<bool, OK_KEY_COUNT> &prev,
                                int mods, OkKey key) {
   if (key == OK_KEY_UNKNOWN || key < 0 || key >= OK_KEY_COUNT) {
@@ -110,10 +110,10 @@ bool OkInput::isPhysicalKeyDown(OkKey key) const {
 }
 
 /**
- * @brief Did this chord just happen on the physical keyboard?
+ * @brief Did this combo just happen on the physical keyboard?
  */
-bool OkInput::isChordJustPressed(int mods, OkKey key) const {
-  return chordJustPressed(_physKeys, _prevPhysKeys, mods, key);
+bool OkInput::isComboJustPressed(int mods, OkKey key) const {
+  return comboJustPressed(_physKeys, _prevPhysKeys, mods, key);
 }
 
 /**
@@ -137,12 +137,12 @@ void OkInput::process() {
   //
   // Two ways, and both are read straight from GLFW rather than through
   // the gate, because the gate is exactly what they are lifting. A timed
-  // block ends on its own, and the release chord ends any block at all --
+  // block ends on its own, and the release combo ends any block at all --
   // an agent that blocks input and then dies must not leave a window
   // that ignores its owner.
   // The DEVICE first, whether or not the game may see it.
   //
-  // Reading it always is what lets the engine recognise a chord while
+  // Reading it always is what lets the engine recognise a combo while
   // input is blocked -- and the gesture that gives the keyboard back is
   // needed exactly then. The gate below decides who sees what; it is no
   // longer the thing that decides what is read.
@@ -172,11 +172,11 @@ void OkInput::process() {
   if (!_physicalEnabled) {
     if (_blockUntil > 0.0 && now >= _blockUntil) {
       setPhysicalInputEnabled(true);
-    } else if (isChordJustPressed(RELEASE_MODS, RELEASE_KEY)) {
+    } else if (isComboJustPressed(RELEASE_MODS, RELEASE_KEY)) {
       setPhysicalInputEnabled(true);
-      // ...and the key of the chord belongs to the chord. Left in the
+      // ...and the key of the combo belongs to the combo. Left in the
       // frame, the application reads it a moment later and acts on it:
-      // with escape, which this chord used first, that meant handing
+      // with escape, which this combo used first, that meant handing
       // the keyboard back by quitting the application -- and with a
       // letter it would mean the avatar wandering off on its own.
       consumeKeyUntilReleased(RELEASE_KEY);
@@ -192,7 +192,7 @@ void OkInput::process() {
 
   // What the game sees: the device when it is allowed to, plus any
   // synthetic (injected) key still within its hold window, minus
-  // whatever a chord has taken for itself.
+  // whatever a combo has taken for itself.
   for (int i = 0; i < OK_KEY_COUNT; i++) {
     bool physical   = _physicalEnabled && _physKeys[i];
     bool injected   = now < _injectedUntil[i];
@@ -378,7 +378,7 @@ void OkInput::setPhysicalInputEnabled(bool enabled) {
   }
 }
 
-// The chord that gives the keyboard back, and its name for whoever has
+// The combo that gives the keyboard back, and its name for whoever has
 // to tell somebody about it -- one place, so the notice on screen and
 // the gesture that works cannot drift apart.
 //
@@ -390,7 +390,7 @@ void OkInput::setPhysicalInputEnabled(bool enabled) {
 const int OkInput::RELEASE_MODS  = OkInput::OK_MOD_CTRL | OkInput::OK_MOD_SHIFT;
 const OkKey OkInput::RELEASE_KEY = OK_KEY_K;
 
-const char *OkInput::releaseChordName() {
+const char *OkInput::releaseComboName() {
   return "ctrl+shift+k";
 }
 
