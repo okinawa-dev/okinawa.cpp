@@ -190,7 +190,7 @@ public:
    * district holding thousands of windows reported the size of one
    * window and was skipped whenever that one window fell out of view.
    */
-  virtual float getRadius() const {
+  float getRadius() const override {
     return radius;
   }
   /**

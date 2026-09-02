@@ -376,10 +376,6 @@ namespace {
   const float AXIS_MIN_M    = 0.25f;
   const float AXIS_MAX_M    = 8.0f;
 
-  // How many segments a debug circle is drawn with. Twelve reads as a
-  // circle at any distance worth looking at one from.
-  const int CIRCLE_STEPS = 12;
-
 }  // namespace
 
 bool OkObject::_debugHelpers[OkObject::DEBUG_HELPER_COUNT] = {false, false,
