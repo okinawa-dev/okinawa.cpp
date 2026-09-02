@@ -9,6 +9,19 @@
 #include <string>
 
 class OkObject {
+public:
+  // WHICH DEBUG DRAWING. One entry per thing an object can show about
+  // itself, and the list is meant to grow: a bounding box, a direction
+  // vector, whatever the next question about "where is this actually"
+  // turns out to be.
+  enum DebugHelper {
+    DEBUG_ORIGIN = 0,  // the three axes at its origin
+    DEBUG_SPHERE,      // the sphere it claims to fit in
+    DEBUG_BOX,         // the box around that sphere
+    DEBUG_CENTRE,      // where that sphere is centred
+    DEBUG_HELPER_COUNT
+  };
+
 protected:
   std::string name;
 
@@ -38,7 +51,12 @@ protected:
   void unlinkFromParent();
 
   // Flags
-  bool drawOriginAxis;  // Flag to draw origin axis
+  bool drawOriginAxis;  // this one always shows its origin, switch or not
+
+  // The world's switches, read from the config once a frame rather than
+  // per object: a lookup by string, fourteen thousand times a frame, is
+  // milliseconds spent on a switch that is usually off.
+  static bool _debugHelpers[DEBUG_HELPER_COUNT];
 
   // Pure virtual method for derived classes to implement their specific drawing
   // and update
@@ -62,7 +80,60 @@ public:
   bool getDrawOriginAxis() const {
     return drawOriginAxis;
   }
-  void drawAxis() const;
+
+  // THE DEBUG DRAWINGS AN OBJECT MAKES OF ITSELF.
+  //
+  // Its origin, the sphere it claims to fit in, the box around that,
+  // the point the sphere is centred on -- and whatever is added next.
+  // They answer "where is this actually", and that question only has an
+  // answer when a whole world answers it at once: one object's axes say
+  // nothing about whether it is anchored the way its neighbours are.
+  //
+  // WHICH IS WHY EACH OBJECT ASKS, AND NOTHING PUSHES IT IN. Walking
+  // the scene to switch a flag on in every object is the scene knowing
+  // about gizmos, which is not its business, and it is state to keep in
+  // step with -- the next object attached after the walk is not in
+  // step. Here the switches are read once a frame and every object
+  // consults them while it draws itself.
+  /** @brief Read the `debug.*` switches. Called once a frame. */
+  static void refreshDebugHelpers();
+  static bool debugHelperOn(DebugHelper which) {
+    return _debugHelpers[which];
+  }
+
+  // A LINE ADDED, NOT A LINE DRAWN.
+  //
+  // An object that issues its own draw call for a gizmo costs a draw
+  // call and -- as `drawAxis` did -- a VAO and a VBO created and
+  // destroyed for three lines, every object, every frame. Fourteen
+  // thousand of those is not a debugging view, it is a stall. So the
+  // objects fill one buffer and the frame draws it once.
+  static void addDebugLine(const OkPoint &from, const OkPoint &to, float r,
+                           float g, float b);
+  /** @brief Draw everything the objects added, and empty the buffer. */
+  static void flushDebugHelpers();
+
+  /**
+   * @brief What this object adds about itself. Extended by subclasses.
+   *
+   * The base knows where it is and how it is turned, so it draws the
+   * axes at its origin. What an object IS -- how far it reaches, where
+   * its geometry sits inside it -- is known further down, and that is
+   * where the sphere and the box come from.
+   */
+  virtual void drawDebugHelpers() const;
+
+  /**
+   * @brief How far this object reaches from its own centre, in metres.
+   *
+   * Zero for an object with no geometry of its own -- a group, a node
+   * that is only somewhere to be. What has a mesh answers with its
+   * sphere, and the debug drawings are sized from this so that a lamp
+   * post and a district are both legible.
+   */
+  virtual float getRadius() const {
+    return 0.0f;
+  }
 
   // Rotation
   OkRotation getRotation() const;

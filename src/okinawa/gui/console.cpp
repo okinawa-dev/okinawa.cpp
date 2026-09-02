@@ -109,24 +109,6 @@ void OkConsole::initialize() {
         }
       });
 
-  registerCommand("origins",
-                  "origins [on|off]: draw the axes at every object's origin",
-                  [](const std::vector<std::string> &args) {
-                    bool            on      = args.empty() || args[0] != "off";
-                    OkSceneHandler *handler = OkCore::getSceneHandler();
-                    OkScene        *scene   = handler != nullptr
-                                                  ? handler->getCurrentScene()
-                                                  : nullptr;
-                    if (scene == nullptr) {
-                      OkConsole::print("no scene");
-                      return;
-                    }
-                    size_t n = scene->setOriginAxes(on);
-                    OkConsole::print(std::string(on ? "origins shown on "
-                                                    : "origins hidden on ") +
-                                     std::to_string(n) + " object(s)");
-                  });
-
   print("okinawa console. type 'help' for commands.");
 }
 

@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <string>
+#include <vector>
 
 /**
  * @brief Constructor for the OkObject class.
@@ -339,9 +340,7 @@ void OkObject::drawPass(bool blendedPass) {
   // Each object draws itself in its own pass and stays out of the other.
   if (isBlended() == blendedPass) {
     drawSelf();
-    if (drawOriginAxis) {
-      drawAxis();
-    }
+    drawDebugHelpers();
   }
 
   // Children recursively (this stays in OkObject)
@@ -352,82 +351,151 @@ void OkObject::drawPass(bool blendedPass) {
   }
 }
 
-/**
- * @brief Draw coordinate axis for this object using its transform matrix.
- *        Shows X (red), Y (green), and Z (blue) axes using simple OpenGL.
- */
-void OkObject::drawAxis() const {
-  // Create axis line vertices in local space (origin-based)
-  // Three axes, each a line from the origin: two points of x, y, z.
-  const size_t                   AXIS_FLOATS  = 18;
-  std::array<float, AXIS_FLOATS> axisVertices = {
-      // X-axis (red) - 100 units long
-      0.0f, 0.0f, 0.0f, 100.0f, 0.0f, 0.0f,
+namespace {
 
-      // Y-axis (green) - 100 units long
-      0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.0f,
+  // The lines every object added this frame, one bucket per colour.
+  // Bucketed rather than carrying a colour per vertex because the world
+  // shader takes its wireframe colour as a uniform: three or four
+  // buckets is three or four draw calls, and a colour per vertex would
+  // be a shader of its own for a debugging view.
+  struct DebugBucket {
+    float              r, g, b;
+    std::vector<float> verts;  // x, y, z per point, two points per line
+  };
 
-      // Z-axis (blue) - 100 units long
-      0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f};
+  std::vector<DebugBucket> &debugBuckets() {
+    static std::vector<DebugBucket> held;
+    return held;
+  }
 
-  // Create temporary VAO and VBO for the axis lines
-  GLuint VAO;
-  GLuint VBO;
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
+  // How long the axes are drawn, in metres, and the bounds they are
+  // held between. Scaled to the object rather than fixed: they used to
+  // be a hundred units long whatever they belonged to, which over a
+  // city of windows is a hairball rather than a diagram.
+  const float AXIS_FRACTION = 0.5f;
+  const float AXIS_MIN_M    = 0.25f;
+  const float AXIS_MAX_M    = 8.0f;
 
-  glBindVertexArray(VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER,
-               static_cast<GLsizeiptr>(axisVertices.size() * sizeof(float)),
-               axisVertices.data(), GL_STATIC_DRAW);
+  // How many segments a debug circle is drawn with. Twelve reads as a
+  // circle at any distance worth looking at one from.
+  const int CIRCLE_STEPS = 12;
 
-  // Configure vertex attributes (position only at location 0)
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-  glEnableVertexAttribArray(0);
+}  // namespace
 
-  // Get current shader program to reuse it
-  GLint current_program;
-  glGetIntegerv(GL_CURRENT_PROGRAM, &current_program);
+bool OkObject::_debugHelpers[OkObject::DEBUG_HELPER_COUNT] = {false, false,
+                                                              false, false};
 
-  if (current_program != 0) {
-    // Get model matrix uniform location
-    GLint modelLoc = glGetUniformLocation(current_program, "model");
-    if (modelLoc != -1) {
-      glm::mat4 model = getTransformMatrix();
-      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+void OkObject::refreshDebugHelpers() {
+  _debugHelpers[DEBUG_ORIGIN] = OkConfig::getBool("debug.origins");
+  _debugHelpers[DEBUG_SPHERE] = OkConfig::getBool("debug.spheres");
+  _debugHelpers[DEBUG_BOX]    = OkConfig::getBool("debug.boxes");
+  _debugHelpers[DEBUG_CENTRE] = OkConfig::getBool("debug.centres");
+}
+
+void OkObject::addDebugLine(const OkPoint &from, const OkPoint &to, float r,
+                            float g, float b) {
+  std::vector<DebugBucket> &buckets = debugBuckets();
+  DebugBucket              *into    = nullptr;
+  for (size_t i = 0; i < buckets.size(); i++) {
+    if (buckets[i].r == r && buckets[i].g == g && buckets[i].b == b) {
+      into = &buckets[i];
+      break;
     }
+  }
+  if (into == nullptr) {
+    DebugBucket made;
+    made.r = r;
+    made.g = g;
+    made.b = b;
+    buckets.push_back(made);
+    into = &buckets.back();
+  }
+  into->verts.push_back(from.x());
+  into->verts.push_back(from.y());
+  into->verts.push_back(from.z());
+  into->verts.push_back(to.x());
+  into->verts.push_back(to.y());
+  into->verts.push_back(to.z());
+}
 
-    // Try to disable texturing
-    GLint hasTexLoc = glGetUniformLocation(current_program, "hasTexture");
+/**
+ * @brief What this object shows about itself: its origin, for the base.
+ *
+ * In WORLD coordinates, because everything added this frame is drawn in
+ * one call with one model matrix -- the identity. An object that drew
+ * its own gizmo under its own matrix cost a draw call and a pair of GL
+ * buffers created and destroyed for three lines, which is what this
+ * replaced.
+ */
+void OkObject::drawDebugHelpers() const {
+  if (!drawOriginAxis && !_debugHelpers[DEBUG_ORIGIN]) {
+    return;
+  }
+  glm::mat4 model = getTransformMatrix();
+  glm::vec4 at    = model * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+  // As long as the object is big, within reason: a lamp post and a
+  // district cannot share one length and both be read.
+  float size = getRadius() * AXIS_FRACTION;
+  if (size < AXIS_MIN_M) {
+    size = AXIS_MIN_M;
+  }
+  if (size > AXIS_MAX_M) {
+    size = AXIS_MAX_M;
+  }
+  OkPoint origin(at.x, at.y, at.z);
+  for (int axis = 0; axis < 3; axis++) {
+    glm::vec4 along(0.0f, 0.0f, 0.0f, 0.0f);
+    along[axis]   = size;
+    glm::vec4 end = model * glm::vec4(along.x, along.y, along.z, 1.0f);
+    addDebugLine(origin, OkPoint(end.x, end.y, end.z), axis == 0 ? 1.0f : 0.0f,
+                 axis == 1 ? 1.0f : 0.0f, axis == 2 ? 1.0f : 0.0f);
+  }
+}
+
+void OkObject::flushDebugHelpers() {
+  std::vector<DebugBucket> &buckets = debugBuckets();
+  if (buckets.empty()) {
+    return;
+  }
+  GLint program = 0;
+  glGetIntegerv(GL_CURRENT_PROGRAM, &program);
+  if (program != 0) {
+    GLint modelLoc = glGetUniformLocation(program, "model");
+    if (modelLoc != -1) {
+      glm::mat4 identity(1.0f);
+      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(identity));
+    }
+    GLint hasTexLoc = glGetUniformLocation(program, "hasTexture");
     if (hasTexLoc != -1) {
       glUniform1i(hasTexLoc, 0);
     }
+    GLint colorLoc = glGetUniformLocation(program, "wireframeColor");
 
-    // Draw each axis with different colors
-    GLint colorLoc = glGetUniformLocation(current_program, "wireframeColor");
-
-    // Draw X-axis in red
-    if (colorLoc != -1) {
-      glUniform4f(colorLoc, 1.0f, 0.0f, 0.0f, 1.0f);
+    GLuint vao = 0;
+    GLuint vbo = 0;
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+    for (size_t i = 0; i < buckets.size(); i++) {
+      if (buckets[i].verts.empty()) {
+        continue;
+      }
+      glBufferData(
+          GL_ARRAY_BUFFER,
+          static_cast<GLsizeiptr>(buckets[i].verts.size() * sizeof(float)),
+          buckets[i].verts.data(), GL_STREAM_DRAW);
+      if (colorLoc != -1) {
+        glUniform4f(colorLoc, buckets[i].r, buckets[i].g, buckets[i].b, 1.0f);
+      }
+      glDrawArrays(GL_LINES, 0,
+                   static_cast<GLsizei>(buckets[i].verts.size() / 3));
     }
-    glDrawArrays(GL_LINES, 0, 2);
-
-    // Draw Y-axis in green
-    if (colorLoc != -1) {
-      glUniform4f(colorLoc, 0.0f, 1.0f, 0.0f, 1.0f);
-    }
-    glDrawArrays(GL_LINES, 2, 2);
-
-    // Draw Z-axis in blue
-    if (colorLoc != -1) {
-      glUniform4f(colorLoc, 0.0f, 0.0f, 1.0f, 1.0f);
-    }
-    glDrawArrays(GL_LINES, 4, 2);
+    glBindVertexArray(0);
+    glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
   }
-
-  // Clean up temporary buffers
-  glBindVertexArray(0);
-  glDeleteBuffers(1, &VBO);
-  glDeleteVertexArrays(1, &VAO);
+  buckets.clear();
 }

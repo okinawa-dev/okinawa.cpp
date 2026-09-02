@@ -885,6 +885,101 @@ bool OkItem::intersectRay(const OkRay &ray, float *outDistance) const {
  * @param newVertexCount The number of new vertices.
  * @note This method updates the OpenGL buffers without recreating the item.
  */
+void OkItem::drawDebugHelpers() const {
+  OkObject::drawDebugHelpers();
+
+  bool sphere = debugHelperOn(DEBUG_SPHERE);
+  bool box    = debugHelperOn(DEBUG_BOX);
+  bool centre = debugHelperOn(DEBUG_CENTRE);
+  if (!sphere && !box && !centre) {
+    return;
+  }
+  // The sphere as the item states it, in the world: the centre through
+  // the item's own transform, and the radius as it reports it -- which
+  // an item drawing its mesh many times reports for all of them, not
+  // for one.
+  const std::array<float, RGB> &local = getSphereCenter();
+  glm::mat4                     model = getTransformMatrix();
+  glm::vec4 at = model * glm::vec4(local[0], local[1], local[2], 1.0f);
+  OkPoint   middle(at.x, at.y, at.z);
+  float     reach = getRadius();
+  if (reach <= 0.0f) {
+    return;  // nothing to say about how far it reaches
+  }
+
+  // How many segments a circle is drawn with: twelve reads as a circle
+  // at any distance worth looking at one from, and three of them --
+  // one per plane -- read as a sphere.
+  const int   STEPS = 12;
+  const float TAU   = 6.28318f;
+  if (sphere) {
+    for (int plane = 0; plane < 3; plane++) {
+      for (int i = 0; i < STEPS; i++) {
+        float a0 = TAU * static_cast<float>(i) / static_cast<float>(STEPS);
+        float a1 = TAU * static_cast<float>(i + 1) / static_cast<float>(STEPS);
+        std::array<float, RGB> p0  = {0.0f, 0.0f, 0.0f};
+        std::array<float, RGB> p1  = {0.0f, 0.0f, 0.0f};
+        int                    u   = (plane + 1) % 3;
+        int                    v   = (plane + 2) % 3;
+        p0[static_cast<size_t>(u)] = std::cos(a0) * reach;
+        p0[static_cast<size_t>(v)] = std::sin(a0) * reach;
+        p1[static_cast<size_t>(u)] = std::cos(a1) * reach;
+        p1[static_cast<size_t>(v)] = std::sin(a1) * reach;
+        addDebugLine(
+            OkPoint(middle.x() + p0[0], middle.y() + p0[1], middle.z() + p0[2]),
+            OkPoint(middle.x() + p1[0], middle.y() + p1[1], middle.z() + p1[2]),
+            1.0f, 0.85f, 0.2f);
+      }
+    }
+  }
+  if (box) {
+    // The box AROUND that sphere, which is what a broad-phase test
+    // actually uses. Drawn from the same numbers, so a box that does
+    // not contain its sphere is a fault you can see.
+    for (int axis = 0; axis < 3; axis++) {
+      for (int corner = 0; corner < 4; corner++) {
+        std::array<float, RGB> from     = {0.0f, 0.0f, 0.0f};
+        std::array<float, RGB> to       = {0.0f, 0.0f, 0.0f};
+        int                    u        = (axis + 1) % 3;
+        int                    v        = (axis + 2) % 3;
+        float                  su       = (corner & 1) != 0 ? reach : -reach;
+        float                  sv       = (corner & 2) != 0 ? reach : -reach;
+        from[static_cast<size_t>(u)]    = su;
+        from[static_cast<size_t>(v)]    = sv;
+        to[static_cast<size_t>(u)]      = su;
+        to[static_cast<size_t>(v)]      = sv;
+        from[static_cast<size_t>(axis)] = -reach;
+        to[static_cast<size_t>(axis)]   = reach;
+        addDebugLine(
+            OkPoint(middle.x() + from[0], middle.y() + from[1],
+                    middle.z() + from[2]),
+            OkPoint(middle.x() + to[0], middle.y() + to[1], middle.z() + to[2]),
+            0.2f, 0.9f, 1.0f);
+      }
+    }
+  }
+  if (centre) {
+    // A small cross where the sphere is centred. Small on purpose: it
+    // is a point, and a point drawn as long lines is mistaken for the
+    // axes it is standing next to.
+    float arm = reach * 0.1f;
+    if (arm < 0.1f) {
+      arm = 0.1f;
+    }
+    for (int axis = 0; axis < 3; axis++) {
+      std::array<float, RGB> from     = {0.0f, 0.0f, 0.0f};
+      std::array<float, RGB> to       = {0.0f, 0.0f, 0.0f};
+      from[static_cast<size_t>(axis)] = -arm;
+      to[static_cast<size_t>(axis)]   = arm;
+      addDebugLine(
+          OkPoint(middle.x() + from[0], middle.y() + from[1],
+                  middle.z() + from[2]),
+          OkPoint(middle.x() + to[0], middle.y() + to[1], middle.z() + to[2]),
+          1.0f, 0.2f, 0.9f);
+    }
+  }
+}
+
 void OkItem::updateVertexData(float *newVertexData, long newVertexCount) {
   if (!newVertexData || newVertexCount <= 0) {
     OkLogger::error("Item", "Invalid vertex data for update");

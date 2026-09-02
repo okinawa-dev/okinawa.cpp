@@ -23,6 +23,21 @@ void OkConfig::setDefaults() {
   boolValues["graphics.textures"]    = true;
   boolValues["graphics.drawCameras"] = true;
 
+  // THE DRAW HELPERS: what an object shows about ITSELF, on top of the
+  // thing it is. Its origin, the sphere it claims to fit in, the point
+  // that sphere is centred on. They are a way of asking "where is this
+  // actually" of a whole world at once, which is a question that only
+  // has an answer when everything answers it together.
+  //
+  // Each object reads these while it draws itself. Nothing walks the
+  // scene switching them on object by object: a switch pushed into
+  // every object is state to keep in step with, and the first thing
+  // added after the walk was written would not be in step.
+  boolValues["debug.origins"] = false;
+  boolValues["debug.spheres"] = false;
+  boolValues["debug.boxes"]   = false;
+  boolValues["debug.centres"] = false;
+
   // Window settings
   intValues["window.width"]    = 800;
   intValues["window.height"]   = 600;

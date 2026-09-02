@@ -442,6 +442,10 @@ void OkCore::loop(const OkCoreCallback &stepCallback,
       // Console first: while open it captures the keyboard, so nothing
       // below (avatar, cameras, game callbacks) sees any key.
       OkConsole::update(dt);
+      // The debug drawings every object makes of itself are switched
+      // from the config; read once here, so that fourteen thousand
+      // objects do not each look a string up in a map to find out.
+      OkObject::refreshDebugHelpers();
       // Whether the keyboard is being ignored, and how to take it back.
       OkInputNotice::update();
 

@@ -217,6 +217,17 @@ public:
   void updateVertexData(float *newVertexData, long newVertexCount);
 
   /**
+   * @brief The base's axes, and what only an item can add: its extent.
+   *
+   * The sphere it claims to fit in, the box around that sphere and the
+   * point the sphere is centred on -- which is not its origin, and the
+   * two being drawn together is the whole point: a mesh baked in the
+   * coordinates of the region it came from sits a long way from the
+   * origin it is placed by, and that is invisible until it is drawn.
+   */
+  void drawDebugHelpers() const override;
+
+  /**
    * @brief Where a ray crosses this item's own triangles, or false if it
    *        misses.
    *
