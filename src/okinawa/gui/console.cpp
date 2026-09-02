@@ -87,8 +87,17 @@ void OkConsole::initialize() {
               return;
             }
             OkConsole::print("no config keys match: " + args[0]);
+            return;
           }
+          // Bare `set`: everything there is. Somebody who types it is
+          // asking what can be changed, and "usage:" answers a
+          // question they did not ask.
           OkConsole::print("usage: set <config-key> <value>");
+          std::vector<std::string> all = OkConfig::getKeysWithPrefix("");
+          for (std::size_t i = 0; i < all.size(); i++) {
+            OkConsole::print("  " + all[i] + " = " +
+                             OkConfig::getValueAsString(all[i]));
+          }
           return;
         }
         const std::string &key = args[0];
