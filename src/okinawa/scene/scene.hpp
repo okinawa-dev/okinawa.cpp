@@ -42,6 +42,20 @@ public:
   OkItem               *findItem(const std::string &name) const;
   std::vector<OkItem *> findItems(const std::string &prefix) const;
 
+  /**
+   * @brief Draw (or stop drawing) the origin axes of everything here.
+   *
+   * Every object carries the switch already; what was missing was a way
+   * to reach all of them at once. It is a debugging view of where
+   * things ARE -- what a rotation will turn about, where a piece is
+   * anchored -- and the answer is only useful for the whole scene at
+   * once: one object's axes tell you nothing about whether it sits
+   * where its neighbours do.
+   *
+   * @return how many objects were switched, children included.
+   */
+  size_t setOriginAxes(bool on);
+
   // Getters
   bool isActive() const {
     return _isActive;

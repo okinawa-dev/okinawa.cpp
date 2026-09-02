@@ -80,6 +80,33 @@ void OkScene::addObject(OkObject *object) {
 /**
  * @brief Find a root OkItem by exact name (first match), or null.
  */
+namespace {
+
+  /** @brief Switch one object's axes, and its children's. */
+  size_t axesInTree(OkObject *object, bool on) {
+    if (object == nullptr) {
+      return 0;
+    }
+    object->setDrawOriginAxis(on);
+    size_t    count = 1;
+    OkObject *child = object->getFirstChild();
+    while (child != nullptr) {
+      count += axesInTree(child, on);
+      child = child->getNextSibling();
+    }
+    return count;
+  }
+
+}  // namespace
+
+size_t OkScene::setOriginAxes(bool on) {
+  size_t count = 0;
+  for (size_t i = 0; i < rootObjects.size(); i++) {
+    count += axesInTree(rootObjects[i], on);
+  }
+  return count;
+}
+
 OkItem *OkScene::findItem(const std::string &name) const {
   for (size_t i = 0; i < rootObjects.size(); ++i) {
     if (rootObjects[i]->getName() == name) {
