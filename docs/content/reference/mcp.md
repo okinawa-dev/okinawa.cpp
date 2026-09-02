@@ -93,6 +93,13 @@ if (input != nullptr && input->injectedPointerUsed()) {
 `takeInjectedWheel` clears what it returns, so read it once a frame: a
 notch delivered twice is one turn of the wheel doing two steps.
 
+And ask `injectedPointerUsed()` every frame rather than remembering the
+answer. The injected pointer **goes quiet two seconds after the last
+call, and the instant the physical mouse moves**: a hand on the desk
+beats anything driving from outside. Fed unconditionally once it had
+been used, it pushes a stale position every frame and the person at the
+window finds their own mouse does nothing.
+
 ## Taking the keyboard, and giving it back
 
 An agent measuring something needs the view to hold still, and a person

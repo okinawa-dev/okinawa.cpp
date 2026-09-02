@@ -337,16 +337,26 @@ std::string OkInput::drainChars() {
  * @param key             The key to inject.
  * @param durationSeconds How long the key should read as pressed.
  */
+// How long the injected pointer goes on speaking after the last call
+// that touched it. Long enough that a gesture arriving as several MCP
+// calls is one drive, short enough that a person reaching for their own
+// mouse does not have to wait for it.
+static const double POINTER_DRIVE_SECONDS = 2.0;
+
+bool OkInput::injectedPointerUsed() const {
+  return _pointerUntil > 0.0 && glfwGetTime() < _pointerUntil;
+}
+
 void OkInput::injectPointerTo(double x, double y) {
-  _pointerX    = x;
-  _pointerY    = y;
-  _pointerUsed = true;
+  _pointerX     = x;
+  _pointerY     = y;
+  _pointerUntil = glfwGetTime() + POINTER_DRIVE_SECONDS;
 }
 
 void OkInput::injectPointerBy(double dx, double dy) {
   _pointerX += dx;
   _pointerY += dy;
-  _pointerUsed = true;
+  _pointerUntil = glfwGetTime() + POINTER_DRIVE_SECONDS;
 }
 
 void OkInput::injectPointerButton(int button, bool down) {
@@ -354,12 +364,12 @@ void OkInput::injectPointerButton(int button, bool down) {
     return;
   }
   _pointerDown[button] = down;
-  _pointerUsed         = true;
+  _pointerUntil        = glfwGetTime() + POINTER_DRIVE_SECONDS;
 }
 
 void OkInput::injectPointerWheel(double notches) {
   _pointerWheel += notches;
-  _pointerUsed = true;
+  _pointerUntil = glfwGetTime() + POINTER_DRIVE_SECONDS;
 }
 
 void OkInput::injectKey(OkKey key, double durationSeconds) {

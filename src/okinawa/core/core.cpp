@@ -780,6 +780,14 @@ void OkCore::mouseCallback(GLFWwindow *window, double xpos, double ypos) {
     return;
   }
 
+  // A HAND ON THE DESK BEATS ANYTHING DRIVING FROM OUTSIDE. The moment
+  // the physical mouse moves, whatever was injected stops being fed to
+  // the application: two pointers fighting over one cursor is a person
+  // finding that their own mouse does nothing.
+  if (_input != nullptr) {
+    _input->clearInjectedPointer();
+  }
+
   // The pointer's motion is followed from here on whether or not the
   // cursor is captured, so that capturing never arrives as a jump -- and
   // so that an application which has refused capture altogether can

@@ -121,9 +121,24 @@ public:
     _pointerWheel = 0.0;
     return had;
   }
-  /** @brief Whether anything has moved the injected pointer at all. */
-  bool injectedPointerUsed() const {
-    return _pointerUsed;
+  /**
+   * @brief Whether the injected pointer is being driven RIGHT NOW.
+   *
+   * It goes quiet on its own a couple of seconds after the last call,
+   * and the moment the physical mouse moves. Left latched on -- which
+   * is how it was written first -- an application feeding it into its
+   * interface pushes a stale position every frame and the person at the
+   * window finds their own mouse does nothing: an agent that touched
+   * the pointer once takes it for good.
+   */
+  bool injectedPointerUsed() const;
+
+  /** @brief Give the pointer back to the person at the window. */
+  void clearInjectedPointer() {
+    _pointerUntil = 0.0;
+    for (int i = 0; i < POINTER_BUTTONS; i++) {
+      _pointerDown[i] = false;
+    }
   }
 
   // Enable/disable physical (keyboard/mouse) input. When disabled, process()
@@ -360,7 +375,11 @@ private:
   double           _pointerY                     = 0.0;
   bool             _pointerDown[POINTER_BUTTONS] = {false, false, false};
   double           _pointerWheel                 = 0.0;
-  bool             _pointerUsed                  = false;
+  // When the injected pointer stops speaking for itself. Refreshed by
+  // every call, so a gesture made of several -- press, move, move,
+  // release -- is one continuous drive rather than four that expire
+  // between the parts.
+  double _pointerUntil = 0.0;
 
   // Pointer lock state: true while the cursor is captured for mouse-look.
   bool _cursorCaptured;

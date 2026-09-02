@@ -75,6 +75,12 @@ handover for Dear ImGui.
 `takeInjectedWheel()` clears what it returns. Read it once a frame: a
 notch delivered twice is one turn of the wheel doing two steps.
 
+`injectedPointerUsed()` is a question about **now**, not a latch: it
+goes false two seconds after the last call that touched the pointer,
+and the moment the physical mouse moves. A hand on the desk beats
+anything driving from outside, and an application that trusted a latch
+here leaves the person at the window with a mouse that does nothing.
+
 ### An application gate is not somebody being held out
 
 `setPhysicalInputEnabled(false)` and `blockPhysicalInput(seconds)` reach
