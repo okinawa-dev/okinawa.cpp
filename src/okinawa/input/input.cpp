@@ -337,6 +337,31 @@ std::string OkInput::drainChars() {
  * @param key             The key to inject.
  * @param durationSeconds How long the key should read as pressed.
  */
+void OkInput::injectPointerTo(double x, double y) {
+  _pointerX    = x;
+  _pointerY    = y;
+  _pointerUsed = true;
+}
+
+void OkInput::injectPointerBy(double dx, double dy) {
+  _pointerX += dx;
+  _pointerY += dy;
+  _pointerUsed = true;
+}
+
+void OkInput::injectPointerButton(int button, bool down) {
+  if (button < 0 || button >= POINTER_BUTTONS) {
+    return;
+  }
+  _pointerDown[button] = down;
+  _pointerUsed         = true;
+}
+
+void OkInput::injectPointerWheel(double notches) {
+  _pointerWheel += notches;
+  _pointerUsed = true;
+}
+
 void OkInput::injectKey(OkKey key, double durationSeconds) {
   if (key <= OK_KEY_UNKNOWN || key >= OK_KEY_COUNT) {
     return;

@@ -85,6 +85,47 @@ public:
   // edge-triggered actions. Call from the engine loop thread.
   void injectKey(OkKey key, double durationSeconds);
 
+  // THE POINTER, INJECTED, AND IN WHAT.
+  //
+  // Window pixels with the origin at the top left -- the frame a
+  // screenshot is in, so an agent looking at a picture of the window
+  // can name a place in it without converting anything. "Move up" is
+  // not an instruction until it says how far and in what.
+  //
+  // The application is the one that knows what to do with it: the
+  // engine keeps the state and says it changed, and whoever draws an
+  // interface of its own feeds it into that interface. Nothing here
+  // pretends to be GLFW.
+  void injectPointerTo(double x, double y);
+  void injectPointerBy(double dx, double dy);
+  void injectPointerButton(int button, bool down);
+  void injectPointerWheel(double notches);
+
+  /** @brief Where the injected pointer is, in window pixels. */
+  void injectedPointer(double *x, double *y) const {
+    *x = _pointerX;
+    *y = _pointerY;
+  }
+  /** @brief Whether an injected button is held. 0 left, 1 right, 2 middle. */
+  bool injectedButton(int button) const {
+    return button >= 0 && button < POINTER_BUTTONS && _pointerDown[button];
+  }
+  /**
+   * @brief The wheel turned since this was last asked, and clears it.
+   *
+   * Read once a frame by whoever applies it: a notch delivered twice is
+   * a piece that rises two steps for one turn of the wheel.
+   */
+  double takeInjectedWheel() {
+    double had    = _pointerWheel;
+    _pointerWheel = 0.0;
+    return had;
+  }
+  /** @brief Whether anything has moved the injected pointer at all. */
+  bool injectedPointerUsed() const {
+    return _pointerUsed;
+  }
+
   // Enable/disable physical (keyboard/mouse) input. When disabled, process()
   // ignores glfwGetKey polling (injected keys still apply) and the cursor is
   // released (GLFW_CURSOR_NORMAL); useful to drive an instance only via the
@@ -311,6 +352,15 @@ private:
   // a panel, and a notice saying an agent holds the keyboard every time
   // the mouse touches a window is a lie about what is happening.
   bool _blockIsHold = false;
+
+  // The injected pointer: where it is, which of its buttons are held,
+  // and what the wheel has turned since somebody last read it.
+  static const int POINTER_BUTTONS               = 3;
+  double           _pointerX                     = 0.0;
+  double           _pointerY                     = 0.0;
+  bool             _pointerDown[POINTER_BUTTONS] = {false, false, false};
+  double           _pointerWheel                 = 0.0;
+  bool             _pointerUsed                  = false;
 
   // Pointer lock state: true while the cursor is captured for mouse-look.
   bool _cursorCaptured;

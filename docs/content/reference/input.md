@@ -17,6 +17,14 @@ nav_order: 7
 | `bool isKeyJustReleased(OkKey key) const` | True only on the frame the key is released. |
 | `OkInputState getState() const` | The digested per-frame input state. |
 | `void injectKey(OkKey key, double durationSeconds)` | Synthesize a key press (used to drive the app programmatically). |
+| `void injectPointerTo(double x, double y)` | Put the injected pointer at a place, in window pixels from the top left. |
+| `void injectPointerBy(double dx, double dy)` | Move it from where it is, in the same pixels. |
+| `void injectPointerButton(int button, bool down)` | Hold or release one of its buttons: 0 left, 1 right, 2 middle. |
+| `void injectPointerWheel(double notches)` | Turn its wheel, positive away from the hand. |
+| `void injectedPointer(double *x, double *y) const` | Where it is. |
+| `bool injectedButton(int button) const` | Whether that button is held. |
+| `double takeInjectedWheel()` | What the wheel has turned since this was last asked, **and clears it**. |
+| `bool injectedPointerUsed() const` | Whether anything has driven it at all. |
 | `void setPhysicalInputEnabled(bool enabled)` | Enable/disable physical keyboard/mouse input. |
 | `void setCursorCaptured(bool captured)` | Capture (hide + lock for mouse-look) or release the OS cursor. |
 | `void setPointerLockOnClick(bool enabled)` | Whether a click may take the pointer at all (default on). |
@@ -50,6 +58,36 @@ and how to take it back. Nothing running in the background can talk its
 way past those. `physicalInputBlockedFor()` reports what is left: `0`
 when input is free, and a negative number for a block with no deadline
 (what the launch flag asks for).
+
+### The injected pointer
+
+Keys are half of driving an application; the other half is the pointer,
+and an application with an interface of its own is nearly all pointer.
+The engine keeps an injected pointer -- a position in **window pixels
+from the top left**, three buttons and a wheel -- and says whether
+anything has used it. What to do with it is the application's business,
+exactly as with injected keys: nothing here pretends to be the window
+system, and a UI library reading the window system directly will not
+see it unless the application hands it over. The MCP `mouse` tool drives
+these, and the [MCP reference](mcp.html#driving-the-pointer) shows the
+handover for Dear ImGui.
+
+`takeInjectedWheel()` clears what it returns. Read it once a frame: a
+notch delivered twice is one turn of the wheel doing two steps.
+
+### An application gate is not somebody being held out
+
+`setPhysicalInputEnabled(false)` and `blockPhysicalInput(seconds)` reach
+the same gate, and they are not the same thing. The first is an
+application routing input somewhere else for a moment -- an editor does
+it every time the cursor crosses one of its panels, so that a drag
+inside a window does not also fly the camera. The second is somebody
+outside holding the keyboard.
+
+Only the second is reported by `physicalInputBlockedFor()` and only the
+second draws the notice on screen. They were one thing once, and the
+result was an editor announcing that an agent held the keyboard every
+time the mouse touched a window.
 
 ### Combos: at once, and one after another
 

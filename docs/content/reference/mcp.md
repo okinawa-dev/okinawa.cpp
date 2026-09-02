@@ -18,6 +18,7 @@ The server exposes these tools to a connected agent:
 | `screenshot` | Writes the current frame to a PNG file on disk (for a human) and returns the path. Optional `path` (default `okinawa-screenshot.png`). |
 | `press_key` | Holds a key for a duration to drive the app for gameplay: W/A/S/D move, SPACE/T/R/F are actions, 1-9 switch camera, arrows turn. Args: `key`, `duration_ms` (default 120). (For positioning the view, use `view` instead.) |
 | `press_keys` | Holds several keys at once (e.g. W and D for diagonal movement). Args: `keys`, `duration_ms`. |
+| `mouse` | **The pointer tool.** Moves the pointer, presses its buttons, drags with one held, or turns the wheel. `action` is `move`, `down`, `up`, `click`, `drag` or `wheel`. **Everything is in window pixels, origin at the top left** -- the same frame a screenshot is in, so a place seen in an image can be named here without converting anything. `move` takes an absolute `x`,`y` or a relative `dx`,`dy`; `drag` goes from `x`,`y` to `to_x`,`to_y` with the `button` held, delivered in `steps` moves (default 12); `wheel` turns by `notches`, positive away from the hand. `button` is `left`, `right` or `middle` (default left). Returns where the pointer ended up. See below on what an application has to do to receive it. |
 | `view` | **The camera tool.** Sets the whole viewpoint in one call. `camera` (optional) activates a camera **by its registered name** (`get_state` lists them under `cameras`); the tool then drives the *active* camera and never force-switches on its own. `x`, `y`, `z` place the avatar. Orbit cameras take `yaw_deg` (compass facing), `pitch_deg` (tilt; negative looks down, `~-89` = top-down) and `distance` (metres back); overhead/fixed cameras take just `distance` (their height). All fields optional; an omitted field keeps its current value. Persistent (survives input). `get_state` returns the same values, with the active camera's name, under `view` — reproduce any viewpoint by passing them straight back. Returns the resulting view. |
 | `set_item_visible` | Show/hide scene items by name to isolate geometry. With `prefix: true` it applies to every item whose name starts with `name` (e.g. `tree_` to hide every tree at once, or `tree_oak_` to narrow it further); otherwise it toggles the single item with that exact `name`. Returns how many items changed. |
 | `console` | Runs one console command line, exactly as if it had been typed into the drop-down console and submitted, and returns what it printed. Arg: `line` (e.g. `time 22`, `set shadows.cascades 3`); with no `line` it returns the registered command names instead. The console does not need to be open, and its open state is left as it was found. This is how an agent drives the console — see the note below on why typing it key by key is not a real option. |
@@ -30,6 +31,67 @@ The server exposes these tools to a connected agent:
 Key names accepted by `press_key`/`press_keys`: single letters and digits, `space`, `up`/`down`/`left`/`right`, `escape`, `enter`, `tab`, `backspace`, `grave` (or `backtick`), `period`, `minus`. `grave` toggles the engine console; while the console is open, injected printable keys feed its input line, so a command *can* be typed a key at a time (`grave`, then the letters with `space`/`period`, then `enter`).
 
 Do not drive the console that way. Each key is one MCP call with its own round trip, so a fifteen-character line costs sixteen of them and takes about as many seconds — long enough that an agent stops reaching for the commands it most needs while debugging. Use `console` instead: one call, one line, and the command's own output comes back as the result.
+
+## Driving the pointer
+
+`press_key` reaches anything bound to the keyboard, which in a game is
+most of it. An application with an interface of its own -- panels,
+menus, things dragged into place -- is a different matter: none of that
+is reachable from a keyboard, so without a pointer an agent working on
+one has to ask a person to make the gesture and send a picture back.
+
+**Say how far, and in what.** "Move up" is not an instruction: up by
+how much, measured in what? Every number this tool takes is in **window
+pixels with the origin at the top left**, which is the frame the agent
+is already looking at in `view_frame`. A position read off a screenshot
+can be handed straight back.
+
+```json
+{"action": "move",  "x": 700, "y": 400}
+{"action": "move",  "dx": 0, "dy": -120}
+{"action": "click", "x": 30, "y": 9, "button": "left"}
+{"action": "drag",  "x": 1100, "y": 500, "to_x": 1250, "to_y": 420, "steps": 10}
+{"action": "wheel", "notches": 3}
+```
+
+Two things are deliberate and neither is free to change:
+
+- **A click holds its button for about four frames.** An interface that
+  never sees the button held does not see a click at all.
+- **A drag is delivered in steps, a frame apart.** Half of what an
+  interface does with a drag it does *while the drag is happening*; one
+  jump from start to end is a gesture whose middle nothing sees.
+
+### What the application has to do
+
+The engine keeps the injected pointer and says it has been used;
+applying it is the application's business, exactly like the injected
+keys. An application that draws its own interface with a UI library has
+to hand the pointer to that library itself -- the library's backend
+reads the window system directly, and an injected pointer is not the
+window system. With Dear ImGui, between the backend's new frame and
+your own:
+
+```cpp
+OkInput *input = OkCore::getInput();
+if (input != nullptr && input->injectedPointerUsed()) {
+  ImGuiIO &io = ImGui::GetIO();
+  double px = 0.0;
+  double py = 0.0;
+  input->injectedPointer(&px, &py);
+  io.AddMousePosEvent(static_cast<float>(px), static_cast<float>(py));
+  for (int b = 0; b < 3; b++) {
+    io.AddMouseButtonEvent(b, input->injectedButton(b));
+  }
+  double wheel = input->takeInjectedWheel();   // read once: clears it
+  if (wheel != 0.0) {
+    io.AddMouseWheelEvent(0.0f, static_cast<float>(wheel));
+  }
+}
+```
+
+`takeInjectedWheel` clears what it returns, so read it once a frame: a
+notch delivered twice is one turn of the wheel doing two steps.
 
 ## Taking the keyboard, and giving it back
 

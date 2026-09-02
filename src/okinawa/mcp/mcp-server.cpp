@@ -68,6 +68,8 @@ namespace {
   const double kMsPerSecond   = 1000.0;
   // Slack added to the hold before the pose is read, so the loop has
   // rendered at least one frame past the release.
+  const long kClickHoldMs  = 60;
+  const long kDragStepMs   = 16;
   const long kPoseSettleMs = 40;
   // Mean this far above the median means long frames are dragging it:
   // that is what a hitch looks like in a summary.
@@ -462,6 +464,55 @@ struct OkMcpServer::Impl {
         {"additionalProperties", false}};
     tools.push_back(pressKey);
 
+    json mouse;
+    mouse["name"] = "mouse";
+    mouse["description"] =
+        "Drive the pointer: move it, press its buttons, drag with one held, "
+        "or turn the wheel. EVERYTHING IS IN WINDOW PIXELS, origin at the top "
+        "left -- the same frame a screenshot is in, so a place seen in an "
+        "image can be named here without converting anything. `move` takes "
+        "either an absolute x,y or a relative dx,dy. `drag` moves with a "
+        "button held, which is how a view is turned or a piece is aimed. "
+        "The wheel is in notches, positive away from the hand.";
+    mouse["inputSchema"] = {
+        {"type", "object"},
+        {"properties",
+         {{"action",
+           {{"type", "string"},
+            {"enum",
+             json::array({"move", "down", "up", "click", "drag", "wheel"})},
+            {"description", "What to do with the pointer."}}},
+          {"x", {{"type", "number"}, {"description", "Where to, in pixels."}}},
+          {"y", {{"type", "number"}, {"description", "Where to, in pixels."}}},
+          {"dx",
+           {{"type", "number"},
+            {"description", "How far across, in pixels, from where it is."}}},
+          {"dy",
+           {{"type", "number"},
+            {"description", "How far down, in pixels, from where it is."}}},
+          {"to_x",
+           {{"type", "number"}, {"description", "Where a drag ends, in px."}}},
+          {"to_y",
+           {{"type", "number"}, {"description", "Where a drag ends, in px."}}},
+          {"button",
+           {{"type", "string"},
+            {"enum", json::array({"left", "right", "middle"})},
+            {"description", "Which button (default left)."}}},
+          {"notches",
+           {{"type", "number"},
+            {"description",
+             "Wheel turn, positive away from the hand. One notch is one "
+             "step of whatever the application does with it."}}},
+          {"steps",
+           {{"type", "number"},
+            {"description",
+             "How many moves a drag is delivered in (default 12). A drag "
+             "delivered in one jump is a gesture no interface sees the "
+             "middle of."}}}}},
+        {"required", json::array({"action"})},
+        {"additionalProperties", false}};
+    tools.push_back(mouse);
+
     json pressKeys;
     pressKeys["name"] = "press_keys";
     pressKeys["description"] =
@@ -780,6 +831,113 @@ struct OkMcpServer::Impl {
         return json{{"line", line}, {"output", out}};
       });
       return textResult(r.dump(2));
+    }
+
+    if (name == "mouse") {
+      // Read here, on the request thread, and handed over as plain
+      // values: what runs on the loop must not be holding a json.
+      std::string action = args.value("action", std::string());
+      std::string button = args.value("button", std::string("left"));
+      int         which  = button == "right" ? 1 : (button == "middle" ? 2 : 0);
+      bool        haveXY = args.contains("x") && args.contains("y");
+      double      x      = args.value("x", 0.0);
+      double      y      = args.value("y", 0.0);
+      double      dx     = args.value("dx", 0.0);
+      double      dy     = args.value("dy", 0.0);
+      double      toX    = args.value("to_x", 0.0);
+      double      toY    = args.value("to_y", 0.0);
+      double      notches = args.value("notches", 0.0);
+      int         steps   = static_cast<int>(args.value("steps", 12.0));
+      if (steps < 1) {
+        steps = 1;
+      }
+
+      if (action == "move") {
+        runOnLoop([haveXY, x, y, dx, dy]() -> json {
+          OkInput *input = OkCore::getInput();
+          if (haveXY) {
+            input->injectPointerTo(x, y);
+          } else {
+            input->injectPointerBy(dx, dy);
+          }
+          return json::object();
+        });
+      } else if (action == "down" || action == "up") {
+        bool down = action == "down";
+        runOnLoop([which, down, haveXY, x, y]() -> json {
+          OkInput *input = OkCore::getInput();
+          if (haveXY) {
+            input->injectPointerTo(x, y);
+          }
+          input->injectPointerButton(which, down);
+          return json::object();
+        });
+      } else if (action == "click") {
+        // Down and up, a frame apart: an interface that never sees the
+        // button held does not see a click at all.
+        runOnLoop([which, haveXY, x, y]() -> json {
+          OkInput *input = OkCore::getInput();
+          if (haveXY) {
+            input->injectPointerTo(x, y);
+          }
+          input->injectPointerButton(which, true);
+          return json::object();
+        });
+        std::this_thread::sleep_for(std::chrono::milliseconds(kClickHoldMs));
+        runOnLoop([which]() -> json {
+          OkCore::getInput()->injectPointerButton(which, false);
+          return json::object();
+        });
+      } else if (action == "drag") {
+        // In steps, with the button held: a drag delivered in one jump
+        // is a gesture whose middle nothing sees, and half of what an
+        // interface does with a drag is done while it is happening.
+        runOnLoop([which, haveXY, x, y]() -> json {
+          OkInput *input = OkCore::getInput();
+          if (haveXY) {
+            input->injectPointerTo(x, y);
+          }
+          input->injectPointerButton(which, true);
+          return json::object();
+        });
+        for (int i = 1; i <= steps; i++) {
+          double f  = static_cast<double>(i) / steps;
+          double px = x + (toX - x) * f;
+          double py = y + (toY - y) * f;
+          runOnLoop([px, py]() -> json {
+            OkCore::getInput()->injectPointerTo(px, py);
+            return json::object();
+          });
+          std::this_thread::sleep_for(std::chrono::milliseconds(kDragStepMs));
+        }
+        runOnLoop([which]() -> json {
+          OkCore::getInput()->injectPointerButton(which, false);
+          return json::object();
+        });
+      } else if (action == "wheel") {
+        runOnLoop([notches, haveXY, x, y]() -> json {
+          OkInput *input = OkCore::getInput();
+          if (haveXY) {
+            input->injectPointerTo(x, y);
+          }
+          input->injectPointerWheel(notches);
+          return json::object();
+        });
+      } else {
+        return errorResult("unknown mouse action: " + action);
+      }
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(kPoseSettleMs));
+      json where = runOnLoop([]() -> json {
+        double px = 0.0;
+        double py = 0.0;
+        OkCore::getInput()->injectedPointer(&px, &py);
+        json at;
+        at["x"] = px;
+        at["y"] = py;
+        return at;
+      });
+      return textResult(action + " done, pointer at " + where.dump());
     }
 
     if (name == "press_key" || name == "press_keys") {

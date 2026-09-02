@@ -247,6 +247,43 @@ OkTextureHandler::getInstance()->removeReference("label");  // item owns it now
 Code that keeps the texture alive for its own use (a sheet, a cached
 atlas) simply keeps its reference and does nothing extra.
 
+## Debug helpers
+
+Every object can draw a few things **about itself** on top of the thing
+it is: the axes at its origin, the sphere it claims to fit in, the box
+around that sphere, and where that sphere is centred. They answer "where
+is this actually", and that question only has an answer when a whole
+world answers it at once — one object's axes say nothing about whether
+it is anchored the way its neighbours are.
+
+The switches are config keys (`debug.origins`, `debug.spheres`,
+`debug.boxes`, `debug.centres`) and **each object reads them while it
+draws itself**:
+
+```cpp
+OkConfig::setBool("debug.spheres", true);   // or `set debug.spheres 1`
+item->setDrawOriginAxis(true);              // this one, switch or not
+```
+
+Two decisions worth knowing, because both were mistakes first:
+
+- **Nothing walks the scene switching a flag on in every object.** That
+  is the scene knowing about gizmos, which is not its business, and it
+  is state to keep in step with: the next object attached after the walk
+  is not in step. The switches are read once a frame into plain
+  booleans — a config lookup by string, fourteen thousand times a frame,
+  is milliseconds spent on a switch that is usually off.
+- **An object adds lines to a buffer; it does not draw them.** One draw
+  call for the frame, and one pair of GL buffers, instead of one of each
+  per object: the first version created and destroyed a vertex array
+  for three lines, per object, per frame.
+
+A subclass extends `drawDebugHelpers()` with whatever only it knows —
+`OkItem` adds its sphere and its centre, because the base knows where it
+is but not how far it reaches. The axes are scaled to the object's own
+radius, since a lamp post and a district cannot share one length and
+both be legible.
+
 ## OkInstancedItem
 
 An instanced item is an `OkItem`, and it draws with the same material

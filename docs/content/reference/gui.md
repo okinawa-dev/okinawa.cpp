@@ -135,9 +135,33 @@ OkConsole::registerCommand("ground", "toggle the terrain",
 Engine built-ins: `help` (list every registered command), `clear`,
 `quit`, and `set` / `get` over the whole `OkConfig` key space — `set
 gui.debug.grid true` works out of the box for every config value,
-present or future. `get` also takes a prefix: `get gui` lists every
-`gui.*` key name; `get gui.sc` narrows to a single key and prints its
-value directly.
+present or future.
+
+Both take **half a key**, because somebody typing one is asking what
+there is: `get gui` lists every `gui.*` key with its value, `set debug`
+does the same for `debug.*`, and either one **on its own** lists the
+whole key space. An exact key still wins over a prefix that happens to
+contain it, and answering `usage:` to a question nobody asked is what
+this replaced.
+
+### An application that draws its own console
+
+The console is two things: an interpreter with a command set and a
+scrollback, and a drop-down that draws itself over the screen. An
+application with an interface of its own wants the first and not the
+second — a second console opening on a keystroke that one of its own
+text fields wanted is not what anybody typing meant.
+
+```cpp
+OkConsole::setKeyEnabled(false);      // no key of its own, draws nothing
+OkConsole::execute("set shadows.cascades 3");  // same interpreter
+std::vector<std::string> tail = OkConsole::getOutputTail(200);
+const std::vector<std::string> &back = OkConsole::getHistory();
+```
+
+`getHistory()` is what makes up/down work in a console somebody else
+draws, and it matters that it is the **same** list: a history kept
+beside this one forgets everything typed into the other.
 
 ## Debug grid overlay
 

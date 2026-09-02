@@ -23,6 +23,13 @@ nav_order: 11
 | `static bool hasKey(const std::string &key)` | Whether the key exists in any typed map. |
 | `static std::string getValueAsString(const std::string &key)` | The value formatted as a string, whatever its type (`"<unset>"` when missing). |
 
+The `debug.*` keys switch the drawings every object makes **about
+itself** — `debug.origins` (the three axes at its origin),
+`debug.spheres` (the sphere it claims to fit in), `debug.boxes` (the box
+around that sphere) and `debug.centres` (where that sphere is centred).
+They are read once a frame and every object consults them while it
+draws; see the [items reference](items.html#debug-helpers).
+
 The graphics keys include `graphics.wireframe`, the scene-wide wireframe
 switch described in the [items reference](items.html#wireframe), and
 `graphics.textures`, which turns texturing off and leaves every item on its
