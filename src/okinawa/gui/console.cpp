@@ -62,26 +62,42 @@ void OkConsole::initialize() {
                     (void)args;
                     OkCore::askForExit();
                   });
-  registerCommand("set",
-                  "set <config-key> <value>: write an engine config value",
-                  [](const std::vector<std::string> &args) {
-                    if (args.size() != 2) {
-                      OkConsole::print("usage: set <config-key> <value>");
-                      // "set key" with no value: also show the current value,
-                      // like a get -- handy when checking before changing.
-                      if (args.size() == 1 && OkConfig::hasKey(args[0])) {
-                        OkConsole::print(args[0] + " = " +
-                                         OkConfig::getValueAsString(args[0]));
-                      }
-                      return;
-                    }
-                    const std::string &key = args[0];
-                    const std::string &val = args[1];
-                    // Typed write: an existing key keeps its type ("set x 0" on
-                    // a float key stores 0.0f, not an int in a different map).
-                    OkConfig::setFromString(key, val);
-                    OkConsole::print(key + " = " + val);
-                  });
+  registerCommand(
+      "set", "set <config-key> <value>: write an engine config value",
+      [](const std::vector<std::string> &args) {
+        if (args.size() != 2) {
+          // "set key" with no value shows what it holds, and
+          // "set debug" -- a PREFIX -- shows everything under
+          // it. Somebody typing half a key is asking what
+          // there is, and answering "usage:" to that is
+          // making them go and read the source.
+          if (args.size() == 1 && OkConfig::hasKey(args[0])) {
+            OkConsole::print(args[0] + " = " +
+                             OkConfig::getValueAsString(args[0]));
+            return;
+          }
+          if (args.size() == 1) {
+            std::vector<std::string> keys =
+                OkConfig::getKeysWithPrefix(args[0]);
+            if (!keys.empty()) {
+              for (std::size_t i = 0; i < keys.size(); i++) {
+                OkConsole::print("  " + keys[i] + " = " +
+                                 OkConfig::getValueAsString(keys[i]));
+              }
+              return;
+            }
+            OkConsole::print("no config keys match: " + args[0]);
+          }
+          OkConsole::print("usage: set <config-key> <value>");
+          return;
+        }
+        const std::string &key = args[0];
+        const std::string &val = args[1];
+        // Typed write: an existing key keeps its type ("set x 0" on
+        // a float key stores 0.0f, not an int in a different map).
+        OkConfig::setFromString(key, val);
+        OkConsole::print(key + " = " + val);
+      });
   registerCommand(
       "get", "get <key-or-prefix>: read config values (prefix lists names)",
       [](const std::vector<std::string> &args) {

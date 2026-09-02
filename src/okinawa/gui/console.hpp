@@ -55,6 +55,14 @@ public:
   }
   static std::vector<std::string> getOutputTail(int maxLines);
 
+  // The lines submitted so far, oldest first. An application drawing a
+  // console of its own needs them: walking back through what you typed
+  // is half of what a console IS, and a second history kept beside this
+  // one would forget everything typed into the other.
+  static const std::vector<std::string> &getHistory() {
+    return _history;
+  }
+
   // Whether the console answers its key at all.
   //
   // An application with its own interface does not want a second one
