@@ -371,6 +371,13 @@ void OkInput::setPhysicalInputEnabled(bool enabled) {
   if (enabled) {
     _blockUntil = 0.0;
   }
+  // An application turning input off for a moment is NOT somebody being
+  // held out of their own window: an editor does it every time the
+  // cursor crosses one of its panels, so that a drag inside a window
+  // does not also fly the camera. Only a hold asked for from outside
+  // is worth a notice on screen, and `blockPhysicalInput` sets that
+  // flag back on after calling this.
+  _blockIsHold = false;
   // Pointer lock is opt-in via a click; disabling physical input just makes
   // sure the cursor is released. It is never auto-captured here.
   if (!enabled) {
@@ -424,7 +431,8 @@ double OkInput::clampBlockSeconds(double seconds) {
 void OkInput::blockPhysicalInput(double seconds) {
   double hold = clampBlockSeconds(seconds);
   setPhysicalInputEnabled(false);
-  _blockUntil = hold > 0.0 ? glfwGetTime() + hold : 0.0;
+  _blockUntil  = hold > 0.0 ? glfwGetTime() + hold : 0.0;
+  _blockIsHold = true;
 }
 
 /**
@@ -433,7 +441,7 @@ void OkInput::blockPhysicalInput(double seconds) {
  *         deadline, otherwise what is left of it.
  */
 double OkInput::physicalInputBlockedFor() const {
-  if (_physicalEnabled) {
+  if (_physicalEnabled || !_blockIsHold) {
     return 0.0;
   }
   if (_blockUntil <= 0.0) {

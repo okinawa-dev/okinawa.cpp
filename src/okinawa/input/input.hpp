@@ -109,8 +109,10 @@ public:
   //        with no deadline, which is what the launch flag does.
   void blockPhysicalInput(double seconds);
 
-  // Seconds until physical input comes back: 0 when it is not blocked,
-  // and BLOCK_FOREVER when the block has no deadline.
+  // Seconds until physical input comes back: 0 when it is not blocked
+  // -- or when it is off because the application asked rather than
+  // because somebody outside is holding it -- and BLOCK_FOREVER when
+  // the hold has no deadline.
   double physicalInputBlockedFor() const;
 
   // The shortest and longest a timed block may last, and the value
@@ -302,6 +304,13 @@ private:
   // When a timed block ends, on the same clock as glfwGetTime(). Zero
   // means the block (if any) has no deadline.
   double _blockUntil = 0.0;
+  // Whether the current disable is a HOLD somebody asked for from
+  // outside, or the application routing input elsewhere for a frame.
+  // Only the first is reported and only the first is worth telling the
+  // person about: an editor disables input whenever the cursor is over
+  // a panel, and a notice saying an agent holds the keyboard every time
+  // the mouse touches a window is a lie about what is happening.
+  bool _blockIsHold = false;
 
   // Pointer lock state: true while the cursor is captured for mouse-look.
   bool _cursorCaptured;
