@@ -12,7 +12,8 @@
 #include <cstdlib>
 #include <sstream>
 
-bool                            OkConsole::_open = false;
+bool                            OkConsole::_open       = false;
+bool                            OkConsole::_keyEnabled = true;
 std::vector<OkConsole::Command> OkConsole::_commands;
 std::vector<std::string>        OkConsole::_output;
 std::vector<std::string>        OkConsole::_history;
@@ -211,6 +212,10 @@ std::vector<std::string> OkConsole::getOutputTail(int maxLines) {
   return tail;
 }
 
+void OkConsole::setKeyEnabled(bool enabled) {
+  _keyEnabled = enabled;
+}
+
 void OkConsole::toggle() {
   _open          = !_open;
   OkInput *input = OkCore::getInput();
@@ -346,6 +351,13 @@ void OkConsole::refreshUi() {
 void OkConsole::update(float dt) {
   OkInput *input = OkCore::getInput();
   if (input == nullptr) {
+    return;
+  }
+
+  if (!_keyEnabled) {
+    if (_open) {
+      toggle();  // it was open when the key was taken away
+    }
     return;
   }
 

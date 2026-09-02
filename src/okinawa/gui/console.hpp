@@ -55,6 +55,19 @@ public:
   }
   static std::vector<std::string> getOutputTail(int maxLines);
 
+  // Whether the console answers its key at all.
+  //
+  // An application with its own interface does not want a second one
+  // opening over it: the editor draws its panels with Dear ImGui and a
+  // grave typed into a text field there must stay a grave. Off, the
+  // console is still there to be driven -- `execute` and the output
+  // buffer are what an interface of one's own is built on -- it simply
+  // has no key of its own and never draws itself.
+  static void setKeyEnabled(bool enabled);
+  static bool isKeyEnabled() {
+    return _keyEnabled;
+  }
+
   // Open state. While open the console owns the keyboard (OkInput is
   // captured) and the game receives no keys.
   static void toggle();
@@ -82,6 +95,7 @@ private:
   static void refreshUi();
 
   static bool                     _open;
+  static bool                     _keyEnabled;
   static std::vector<Command>     _commands;
   static std::vector<std::string> _output;   // scrollback, newest last
   static std::vector<std::string> _history;  // submitted lines
