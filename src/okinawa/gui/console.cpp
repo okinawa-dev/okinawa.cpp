@@ -102,7 +102,12 @@ void OkConsole::initialize() {
       "get", "get <key-or-prefix>: read config values (prefix lists names)",
       [](const std::vector<std::string> &args) {
         if (args.size() != 1) {
+          std::vector<std::string> all = OkConfig::getKeysWithPrefix("");
           OkConsole::print("usage: get <key-or-prefix>");
+          for (std::size_t i = 0; i < all.size(); i++) {
+            OkConsole::print("  " + all[i] + " = " +
+                             OkConfig::getValueAsString(all[i]));
+          }
           return;
         }
         const std::string &prefix = args[0];
