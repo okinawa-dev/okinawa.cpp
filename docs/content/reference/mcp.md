@@ -41,10 +41,16 @@ is reachable from a keyboard, so without a pointer an agent working on
 one has to ask a person to make the gesture and send a picture back.
 
 **Say how far, and in what.** "Move up" is not an instruction: up by
-how much, measured in what? Every number this tool takes is in **window
-pixels with the origin at the top left**, which is the frame the agent
-is already looking at in `view_frame`. A position read off a screenshot
-can be handed straight back.
+how much, measured in what? Every number this tool takes is in **the
+pixels `get_state` reports under `window`**, origin at the top left --
+the frame a screenshot is made of, so a position read off an image can
+be handed straight back.
+
+That frame is the framebuffer, and on a screen with more pixels than
+points an interface is laid out in half as many: the tool converts, so
+a caller never has to know what display it is drawing on. What a caller
+does have to allow for is a picture that arrived **scaled down** on the
+way -- multiply by `window.width` over the image's own width first.
 
 ```json
 {"action": "move",  "x": 700, "y": 400}

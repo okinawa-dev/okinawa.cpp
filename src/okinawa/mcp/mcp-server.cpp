@@ -468,9 +468,11 @@ struct OkMcpServer::Impl {
     mouse["name"] = "mouse";
     mouse["description"] =
         "Drive the pointer: move it, press its buttons, drag with one held, "
-        "or turn the wheel. EVERYTHING IS IN WINDOW PIXELS, origin at the top "
-        "left -- the same frame a screenshot is in, so a place seen in an "
-        "image can be named here without converting anything. `move` takes "
+        "or turn the wheel. EVERYTHING IS IN THE PIXELS `get_state` REPORTS "
+        "under `window`, origin at the top left -- the frame a screenshot is "
+        "made of, so a place seen in an image can be named here. (An image "
+        "that arrived scaled down is still that frame: multiply by "
+        "`window.width` over the image's width first.) `move` takes "
         "either an absolute x,y or a relative dx,dy. `drag` moves with a "
         "button held, which is how a view is turned or a piece is aimed. "
         "The wheel is in notches, positive away from the hand.";
@@ -834,18 +836,41 @@ struct OkMcpServer::Impl {
     }
 
     if (name == "mouse") {
+      // THE FRAME EVERYTHING IS IN.
+      //
+      // The numbers arrive in the pixels `get_state` reports and a
+      // screenshot is made of -- the framebuffer -- and an interface
+      // is laid out in the window's own, which on a screen with more
+      // pixels than points is half as many. Converted here, once, so
+      // that a place read off an image can be handed back without the
+      // caller knowing anything about the display it was drawn on.
+      double toLogical = runOnLoop([]() -> json {
+                           GLFWwindow *win = OkCore::getWindow();
+                           int         fbW = 0;
+                           int         fbH = 0;
+                           int         wW  = 0;
+                           int         wH  = 0;
+                           if (win != nullptr) {
+                             glfwGetFramebufferSize(win, &fbW, &fbH);
+                             glfwGetWindowSize(win, &wW, &wH);
+                           }
+                           json out;
+                           out["scale"] =
+                               (fbW > 0) ? static_cast<double>(wW) / fbW : 1.0;
+                           return out;
+                         }).value("scale", 1.0);
       // Read here, on the request thread, and handed over as plain
       // values: what runs on the loop must not be holding a json.
       std::string action = args.value("action", std::string());
       std::string button = args.value("button", std::string("left"));
       int         which  = button == "right" ? 1 : (button == "middle" ? 2 : 0);
       bool        haveXY = args.contains("x") && args.contains("y");
-      double      x      = args.value("x", 0.0);
-      double      y      = args.value("y", 0.0);
-      double      dx     = args.value("dx", 0.0);
-      double      dy     = args.value("dy", 0.0);
-      double      toX    = args.value("to_x", 0.0);
-      double      toY    = args.value("to_y", 0.0);
+      double      x      = args.value("x", 0.0) * toLogical;
+      double      y      = args.value("y", 0.0) * toLogical;
+      double      dx     = args.value("dx", 0.0) * toLogical;
+      double      dy     = args.value("dy", 0.0) * toLogical;
+      double      toX    = args.value("to_x", 0.0) * toLogical;
+      double      toY    = args.value("to_y", 0.0) * toLogical;
       double      notches = args.value("notches", 0.0);
       int         steps   = static_cast<int>(args.value("steps", 12.0));
       if (steps < 1) {
@@ -928,13 +953,13 @@ struct OkMcpServer::Impl {
       }
 
       std::this_thread::sleep_for(std::chrono::milliseconds(kPoseSettleMs));
-      json where = runOnLoop([]() -> json {
+      json where = runOnLoop([toLogical]() -> json {
         double px = 0.0;
         double py = 0.0;
         OkCore::getInput()->injectedPointer(&px, &py);
         json at;
-        at["x"] = px;
-        at["y"] = py;
+        at["x"] = toLogical > 0.0 ? px / toLogical : px;
+        at["y"] = toLogical > 0.0 ? py / toLogical : py;
         return at;
       });
       return textResult(action + " done, pointer at " + where.dump());
